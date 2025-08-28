@@ -1,0 +1,39 @@
+{% load base_tags %}
+
+{% if section_navigation|default_if_none:"header" == "header" %}
+  <header id="section_header" class="d-flex align-items-center 
+    {% if section_hero|default_if_none:False %}fixed-top{% endif %}
+     ">
+    <div class="container-fluid">
+      <div class="row align-items-center">
+        {# Logo #}
+        <div class="col-4 d-flex align-items-center">
+          {% comment  %}
+            <a href="" class="logo d-flex align-items-center">
+              {# Uncomment the line below if you also wish to use an image logo #}
+              <img src="{% get_env 'SITE_LOGO' %}" class="img-fluid" alt="logo" width="" height="" />
+                <h1 class="sitename">{% get_env 'SITE_NAME' %}</h1>
+            </a>
+          {% endcomment %}
+        </div>
+        {# Navigation #}
+        <div class="col-4 d-flex justify-content-center">
+          <nav id="navmenu">
+            <ul>
+              {# navmenu #}
+            </ul>
+            <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+          </nav>
+        </div>
+        {# CTA Btn #}
+        <div class="col-4 d-flex justify-content-end"></div>
+      </div>
+    </div>
+  </header>
+{% endif %}
+
+{% if section_navigation|default_if_none:"header" == "aside" %}
+  <aside>
+    <div class="d-none"></div>
+  </aside>
+{% endif %}

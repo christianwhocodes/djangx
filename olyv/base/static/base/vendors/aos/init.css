@@ -1,0 +1,8 @@
+/*--------------------------------------------------------------
+# Disable aos animation delay on mobile devices
+--------------------------------------------------------------*/
+@media screen and (max-width: 767.98px) {
+  [data-aos-delay] {
+    transition-delay: 0 !important;
+  }
+}

@@ -1,0 +1,71 @@
+<div class="col-lg-8 entries">
+    {% for article in blog_articles %}
+        <article class="entry">
+            <div class="entry-img">
+                <img src="{{ article.image.url }}"
+                     width=""
+                     height=""
+                     alt=""
+                     class="img-fluid">
+            </div>
+            <h2 class="entry-title">
+                <a href="{% url 'blog-details' pk=article.id %}">{{ article.title }}</a>
+            </h2>
+            <div class="entry-meta">
+                <ul>
+                    <li class="d-flex align-items-center">
+                        <i class="bi bi-person"></i> <a href="#" class="pe-none" tabindex="-1" aria-disabled="true">{{ article.author.first_name }} {{ article.author.last_name }}</a>
+                    </li>
+                    <li class="d-flex align-items-center">
+                        <i class="bi bi-clock"></i> <a href="#" class="pe-none" tabindex="-1" aria-disabled="true"><time datetime="{{ article.date_created|date:'c' }}">{{ article.date_created|date }}</time></a>
+                    </li>
+                    <!-- <li class="d-flex align-items-center">
+                        <i class="bi bi-chat-dots"></i> <a href="#">{{ article.comment_set.count }} Comments</a>
+                    </li> -->
+                </ul>
+            </div>
+            <div class="entry-content">
+                {% if article.content %}
+                    <p>{{ article.content|safe|truncatewords:45 }}</p>
+                {% else %}
+                    <p>No content available.</p>
+                {% endif %}
+                <div class="read-more">
+                    <a href="{% url 'blog-details' pk=article.id %}" hx-get="{{ article.title }}" hx-target="#blog-page-title-breadcrumb">Read More</a>
+                </div>
+            </div>
+        </article>
+    {% endfor %}
+    <div class="blog-pagination">
+        <ul class="justify-content-center">
+            {% if blog_articles.has_previous %}
+                <li>
+                    <a href="?category={{ filtered_category }}&tag={{ filtered_tag }}&page={{ blog_articles.previous_page_number }}">«</a>
+                </li>
+            {% endif %}
+            <li class="active">
+                <a href="?category={{ filtered_category }}&tag={{ filtered_tag }}&page={{ blog_articles.number }}">{{ blog_articles.number }}</a>
+            </li>
+            {% if blog_articles.has_next %}
+                <li>
+                    <a href="?category={{ filtered_category }}&tag={{ filtered_tag }}&page={{ blog_articles.next_page_number }}">»</a>
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+<!-- 
+    ***
+    ***
+    *** Other Way to do pagination
+    ***
+    ***
+    ***
+    <ul class="justify-content-center">
+            {% for page in blog_articles.paginator.page_range %}
+                <li {% if page == blog_articles.number %}class="active"{% endif %}>
+                    <a href="?category={{ filtered_category }}}&tag={{ filtered_tag }}&page={{ page }}">{{ page }}</a>
+                </li>
+            {% endfor %}
+    </ul>
+ -->
