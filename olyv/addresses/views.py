@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.db import connection
 from django.template.loader import render_to_string
-from rest_framework import status
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK, HTTP_500_INTERNAL_SERVER_ERROR
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -32,37 +32,37 @@ class EmailUsAPIView(APIView):
                         "message": "Please correct the errors below.",
                         "errors": form.errors,
                     },
-                    status=status.HTTP_400_BAD_REQUEST,
+                    status=HTTP_400_BAD_REQUEST,
                 )
+            else:
+                # Extract validated data
+                sender_name = form.cleaned_data["name"]
+                sender_email = form.cleaned_data["email"]
+                sender_subject = form.cleaned_data["subject"]
+                sender_message = form.cleaned_data["message"]
 
-            # Extract validated data
-            sender_name = form.cleaned_data["name"]
-            sender_email = form.cleaned_data["email"]
-            sender_subject = form.cleaned_data["subject"]
-            sender_message = form.cleaned_data["message"]
+                # Get recipient email
+                recipient_email = self._get_recipient_email()
 
-            # Get recipient email
-            recipient_email = self._get_recipient_email()
+                # Prepare email context
+                email_context = {
+                    "name": sender_name,
+                    "email": sender_email,
+                    "subject": sender_subject,
+                    "message": sender_message,
+                    "url": request.build_absolute_uri("/"),
+                }
 
-            # Prepare email context
-            email_context = {
-                "name": sender_name,
-                "email": sender_email,
-                "subject": sender_subject,
-                "message": sender_message,
-                "url": request.build_absolute_uri("/"),
-            }
+                # Send email
+                self._send_contact_email(sender_subject, sender_email, recipient_email, email_context)
 
-            # Send email
-            self._send_contact_email(sender_subject, sender_email, recipient_email, email_context)
-
-            return Response(
-                {
-                    "success": True,
-                    "message": "Thank you for your message! We will get back to you soon.",
-                },
-                status=status.HTTP_200_OK,
-            )
+                return Response(
+                    {
+                        "success": True,
+                        "message": "Thank you for your message! We will get back to you soon.",
+                    },
+                    status=HTTP_200_OK,
+                )
 
         except Exception as e:
             logger.error(f"Error sending contact email: {str(e)}")
@@ -71,7 +71,7 @@ class EmailUsAPIView(APIView):
                     "success": False,
                     "message": "There was an error sending your message. Please try again later.",
                 },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                status=HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
     def _get_recipient_email(self):
