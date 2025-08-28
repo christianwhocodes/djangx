@@ -1,0 +1,55 @@
+<div class="col-lg-4">
+  <div class="sidebar">
+    <h3 class="sidebar-title">Search</h3>
+    <div class="sidebar-item search-form">
+      <form action="{% url 'blogpage' %}" method="get">
+        {% csrf_token %}
+        {{ searchform.text }}
+        <button type="submit">
+          <i class="bi bi-search"></i>
+        </button>
+      </form>
+    </div>
+    <h3 class="sidebar-title">Categories</h3>
+    <div class="sidebar-item categories">
+      <ul>
+        {% for category in categories.all %}
+          <li>
+            <a href="{% url 'blogpage' %}?category={{ category.name }}"
+               {% if filtered_category == category.name %}class="highlight2"{% endif %}>
+              {{ category.name }} <span>({{ category.article_set.count }})</span>
+            </a>
+          </li>
+        {% endfor %}
+        <li>
+          <a href="{% url 'blogpage' %}"
+             {% if not filtered_category %}class="highlight2"{% endif %}>All articles <span>({{ articles.count }})</span></a>
+        </li>
+      </ul>
+    </div>
+    <h3 class="sidebar-title">Recent Posts</h3>
+    <div class="sidebar-item recent-posts">
+      {% for article in articles|slice:':5' %}
+        <div class="post-item clearfix">
+          <img src="{{ article.image.url }}" width="" height="" alt="">
+          <h4>
+            <a href="{% url 'blog-details' pk=article.id %}">{{ article.title }}</a>
+          </h4>
+          <time datetime="{{ article.date_created|date:'c' }}">{{ article.date_created|date }}</time>
+        </div>
+      {% endfor %}
+    </div>
+    {% if single_article %}
+      <h3 class="sidebar-title">Tags</h3>
+      <div class="sidebar-item tags">
+        <ul>
+          {% for tag in tags.all %}
+            <li>
+              <a href="{% url 'blogpage' %}?tag={{ tag.name }}">{{ tag.name }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+</div>

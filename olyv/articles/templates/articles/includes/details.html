@@ -1,0 +1,156 @@
+{% load static %}
+
+<div class="col-lg-8 entries">
+  <article class="entry entry-single">
+    <div class="entry-img">
+      <img src="{{ single_article.image.url }}"
+           width=""
+           height=""
+           alt=""
+           class="img-fluid">
+    </div>
+    <h2 class="entry-title">
+      <a href="#">{{ single_article.title }}</a>
+    </h2>
+    <div class="entry-meta">
+      <ul>
+        <li class="d-flex align-items-center">
+          <i class="bi bi-person"></i> <a href="#" class="pe-none" tabindex="-1" aria-disabled="true">{{ single_article.author.first_name }} {{ single_article.author.last_name }}</a>
+        </li>
+        <li class="d-flex align-items-center">
+          <i class="bi bi-clock"></i> <a href="#" class="pe-none" tabindex="-1" aria-disabled="true"><time datetime="{{ single_article.date_created|date:'c' }}">{{ single_article.date_created|date }}</time></a>
+        </li>
+        <!-- <li class="d-flex align-items-center">
+          <i class="bi bi-chat-dots"></i> <a href="#">{{ single_article.comment_set.count }} Comments</a>
+        </li> -->
+      </ul>
+    </div>
+    <div class="entry-content">{{ single_article.content|safe }}</div>
+    <div class="entry-footer">
+      <i class="bi bi-folder"></i>
+      <ul class="cats">
+        <li>
+          <a href="{% url 'blogpage' %}?category={{ single_article.category.name }}">{{ single_article.category.name }}</a>
+        </li>
+      </ul>
+      <i class="bi bi-tags"></i>
+      <ul class="tags">
+
+        {% for tag in tags.all %}
+          <li>
+            <a href="{% url 'blogpage' %}?tag={{ tag.name }}">{{ tag.name }}</a>
+          </li>
+        {% endfor %}
+
+      </ul>
+    </div>
+  </article><!-- End blog entry -->
+  <div class="blog-author d-flex align-items-center">
+
+    {% if single_article.author.image %}
+      <img src="{{ single_article.author.image.url }}"
+           class="rounded-circle float-left"
+           width=""
+           height=""
+           alt="">
+    {% else %}
+      <img src="{% static 'blog/img/default-profile.jpg' %}"
+           class="rounded-circle float-left"
+           width=""
+           height=""
+           alt="">
+    {% endif %}
+
+    <div>
+      <h4>{{ single_article.author.first_name }} {{ single_article.author.last_name }}</h4>
+      <div class="social-links">
+
+        {% if single_article.author.twitter %}
+          <a href="{{ single_article.author.twitter }}"><i class="bi bi-twitter"></i></a>
+        {% endif %}
+
+        {% if single_article.author.facebook %}
+          <a href="{{ single_article.author.facebook }}"><i class="bi bi-facebook"></i></a>
+        {% endif %}
+
+        {% if single_article.author.instagram %}
+          <a href="{{ single_article.author.instagram }}"><i class="biu bi-instagram"></i></a>
+        {% endif %}
+
+      </div>
+      <p>{{ single_article.author.description }}</p>
+    </div>
+  </div>
+  <!-- End blog author bio -->
+ 
+  <div class="blog-comments">
+    <!-- Start main Reply form -->
+    <div class="reply-form" id="replyform">
+      <h4>Leave a Reply</h4>
+      <p>Your email address will not be published. Required fields are marked *</p>
+      <form id="replyform" action="{% url 'blog-details' pk=single_article.id %}#replyform" method="post">
+        {% if messages %}
+          {% for message in messages %}
+            {% if message.tags == 'error' %}
+              <div class="alert alert-danger text-center">{{ message }}</div>
+            {% elif message.tags == 'success' %}
+              <div class="alert alert-success text-center">{{ message }}</div>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+        {% csrf_token %}
+        <div class="row">
+          <div class="col-md-6 form-group">{{ replyform.name }}</div>
+          <div class="col-md-6 form-group">{{ replyform.email }}</div>
+        </div>
+        <div class="row">
+          <div class="col form-group">{{ replyform.website }}</div>
+        </div>
+        <div class="row">
+          <div class="col form-group">{{ replyform.content }}</div>
+        </div>
+        <button disabled type="submit" class="btn btn-primary">Post Comment</button>
+      </form>
+    </div>
+    <!-- End Main Reply form -->
+    <!-- Start Blog Comments -->
+    <h4 class="comments-count mt-5">{{ single_article.comment_set.count }} Comments</h4>
+    {% for comment in comments %}
+      <div id="comment-1" class="comment">
+        <div class="d-flex">
+          <div>
+            <h5>
+              <a href="">{{ comment.name }}</a>
+              <!-- <a data-bs-toggle="collapse" href="#replytocomment-{{ comment.id }}" aria-expanded="false" aria-controls="replytocomment-{{ comment.id }}" class="reply">
+                <i class="bi bi-reply-fill"></i> Reply
+              </a> -->
+            </h5>
+            <time datetime="2020-01-01">{{ comment.date_created|date }}</time>
+            <p>{{ comment.content }}</p>
+          </div>
+        </div>
+        <!-- sub reply form -->
+        <!-- <div class="collapse reply-form" id="replytocomment-{{ comment.id }}">
+          <p>Your email address will not be published. Required fields are marked *</p>
+          <form id="replytocommentform-{{ comment.id }}" action="{% url 'blog-details' pk=single_article.id %}#replytocomment-{{ comment.id }}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="parent_comment" value="{{ comment.id }}">
+            <div class="row">
+              <div class="col-md-6 form-group">{{ replyform.name }}</div>
+              <div class="col-md-6 form-group">{{ replyform.email }}</div>
+            </div>
+            <div class="row">
+              <div class="col form-group">{{ replyform.website }}</div>
+            </div>
+            <div class="row">
+              <div class="col form-group">{{ replyform.content }}</div>
+            </div>
+            <button type="submit" class="btn btn-primary">Post Reply</button>
+          </form>
+        </div>
+      </div> -->
+      {% endfor %}
+    </div>
+    <!-- End blog comments -->
+  </div>
+ 

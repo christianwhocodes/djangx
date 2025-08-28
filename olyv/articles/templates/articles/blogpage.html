@@ -1,0 +1,43 @@
+{% extends "base/index.html" %}
+{% load static %}
+
+{% block static %}
+  <link rel="stylesheet" href="{% static 'blog/page.css' %}">
+{% endblock static %}
+
+{% block layout %}
+  <!-- ======= Blog Section ======= -->
+  <section id="blog" class="blog">
+    {# Section Title #}
+    {% include 'base/widgets/section-title/static-v1.html' %}
+    {% include "base/widgets/section-title/widget.html" with section_title_heading=blog_title_heading|default:"Blog" section_title_paragraph=blog_title_paragraph %}
+    {# End Section Title #}
+    {# Page Title #}
+    <div class="modal-header page-title border-0 pb-0">
+      <div class="container d-lg-flex justify-content-between align-items-center">
+        <h1 id="blog-page-title-heading" class="mb-2 mb-lg-0">Blog Articles</h1>{# Autofilled by HTMX #}
+        <nav class="breadcrumbs">
+          <ol>
+            <li>
+              <a href="{% url 'blogpage' %}" class="link">Blog</a>
+            </li>
+            <li id="blog-page-title-breadcrumb" class="current">{# Autofilled by HTMX #}</li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+    {# End Page Title #}
+    <div class="container" data-aos="fade-up">
+      <div class="row">
+
+        {% if blog_articles %}
+          {% include "blog/includes/list.html" %}
+        {% elif single_article %}
+          {% include "blog/includes/details.html" %}
+        {% endif %}
+
+        {% include "blog/includes/sidebar.html" %}
+      </div>
+    </div>
+  </section>
+{% endblock layout %}

@@ -1,0 +1,32 @@
+{
+  "name": "Online BigPen Kenya",
+  "short_name": "BigPen",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a202c",
+  "description": "Delivering Stationery Supplies",
+  "icons": [
+    {
+      "src": "/lib/static/core/img/mstile.png",
+      "sizes": "150x150",
+      "type": "image/png"
+    },
+    {
+      "src": "/lib/static/core/img/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/lib/static/core/img/android-chrome-icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/lib/static/core/img/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "lang": "en"
+}

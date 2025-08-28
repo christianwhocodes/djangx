@@ -1,0 +1,59 @@
+{% load base_tags %}
+
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    {# meta tags #}
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta name="author" content='{% get_env "SITE_AUTHOR" %}' />
+    <meta name="description" content='{% get_env "SITE_DESCRIPTION" %}' />
+    <meta name="keywords" content='{% get_env "SITE_KEYWORDS" %}' />
+    {# Twitter #}
+    <meta name="twitter:image" content='{% get_env "SITE_LOGO" %}' />
+    <meta name="twitter:card" content='{% get_env "SITE_DESCRIPTION" %}' />
+    <meta name="twitter:site" content='{% get_env "SITE_URL" %}' />
+    <meta name="twitter:title" content='{% get_env "SITE_NAME" %}' />
+    <meta name="twitter:description" content='{% get_env "SITE_DESCRIPTION" %}' />
+    <meta name="twitter:image:alt" content='{% get_env "SITE_NAME" %}' />
+    {# Open Graph #}
+    <meta property="og:image" content='{% get_env "SITE_LOGO" %}' />
+    <meta property="og:url" content='{% get_env "SITE_URL" %}' />
+    <meta property="og:site_name" content='{% get_env "SITE_NAME" %}' />
+    <meta property="og:title" content='{% get_env "SITE_NAME" %}' />
+    <meta property="og:locale" content="en_GB" />
+    {# Icons & Manifest #}
+    <link rel='icon' type='image/x-icon' href='{% get_env "SITE_FAVICON" %}'>
+    <link rel='apple-touch-icon'
+          href='{% get_env "SITE_APPLE_TOUCH_ICON" %}'
+          sizes='180x180'>
+    <link rel='icon'
+          type='image/png'
+          sizes='192x192'
+          href='{% get_env "SITE_ANDROID_CHROME_ICON" %}' />
+    <meta name='msapplication-TileImage' content='{% get_env "SITE_MS_TILE" %}' />
+    <link rel='manifest' href='{% get_env "SITE_MANIFEST" %}'>
+    {# vendors #}
+    {% include "base/vendors/bootstrap.html" %}
+    {% include "base/vendors/bootstrap-icons.html" %}
+    {% include "base/vendors/aos.html" %}
+
+    {% block assets %}
+    {% endblock assets %}
+
+    {% title %}
+  </head>
+  <body>
+    {% include "base/modals/preloader.html" %}
+    {% include "base/sections/navigation.html" %}
+    <main>
+      {% include "base/sections/hero.html" %}
+
+      {% block main %}
+      {% endblock main %}
+
+    </main>
+    {% include "base/btns/back-to-top.html" %}
+    {% include "accounts/forms/logout.html" %}
+  </body>
+</html>

@@ -1,0 +1,387 @@
+// Custom.scss
+
+// 1. Include functions first (so you can manipulate colors, SVGs, calc, etc)
+@import "./scss/functions";
+
+// 2. Include any default variable overrides here
+$primary: #ef4444;
+
+// 3. Include remainder of required Bootstrap stylesheets (including any separate color mode stylesheets)
+@import "./scss/variables";
+@import "./scss/variables-dark";
+
+// 4. Include any default map overrides here
+
+// 5. Include remainder of required parts
+@import "./scss/maps";
+@import "./scss/mixins";
+@import "./scss/root";
+
+// 6. Include any other optional stylesheet partials as desired; list below is not inclusive of all available stylesheets
+@import "./scss/utilities";
+@import "./scss/reboot";
+@import "./scss/type";
+@import "./scss/images";
+@import "./scss/containers";
+@import "./scss/grid";
+@import "./scss/helpers";
+@import "./scss/buttons";
+// ...
+
+// 7. Optionally include utilities API last to generate classes based on the Sass map in `_utilities.scss`
+@import "./scss/utilities/api";
+
+// 8. Add additional custom code here
+// TODO: Find a way to include custom fonts as bootstrap variable overrides
+@font-face {
+  font-family: "PreloSlab";
+  src: url("/lib/static/base/globals/preloslab-book.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "PreloSlab";
+  src: url("/lib/static/base/globals/preloslab-bold.otf") format("opentype");
+  /* Assuming this exists */
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+// Custom hover style for .btn class elements (e.g a or button) with bg-primary
+.btn.bg-primary {
+  &:hover {
+    background-color: color-mix(
+      in srgb,
+      var(--bs-primary),
+      transparent 20%
+    ) !important;
+  }
+}
+
+:root {
+  --default-font: "PreloSlab", "Roboto", system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --heading-font: "PreloSlab", sans-serif;
+  --nav-font: "PreloSlab", sans-serif;
+}
+
+/* Global Colors - The following color variables are used throughout the website. Updating them here will change the color scheme of the entire website */
+:root {
+  --background-color: var(--bs-white);
+  /* Background color for the entire website, including individual sections */
+  --default-color: #555555;
+  --default-color-rgb: 85, 85, 85;
+  /* Default color used for the majority of the text content across the entire website */
+  --accent-color: var(--bs-primary);
+  /* Accent color that represents your brand on the website. It's used for buttons, links, and other elements that need to stand out */
+  --heading-color: #151515;
+  --heading-color-rgb: 21, 21, 21;
+  /* Color for headings, subheadings and title throughout the website */
+  --surface-color: var(--bs-white);
+  /* The surface color is used as a background of boxed elements within sections, such as cards, icon boxes, or other elements that require a visual separation from the global background. */
+  --contrast-color: var(--bs-white);
+  /* Contrast color for text, ensuring readability against backgrounds of accent, heading, or default colors. */
+}
+
+/* Nav Menu Colors - The following color variables are used specifically for the navigation menu. They are separate from the global colors to allow for more customization options */
+:root {
+  --nav-color: rgba(var(--bs-white-rgb), 0.605);
+  /* The default color of the main navmenu links */
+  --nav-hover-color: var(--bs-primary);
+  /* Applied to main navmenu links when they are hovered over or active */
+  --nav-mobile-background-color: var(--bs-white);
+  /* Used as the background color for mobile navigation menu */
+  --nav-dropdown-background-color: var(--bs-white);
+  /* Used as the background color for dropdown items that appear when hovering over primary navigation items */
+  --nav-dropdown-color: #555555;
+  /* Used for navigation links of the dropdown items in the navigation menu. */
+  --nav-dropdown-hover-color: var(--bs-primary);
+  /* Similar to --nav-hover-color, this color is applied to dropdown navigation links when they are hovered over. */
+}
+
+/* Color Presets - These classes override global colors when applied to any section or element, providing reuse of the sam color scheme. */
+.light-background {
+  --background-color: #f9f9f9;
+  --surface-color: var(--bs-white);
+}
+
+.dark-background {
+  --background-color: #060606;
+  --default-color: var(--bs-white);
+  --heading-color: var(--bs-white);
+  --surface-color: #252525;
+  --contrast-color: var(--bs-white);
+}
+
+:root {
+  scroll-behavior: smooth;
+}
+
+:root {
+  --header-height: 80px; /* Set your actual header height */
+}
+
+body {
+  color: var(--default-color);
+  background-color: var(--background-color);
+  font-family: var(--default-font);
+  letter-spacing: 0.01em;
+}
+
+a {
+  color: var(--bs-primary);
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+a:hover {
+  color: color-mix(in srgb, var(--bs-primary), transparent 25%);
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--heading-color);
+  font-family: var(--heading-font);
+}
+
+h1 {
+  letter-spacing: 0.025em;
+}
+
+h2,
+h3 {
+  letter-spacing: 0.02em;
+}
+
+h4,
+h5,
+h6 {
+  letter-spacing: 0.015em;
+}
+
+.btn-redirect {
+  color: var(--contrast-color);
+  background: var(--bs-primary);
+}
+
+.btn-redirect:hover {
+  background-color: color-mix(in srgb, var(--bs-primary), transparent 20%);
+  color: var(--contrast-color) !important;
+}
+
+.btn-no-outline {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.btn-no-outline:focus,
+.btn-no-outline:active,
+.btn-no-outline:hover {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/*--------------------------------------------------------------
+# Global Sections
+--------------------------------------------------------------*/
+section,
+.section {
+  color: var(--default-color);
+  background-color: var(--background-color);
+  padding: 60px 0;
+  scroll-margin-top: 90px;
+  overflow: clip;
+}
+
+@media (max-width: 1199.98px) {
+  section,
+  .section {
+    scroll-margin-top: 66px;
+  }
+}
+
+/*--------------------------------------------------------------
+# Modal Header
+--------------------------------------------------------------*/
+
+// $modal-backdrop-opacity: 0.87;
+
+.modal-header {
+  color: var(--default-color);
+  padding: 25px 0 0 0;
+  position: relative;
+}
+
+.modal-header .container {
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--default-color), transparent 90%);
+  padding-bottom: 25px;
+}
+
+.modal-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.modal-header .breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.modal-header .breadcrumbs ol li + li {
+  padding-left: 10px;
+}
+
+.modal-header .breadcrumbs ol li + li::before {
+  content: "/";
+  display: inline-block;
+  padding-right: 10px;
+  color: color-mix(in srgb, var(--default-color), transparent 70%);
+}
+
+/*--------------------------------------------------------------
+# Global modal
+--------------------------------------------------------------*/
+.modal-open {
+  padding-right: 0 !important;
+}
+
+body.modal-open {
+  /* Prevent layout changes */
+  overflow-y: scroll !important;
+  position: fixed !important;
+  width: 100% !important;
+  /* This will be set dynamically via JavaScript */
+  top: var(--scroll-top, 0);
+}
+
+.modal-content {
+  border-radius: 12px;
+  box-shadow: 0 15px 35px rgba(var(--bs-black-rgb), 0.1);
+  background-color: var(--surface-color);
+}
+
+.modal-body {
+  padding: 2rem;
+  color: var(--default-color);
+}
+
+.modal-body .text-muted {
+  color: color-mix(in srgb, var(--default-color), transparent 40%) !important;
+}
+
+.btn-close {
+  color: var(--contrast-color);
+}
+
+.modal-footer {
+  background-color: var(--surface-color);
+  border-top: 1px solid
+    color-mix(in srgb, var(--default-color), transparent 85%);
+}
+
+/* Override Bootstrap button colors to match your theme */
+.modal .btn-primary {
+  color: var(--contrast-color);
+}
+
+.modal .btn-primary:hover,
+.modal .btn-primary:focus {
+  background-color: color-mix(in srgb, var(--bs-primary), transparent 20%);
+  border-color: color-mix(in srgb, var(--bs-primary), transparent 20%);
+}
+
+.modal .btn-outline-primary {
+  color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  background-color: transparent;
+}
+
+.modal .btn-outline-primary:hover,
+.modal .btn-outline-primary:focus {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: var(--contrast-color);
+}
+
+@media (max-width: 575.98px) {
+  .modal-body {
+    padding: 1.5rem;
+  }
+}
+
+/*--------------------------------------------------------------
+# Global Dropdown
+--------------------------------------------------------------*/
+/* Custom Dropdown Styling */
+.dropdown-menu {
+  background-color: var(--nav-dropdown-background-color);
+  border: 1px solid rgba(var(--bs-black-rgb), 0.1);
+  box-shadow: 0 0.5rem 1rem rgba(var(--bs-black-rgb), 0.15);
+}
+
+.dropdown-item {
+  color: var(--nav-dropdown-color);
+  transition: all 0.3s ease;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background-color: var(--nav-hover-color);
+  color: var(--contrast-color);
+}
+
+.dropdown-item:active {
+  background-color: var(--nav-hover-color);
+  color: var(--contrast-color);
+}
+
+/* Optional: Style the dropdown toggle button */
+.dropdown-toggle {
+  background: transparent !important;
+  border: none !important;
+}
+
+.dropdown-toggle:hover {
+  color: var(--nav-hover-color) !important;
+}
+
+.dropdown-toggle:focus {
+  box-shadow: none !important;
+}
+
+/* Optional: Custom dropdown arrow color */
+.dropdown-toggle::after {
+  border-top-color: currentColor;
+}
+
+/* Optional: Rounded corners */
+.dropdown-menu {
+  border-radius: 0.5rem;
+}
+
+/* Optional: Custom spacing */
+.dropdown-item {
+  padding: 0.75rem 1rem;
+}
+
+/* Optional: Divider styling */
+.dropdown-divider {
+  border-color: rgba(var(--bs-black-rgb), 0.1);
+}

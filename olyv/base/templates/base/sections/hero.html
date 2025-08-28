@@ -1,0 +1,42 @@
+{% load base_tags %}
+
+{% if section_hero|default_if_none:False %}
+  {% get_env "SITE_HERO_1" as hero_bg_1 %}
+  <section id="section_hero"
+           class="position-relative d-flex align-items-center justify-content-center min-vh-100 py-5 text-center text-white"
+           style="background-image: url('{{ hero_bg_1 }}');
+                  background-size: cover;
+                  background-position: center">
+    {# Overlay using Bootstrap utility #}
+    <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark opacity-50"></div>
+    <div class="container position-relative"  data-aos="zoom-out">
+      <div class="row justify-content-center">
+        <div class="col-lg-9">
+          <img src="{% get_env 'SITE_LOGO' %}"
+               width="130"
+               height="133"
+               alt=""
+               class="img-fluid mb-3" />
+          <h2 class="display-3 fw-bold mb-3">{% get_env 'SITE_NAME' %}</h2>
+          <p class="lead fs-4 mb-4">{% get_env 'SITE_DESCRIPTION' %}</p>
+          <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
+            <span>{# include hero btn 1 #}</span>
+            <span>{# include hero btn 2 #}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <style>
+    @media (min-width: 576px) {
+      #section_hero {
+        background-attachment: fixed !important;
+      }
+    }
+
+    #section_hero h2,
+    #section_hero p {
+      color: inherit;
+    }
+  </style>
+{% endif %}

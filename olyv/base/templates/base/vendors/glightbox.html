@@ -1,0 +1,8 @@
+{% load static %}
+
+{% if show_portfolio|default_if_none:False %}
+  <link rel="stylesheet"
+        href="{% static 'base/vendors/glightbox/glightbox.min.css' %}">
+  <script defer
+          src="{% static 'base/vendors/glightbox/glightbox.min.js' %}"></script>
+{% endif %}

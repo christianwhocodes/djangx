@@ -1,0 +1,6 @@
+{% load static %}
+
+{% if show_portfolio|default_if_none:False %}
+  <script defer
+          src="{% static 'base/vendors/imagesloaded/imagesloaded.pkgd.min.js' %}"></script>
+{% endif %}
