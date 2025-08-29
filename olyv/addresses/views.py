@@ -29,7 +29,7 @@ class EmailUsAPIView(APIView):
     """API endpoint for handling contact form submissions."""
 
     def post(self, request: HttpRequest) -> Response:
-        """Handle contact form submission."""
+        """Handle EmailUsForm submission."""
         try:
             # Create and validate form with request data
             form = EmailUsForm(request.data)
@@ -65,7 +65,7 @@ class EmailUsAPIView(APIView):
             # Send email
             self._send_contact_email(sender_subject, sender_email, recipient_email, email_context)
 
-            logger.info(f"Contact form email sent successfully from {sender_email}")
+            logger.info(f"EmailUsForm email sent successfully from {sender_email}")
 
             return Response(
                 {
@@ -77,7 +77,7 @@ class EmailUsAPIView(APIView):
 
         except ValueError as e:
             # Configuration errors (like missing recipient email)
-            logger.error(f"Configuration error in contact form: {str(e)}")
+            logger.error(f"Configuration error in EmailUs form: {str(e)}")
             return Response(
                 {
                     "success": False,
@@ -87,7 +87,7 @@ class EmailUsAPIView(APIView):
             )
 
         except Exception as e:
-            logger.error(f"Unexpected error sending contact email: {str(e)}", exc_info=True)
+            logger.error(f"Unexpected error sending EmailUs form email: {str(e)}", exc_info=True)
             return Response(
                 {
                     "success": False,
@@ -131,5 +131,5 @@ class EmailUsAPIView(APIView):
             msg.send()
 
         except Exception as e:
-            logger.error(f"Failed to send contact email: {str(e)}")
+            logger.error(f"Failed to send EmailUs form email: {str(e)}")
             raise  # Re-raise to be caught by the main exception handler
