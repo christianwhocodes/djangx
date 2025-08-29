@@ -1,8 +1,10 @@
 import logging
+from typing import TypedDict
 
 from django.conf import settings
 from django.core.exceptions import ProgrammingError
 from django.core.mail import EmailMultiAlternatives
+from django.http import HttpRequest
 from django.template.loader import render_to_string
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
@@ -11,13 +13,22 @@ from rest_framework.views import APIView
 from .forms import EmailUsForm
 from .models import EmailAddress
 
+
+class EmailContext(TypedDict):
+    """Type definition for email template context."""
+    name: str
+    email: str
+    subject: str
+    message: str
+    url: str
+
 logger = logging.getLogger(__name__)
 
 
 class EmailUsAPIView(APIView):
     """API endpoint for handling contact form submissions."""
 
-    def post(self, request):
+    def post(self, request: HttpRequest) -> Response:
         """Handle contact form submission."""
         try:
             # Create and validate form with request data
@@ -72,9 +83,9 @@ class EmailUsAPIView(APIView):
                 status=HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    def _get_recipient_email(self):
+    def _get_recipient_email(self) -> str:
         """Get the recipient email address."""
-        recipient_email = None
+        recipient_email: str | None = None
 
         # Attempt to get the primary contact email from the EmailAddress model
         try:
@@ -87,18 +98,20 @@ class EmailUsAPIView(APIView):
 
         # Fallback to DEFAULT_FROM_EMAIL if no primary email found
         if not recipient_email:
-            recipient_email = getattr(settings, "DEFAULT_FROM_EMAIL", "admin@example.com")
+            recipient_email = getattr(settings, "DEFAULT_FROM_EMAIL", "")
 
         return recipient_email
 
-    def _send_contact_email(self, subject, sender_email, recipient_email, context):
+    def _send_contact_email(
+        self, subject: str, sender_email: str, recipient_email: str, context: EmailContext
+    ) -> None:
         """Send the contact form email."""
         # Render email templates
         text_content = render_to_string("addresses/email-us.txt", context)
         html_content = render_to_string("addresses/email-us.html", context)
 
         # Send email
-        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@example.com")
+        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "")
 
         msg = EmailMultiAlternatives(
             f"Contact Form: {subject}",
