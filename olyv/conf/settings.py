@@ -13,36 +13,16 @@ https://docs.djangoproject.com/en/stable/howto/deployment/checklist/
 
 from pathlib import Path
 
-OLYV_SETTINGS = str(Path(__file__).resolve())
+from olyv.utils import find_project_root
+
+OLYV_SETTINGS_PATH = str(Path(__file__).resolve())
 
 
-def find_project_root(start_path=None):
-    """
-    Find the project root by looking for manage.py.
-    Returns Path object of the project root.
-    """
-    if start_path is None:
-        # Start from the current working directory
-        start_path = Path.cwd()
-    else:
-        start_path = Path(start_path)
-
-    # Look only for Django's manage.py
-    markers = ["manage.py"]
-
-    current = start_path.resolve()
-
-    # Traverse up the directory tree
-    for parent in [current] + list(current.parents):
-        if any((parent / marker).exists() for marker in markers):
-            return parent
-
-    # Fallback to current working directory
-    return Path.cwd()
-
+# ------------------------------------------------------------------------------
+# Project Directories
+# ------------------------------------------------------------------------------
 
 BASE_DIR = find_project_root()
-
 LIB_DIR = BASE_DIR / "lib"
 LIB_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -75,20 +55,6 @@ INSTALLED_APPS = [
     "olyv.lists",
     "olyv.articles",
 ]
-
-# ------------------------------------------------------------------------------
-# 🌐 URL Configuration
-# https://docs.djangoproject.com/en/stable/ref/settings/#root-urlconf
-# ------------------------------------------------------------------------------
-
-ROOT_URLCONF = "olyv.settings.urls"
-
-# ------------------------------------------------------------------------------
-# 🧵 Deployment
-# https://docs.djangoproject.com/en/stable/ref/settings/#wsgi-application
-# ------------------------------------------------------------------------------
-
-WSGI_APPLICATION = "olyv.settings.wsgi.application"
 
 # ------------------------------------------------------------------------------
 # 🗄️ Database Configuration
@@ -177,7 +143,6 @@ STATICFILES_FINDERS = [
 ]
 
 SASS_PRECISION = 8
-
 STATIC_URL = "/lib/static/"
 STATIC_ROOT = LIB_DIR / "static"
 
@@ -211,7 +176,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # https://pypi.org/project/django-ckeditor-5/
 # ------------------------------------------------------------------------------
 
-CKEDITOR_5_CUSTOM_CSS = "base/vendors/ckeditor/ckeditor.css"
+CKEDITOR_5_CUSTOM_CSS = "olyv/base/vendors/ckeditor/ckeditor.css"
 
 customColorPalette = [
     {"color": "hsl(4, 90%, 58%)", "label": "Red"},

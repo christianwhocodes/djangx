@@ -1,4 +1,4 @@
-{% extends "base/index.html" %}
+{% extends "olyv/base/index.html" %}
 {% load static %}
 
 {% block static %}
@@ -9,13 +9,14 @@
   <!-- ======= Blog Section ======= -->
   <section id="blog" class="blog">
     {# Section Title #}
-    {% include 'base/widgets/section-title/static-v1.html' %}
-    {% include "base/widgets/section-title/widget.html" with section_title_heading=blog_title_heading|default:"Blog" section_title_paragraph=blog_title_paragraph %}
+    {% include 'olyv/base/widgets/section-title/static-v1.html' %}
+    {% include "olyv/base/widgets/section-title/widget.html" with section_title_heading=blog_title_heading|default:"Blog" section_title_paragraph=blog_title_paragraph %}
     {# End Section Title #}
     {# Page Title #}
     <div class="modal-header page-title border-0 pb-0">
       <div class="container d-lg-flex justify-content-between align-items-center">
-        <h1 id="blog-page-title-heading" class="mb-2 mb-lg-0">Blog Articles</h1>{# Autofilled by HTMX #}
+        <h1 id="blog-page-title-heading" class="mb-2 mb-lg-0">Blog Articles</h1>
+        {# Autofilled by HTMX #}
         <nav class="breadcrumbs">
           <ol>
             <li>
