@@ -28,6 +28,8 @@ logger = logging.getLogger(__name__)
 class EmailUsAPIView(APIView):
     """API endpoint for handling contact form submissions."""
 
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "")
+
     def post(self, request: HttpRequest) -> Response:
         """Handle contact form submission."""
         try:
@@ -98,7 +100,7 @@ class EmailUsAPIView(APIView):
 
         # Fallback to DEFAULT_FROM_EMAIL if no primary email found
         if not recipient_email:
-            recipient_email = getattr(settings, "DEFAULT_FROM_EMAIL", "")
+            recipient_email = self.from_email
 
         return recipient_email
 
@@ -111,12 +113,10 @@ class EmailUsAPIView(APIView):
         html_content = render_to_string("addresses/email-us.html", context)
 
         # Send email
-        from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "")
-
         msg = EmailMultiAlternatives(
             f"Contact Form: {subject}",
             text_content,
-            from_email,
+            self.from_email,
             [recipient_email],
             reply_to=[sender_email],
         )
