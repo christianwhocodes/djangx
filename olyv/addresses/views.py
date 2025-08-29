@@ -77,19 +77,15 @@ class EmailUsAPIView(APIView):
     def _get_recipient_email(self):
         """Get the recipient email address"""
         recipient_email = None
-        try:
-            # Attempt to get the primary contact email from the EmailAddress model
-            if EmailAddress._meta.db_table in connection.introspection.table_names():
-                contact_email_obj = EmailAddress.objects.filter(is_primary=True).first()
-                if contact_email_obj:
+
+        # Attempt to get the primary contact email from the EmailAddress model
+        if EmailAddress._meta.db_table in connection.introspection.table_names():
+            contact_email_obj = EmailAddress.objects.filter(is_primary=True).first()
+            if contact_email_obj:
                     recipient_email = contact_email_obj.email
 
-            # Fallback to DEFAULT_FROM_EMAIL if no primary email found
-            if not recipient_email:
-                recipient_email = getattr(settings, "DEFAULT_FROM_EMAIL", "admin@example.com")
-
-        except Exception as e:
-            logger.error(f"Error getting recipient email: {str(e)}")
+        # Fallback to DEFAULT_FROM_EMAIL if no primary email found
+        if not recipient_email:
             recipient_email = getattr(settings, "DEFAULT_FROM_EMAIL", "admin@example.com")
 
         return recipient_email
