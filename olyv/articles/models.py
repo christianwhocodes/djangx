@@ -40,7 +40,7 @@ class Article(models.Model):
         null=True,  # Allow null values temporarily
         blank=True,  # Allow blank in forms
     )
-    image = models.ImageField(upload_to="blog/articles/", help_text="Article Image")
+    image = models.ImageField(upload_to="olyv/articles/", help_text="Article Image")
     title = models.CharField(max_length=255, help_text="Article Title")
     content = models.TextField(help_text="Article Content (Optional)", blank=True)
 

@@ -34,9 +34,9 @@
     <meta name='msapplication-TileImage' content='{% get_env "SITE_MS_TILE" %}' />
     <link rel='manifest' href='{% get_env "SITE_MANIFEST" %}'>
     {# vendors #}
-    {% include "base/vendors/bootstrap.html" %}
-    {% include "base/vendors/bootstrap-icons.html" %}
-    {% include "base/vendors/aos.html" %}
+    {% include "olyv/base/vendors/bootstrap.html" %}
+    {% include "olyv/base/vendors/bootstrap-icons.html" %}
+    {% include "olyv/base/vendors/aos.html" %}
 
     {% block assets %}
     {% endblock assets %}
@@ -44,16 +44,16 @@
     {% title %}
   </head>
   <body>
-    {% include "base/modals/preloader.html" %}
-    {% include "base/sections/navigation.html" %}
+    {% include "olyv/base/modals/preloader.html" %}
+    {% include "olyv/base/sections/navigation.html" %}
     <main>
-      {% include "base/sections/hero.html" %}
+      {% include "olyv/base/sections/hero.html" %}
 
       {% block main %}
       {% endblock main %}
 
     </main>
-    {% include "base/btns/back-to-top.html" %}
-    {% include "accounts/forms/logout.html" %}
+    {% include "olyv/base/btns/back-to-top.html" %}
+    {% include "olyv/accounts/forms/logout.html" %}
   </body>
 </html>

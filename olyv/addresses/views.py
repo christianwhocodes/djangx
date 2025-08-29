@@ -1,10 +1,10 @@
 import logging
-from typing import TypedDict
+from typing import Any, Dict
 
-from django.core.exceptions import ProgrammingError
 from django.core.mail import EmailMultiAlternatives
-from django.http import HttpRequest
+from django.db import ProgrammingError
 from django.template.loader import render_to_string
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
 from rest_framework.views import APIView
@@ -12,27 +12,17 @@ from rest_framework.views import APIView
 from .forms import EmailUsForm
 from .models import EmailAddress
 
-
-class EmailContext(TypedDict):
-    """Type definition for email template context."""
-    name: str
-    email: str
-    subject: str
-    message: str
-    url: str
-
-
 logger = logging.getLogger(__name__)
 
 
 class EmailUsAPIView(APIView):
     """API endpoint for handling EmailUs form submissions."""
 
-    def post(self, request: HttpRequest) -> Response:
+    def post(self, request: Request) -> Response:
         """Handle EmailUsForm submission."""
         try:
             # Create and validate form with request data
-            form = EmailUsForm(request.data)
+            form = EmailUsForm(data=request.data)  # type: ignore[arg-type]
 
             if not form.is_valid():
                 return Response(
@@ -54,7 +44,7 @@ class EmailUsAPIView(APIView):
             recipient_email = self._get_recipient_email()
 
             # Prepare email context
-            email_context: EmailContext = {
+            email_context: Dict[str, Any] = {
                 "name": sender_name,
                 "email": sender_email,
                 "subject": sender_subject,
@@ -111,13 +101,13 @@ class EmailUsAPIView(APIView):
             raise ValueError("EmailAddress table not found - ensure migrations have been run")
 
     def _send_contact_email(
-        self, subject: str, sender_email: str, recipient_email: str, context: EmailContext
+        self, subject: str, sender_email: str, recipient_email: str, context: Dict[str, Any]
     ) -> None:
         """Send the contact form email."""
         try:
             # Render email templates
-            text_content = render_to_string("addresses/email-us.txt", context)
-            html_content = render_to_string("addresses/email-us.html", context)
+            text_content = render_to_string("olyv/addresses/email-us.txt", context)
+            html_content = render_to_string("olyv/addresses/email-us.html", context)
 
             # Create and send email
             msg = EmailMultiAlternatives(

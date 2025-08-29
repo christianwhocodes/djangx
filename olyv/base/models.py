@@ -42,7 +42,7 @@ class AbstractImage(models.Model):
         abstract = True
 
     image = models.ImageField(
-        upload_to="images/",
+        upload_to="olyv/images/",
         blank=True,
         null=True,
         help_text="Optional Image.",
@@ -56,4 +56,4 @@ class AbstractImage(models.Model):
         """Return the URL of the image if it exists."""
         if self.image:
             return self.image.url
-        return static("base/images/default.png")
+        return static("olyv/base/images/default.png")

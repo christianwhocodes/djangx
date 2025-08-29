@@ -35,7 +35,8 @@ $primary: #ef4444;
 // TODO: Find a way to include custom fonts as bootstrap variable overrides
 @font-face {
   font-family: "PreloSlab";
-  src: url("/lib/static/base/globals/preloslab-book.otf") format("opentype");
+  src: url("/lib/static/olyv/base/globals/preloslab-book.otf")
+    format("opentype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -43,7 +44,8 @@ $primary: #ef4444;
 
 @font-face {
   font-family: "PreloSlab";
-  src: url("/lib/static/base/globals/preloslab-bold.otf") format("opentype");
+  src: url("/lib/static/olyv/base/globals/preloslab-bold.otf")
+    format("opentype");
   /* Assuming this exists */
   font-weight: 700;
   font-style: normal;
