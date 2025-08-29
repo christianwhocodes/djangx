@@ -1,11 +1,11 @@
 import logging
 
 from django.conf import settings
+from django.core.exceptions import ProgrammingError
 from django.core.mail import EmailMultiAlternatives
-from django.db import connection
 from django.template.loader import render_to_string
-from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK, HTTP_500_INTERNAL_SERVER_ERROR
 from rest_framework.response import Response
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
 from rest_framework.views import APIView
 
 from .forms import EmailUsForm
@@ -15,12 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 class EmailUsAPIView(APIView):
-    """
-    API endpoint for handling contact form submissions
-    """
+    """API endpoint for handling contact form submissions."""
 
     def post(self, request):
-        """Handle contact form submission"""
+        """Handle contact form submission."""
         try:
             # Create and validate form with request data
             form = EmailUsForm(request.data)
@@ -34,35 +32,35 @@ class EmailUsAPIView(APIView):
                     },
                     status=HTTP_400_BAD_REQUEST,
                 )
-            else:
-                # Extract validated data
-                sender_name = form.cleaned_data["name"]
-                sender_email = form.cleaned_data["email"]
-                sender_subject = form.cleaned_data["subject"]
-                sender_message = form.cleaned_data["message"]
 
-                # Get recipient email
-                recipient_email = self._get_recipient_email()
+            # Extract validated data
+            sender_name = form.cleaned_data["name"]
+            sender_email = form.cleaned_data["email"]
+            sender_subject = form.cleaned_data["subject"]
+            sender_message = form.cleaned_data["message"]
 
-                # Prepare email context
-                email_context = {
-                    "name": sender_name,
-                    "email": sender_email,
-                    "subject": sender_subject,
-                    "message": sender_message,
-                    "url": request.build_absolute_uri("/"),
-                }
+            # Get recipient email
+            recipient_email = self._get_recipient_email()
 
-                # Send email
-                self._send_contact_email(sender_subject, sender_email, recipient_email, email_context)
+            # Prepare email context
+            email_context = {
+                "name": sender_name,
+                "email": sender_email,
+                "subject": sender_subject,
+                "message": sender_message,
+                "url": request.build_absolute_uri("/"),
+            }
 
-                return Response(
-                    {
-                        "success": True,
-                        "message": "Thank you for your message! We will get back to you soon.",
-                    },
-                    status=HTTP_200_OK,
-                )
+            # Send email
+            self._send_contact_email(sender_subject, sender_email, recipient_email, email_context)
+
+            return Response(
+                {
+                    "success": True,
+                    "message": "Thank you for your message! We will get back to you soon.",
+                },
+                status=HTTP_200_OK,
+            )
 
         except Exception as e:
             logger.error(f"Error sending contact email: {str(e)}")
@@ -75,14 +73,17 @@ class EmailUsAPIView(APIView):
             )
 
     def _get_recipient_email(self):
-        """Get the recipient email address"""
+        """Get the recipient email address."""
         recipient_email = None
 
         # Attempt to get the primary contact email from the EmailAddress model
-        if EmailAddress._meta.db_table in connection.introspection.table_names():
+        try:
             contact_email_obj = EmailAddress.objects.filter(is_primary=True).first()
             if contact_email_obj:
-                    recipient_email = contact_email_obj.email
+                recipient_email = contact_email_obj.email
+        except ProgrammingError:
+            # Table doesn't exist yet (migrations haven't run)
+            logger.info("EmailAddress table not found, using fallback email")
 
         # Fallback to DEFAULT_FROM_EMAIL if no primary email found
         if not recipient_email:
@@ -91,7 +92,7 @@ class EmailUsAPIView(APIView):
         return recipient_email
 
     def _send_contact_email(self, subject, sender_email, recipient_email, context):
-        """Send the contact form email"""
+        """Send the contact form email."""
         # Render email templates
         text_content = render_to_string("addresses/email-us.txt", context)
         html_content = render_to_string("addresses/email-us.html", context)
