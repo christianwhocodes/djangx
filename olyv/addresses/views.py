@@ -1,7 +1,6 @@
 import logging
 from typing import TypedDict
 
-from django.conf import settings
 from django.core.exceptions import ProgrammingError
 from django.core.mail import EmailMultiAlternatives
 from django.http import HttpRequest
@@ -22,13 +21,12 @@ class EmailContext(TypedDict):
     message: str
     url: str
 
+
 logger = logging.getLogger(__name__)
 
 
 class EmailUsAPIView(APIView):
     """API endpoint for handling contact form submissions."""
-
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "")
 
     def post(self, request: HttpRequest) -> Response:
         """Handle contact form submission."""
@@ -56,7 +54,7 @@ class EmailUsAPIView(APIView):
             recipient_email = self._get_recipient_email()
 
             # Prepare email context
-            email_context = {
+            email_context: EmailContext = {
                 "name": sender_name,
                 "email": sender_email,
                 "subject": sender_subject,
@@ -67,6 +65,8 @@ class EmailUsAPIView(APIView):
             # Send email
             self._send_contact_email(sender_subject, sender_email, recipient_email, email_context)
 
+            logger.info(f"Contact form email sent successfully from {sender_email}")
+
             return Response(
                 {
                     "success": True,
@@ -75,8 +75,19 @@ class EmailUsAPIView(APIView):
                 status=HTTP_200_OK,
             )
 
+        except ValueError as e:
+            # Configuration errors (like missing recipient email)
+            logger.error(f"Configuration error in contact form: {str(e)}")
+            return Response(
+                {
+                    "success": False,
+                    "message": "Service temporarily unavailable. Please try again later.",
+                },
+                status=HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
         except Exception as e:
-            logger.error(f"Error sending contact email: {str(e)}")
+            logger.error(f"Unexpected error sending contact email: {str(e)}", exc_info=True)
             return Response(
                 {
                     "success": False,
@@ -86,35 +97,39 @@ class EmailUsAPIView(APIView):
             )
 
     def _get_recipient_email(self) -> str:
-        """Get the recipient email address."""
-        recipient_email: str = self.from_email
-
-        # Attempt to get the primary contact email from the EmailAddress model
+        """Get the recipient email address from primary EmailAddress record."""
         try:
             contact_email_obj = EmailAddress.objects.filter(is_primary=True).first()
             if contact_email_obj:
                 recipient_email = contact_email_obj.email
+                logger.debug(f"Using primary email from database: {recipient_email}")
+                return recipient_email
+            else:
+                raise ValueError("No primary email address found in EmailAddress model")
         except ProgrammingError:
             # Table doesn't exist yet (migrations haven't run)
-            logger.info("EmailAddress table / primary email not found, setting recipient to DEFAULT_FROM_EMAIL")
-
-        return recipient_email
+            raise ValueError("EmailAddress table not found - ensure migrations have been run")
 
     def _send_contact_email(
         self, subject: str, sender_email: str, recipient_email: str, context: EmailContext
     ) -> None:
         """Send the contact form email."""
-        # Render email templates
-        text_content = render_to_string("addresses/email-us.txt", context)
-        html_content = render_to_string("addresses/email-us.html", context)
+        try:
+            # Render email templates
+            text_content = render_to_string("addresses/email-us.txt", context)
+            html_content = render_to_string("addresses/email-us.html", context)
 
-        # Send email
-        msg = EmailMultiAlternatives(
-            f"Contact Form: {subject}",
-            text_content,
-            self.from_email,
-            [recipient_email],
-            reply_to=[sender_email],
-        )
-        msg.attach_alternative(html_content, "text/html")
-        msg.send()
+            # Create and send email
+            msg = EmailMultiAlternatives(
+                f"Contact Form: {subject}",
+                text_content,
+                from_email=None,  # Let Django use DEFAULT_FROM_EMAIL
+                to=[recipient_email],
+                reply_to=[sender_email],
+            )
+            msg.attach_alternative(html_content, "text/html")
+            msg.send()
+
+        except Exception as e:
+            logger.error(f"Failed to send contact email: {str(e)}")
+            raise  # Re-raise to be caught by the main exception handler
