@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 class EmailUsAPIView(APIView):
-    """API endpoint for handling contact form submissions."""
+    """API endpoint for handling EmailUs form submissions."""
 
     def post(self, request: HttpRequest) -> Response:
         """Handle EmailUsForm submission."""
