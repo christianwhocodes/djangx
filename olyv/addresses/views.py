@@ -87,7 +87,7 @@ class EmailUsAPIView(APIView):
 
     def _get_recipient_email(self) -> str:
         """Get the recipient email address."""
-        recipient_email: str | None = None
+        recipient_email: str = self.from_email
 
         # Attempt to get the primary contact email from the EmailAddress model
         try:
@@ -96,11 +96,7 @@ class EmailUsAPIView(APIView):
                 recipient_email = contact_email_obj.email
         except ProgrammingError:
             # Table doesn't exist yet (migrations haven't run)
-            logger.info("EmailAddress table not found, using fallback email")
-
-        # Fallback to DEFAULT_FROM_EMAIL if no primary email found
-        if not recipient_email:
-            recipient_email = self.from_email
+            logger.info("EmailAddress table / primary email not found, setting recipient to DEFAULT_FROM_EMAIL")
 
         return recipient_email
 
