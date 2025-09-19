@@ -1,6 +1,6 @@
 {% if request.user.is_authenticated %}
   <form id="form-logout"
-        action="/accounts/logout/"
+        action="/olyv/accounts/logout/"
         method="post"
         class="d-none">
     {% csrf_token %}

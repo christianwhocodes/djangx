@@ -3,9 +3,8 @@ from django.urls import include, path
 
 urlpatterns = [
     path("__reload__/", include("django_browser_reload.urls")),
-    path("api-auth/", include("rest_framework.urls")),
     path("ckeditor5/", include("django_ckeditor_5.urls")),
-    path("base/", include("olyv.base.urls")),
+    path("", include("olyv.base.urls")),
     path("accounts/", include("olyv.accounts.urls")),
     path("addresses/", include("olyv.addresses.urls")),
     path("lists/", include("olyv.lists.urls")),

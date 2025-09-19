@@ -17,7 +17,6 @@ from olyv.utils import find_project_root
 
 OLYV_SETTINGS_PATH = str(Path(__file__).resolve())
 
-
 # ------------------------------------------------------------------------------
 # Project Directories
 # ------------------------------------------------------------------------------
