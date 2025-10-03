@@ -1,30 +1,36 @@
 {% load static %}
 
 {% if modal_preloader|default_if_none:True %}
-  <div id="modal_preloader"
-       class="position-fixed top-0 start-0 w-100 h-100 overflow-hidden bg-body z-3"></div>
-  <style>
-    /* Spinner element */
-    #modal_preloader::before {
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 60px;
-      height: 60px;
-      margin-top: -30px;
-      margin-left: -30px;
-      border: 6px solid var(--bs-primary);
-      border-top-color: color-mix(in srgb, var(--bs-primary), transparent 90%);
-      border-radius: 50%;
-      animation: animate-preloader 1s linear infinite;
-    }
 
-    @keyframes animate-preloader {
-      to {
-        transform: rotate(360deg);
+  {% if modal_preloader_variant|default_if_none:1 == 1 %}
+    <div id="modal_preloader"
+         class="position-fixed top-0 start-0 w-100 h-100 overflow-hidden bg-body z-3"></div>
+    <style>
+      /* Spinner element */
+      #modal_preloader::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 60px;
+        height: 60px;
+        margin-top: -30px;
+        margin-left: -30px;
+        border: 6px solid var(--bs-primary);
+        border-top-color: color-mix(in srgb, var(--bs-primary), transparent 90%);
+        border-radius: 50%;
+        animation: animate-preloader 1s linear infinite;
       }
-    }
-  </style>
+
+      @keyframes animate-preloader {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  {% elif modal_preloader_variant == 2 %}
+    {# Add variant 2 here #}
+  {% endif %}
+
   <script defer src="{% static 'olyv/base/modals/preloader.js' %}"></script>
 {% endif %}
