@@ -1,13 +1,24 @@
 {% load static %}
 
 {% if btn_back_to_top|default_if_none:True %}
-  <a href="#"
-     id="btn_back_to_top"
-     class="btn d-flex align-items-center justify-content-center position-fixed end-0 bottom-0 mb-3 me-3 z-2 bg-primary text-white rounded opacity-0 invisible"
-     style="width: 40px;
-            height: 40px;
-            transition: all 0.3s">
-    <i class="bi bi-arrow-up-short fs-3 lh-1"></i>
-  </a>
+
+  {% if btn_back_to_top_variant|default_if_none:1 == 1 %}
+    <a href="#"
+       id="btn_back_to_top"
+       class="btn bg-primary d-flex align-items-center justify-content-center position-fixed end-0 bottom-0 mb-3 me-3 z-2 text-white rounded opacity-0 invisible"
+       aria-label="Back to top">
+      <i class="bi bi-arrow-up-short fs-3 lh-1"></i>
+    </a>
+    <style>
+      #btn_back_to_top {
+        width: 40px;
+        height: 40px;
+        transition: all 0.3s;
+      }
+    </style>
+  {% elif btn_back_to_top_variant == 2 %}
+    {# Add variant 2 HTML here #}
+  {% endif %}
+
   <script defer src="{% static 'olyv/base/btns/back-to-top.js' %}"></script>
 {% endif %}
