@@ -30,7 +30,7 @@ def title(context: Context, title: str | None = None, separator: str = " | ") ->
         {% title separator=" :: " %}       ← "Page Title :: Site Name"
 
     Note:
-        Requires SITE_NAME environment variable to be set for the site name portion.
+        Requires SITE_NAME setting to be set for the site name portion.
     """
     site_name = getattr(settings, "SITE_NAME", "").strip()
     title = title or context.get("page_title")
