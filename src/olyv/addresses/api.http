@@ -1,9 +1,0 @@
-POST http://localhost:8000/olyv/addresses/email-us/ HTTP/1.1
-Content-Type: application/json
-
-{
-    "name": "sample",
-    "email": "sample@example.com",
-    "subject": "Sample Subject",
-    "message": "This is a sample message for the email us endpoint."
-}
