@@ -2,9 +2,9 @@
 """
 Simple script to bump version, tag, and push to git.
 Usage:
-    uv run python publish.py --test         # Bump patch version, tag as dev-X.X.X, push, publish to TestPyPI via GitHub Actions
-    uv run python publish.py --prod         # Bump patch version, tag as vX.X.X, push, publish to PyPI via GitHub Actions
-    uv run python publish.py --bump-only    # Just bump version without pushing
+    uv run python publish.py --target testpypi    # Bump patch version, tag as dev-X.X.X, push, publish to TestPyPI via GitHub Actions
+    uv run python publish.py --target pypi        # Bump patch version, tag as vX.X.X, push, publish to PyPI via GitHub Actions (default)
+    uv run python publish.py --bump-only          # Just bump version without pushing
 """
 
 import argparse
@@ -39,21 +39,18 @@ def main() -> None:
         if args.bump_only:
             print(colored("\n✅ Version bumped. Push manually with: git push", "green"))
         else:
-            create_and_push_tag(new_version, is_test=args.test)
+            create_and_push_tag(new_version, target=args.target)
 
 
 def parse_and_validate_arguments() -> argparse.Namespace:
     """Parse and validate command line arguments"""
     parser = argparse.ArgumentParser(description="Bump version and publish")
     parser.add_argument(
-        "--test",
-        action="store_true",
-        help="Publish to TestPyPI (dev- tag)",
-    )
-    parser.add_argument(
-        "--prod",
-        action="store_true",
-        help="Publish to PyPI (v tag)",
+        "--target",
+        type=str,
+        choices=["testpypi", "pypi"],
+        default="pypi",
+        help="Publish target: 'testpypi' (dev- tag) or 'pypi' (v tag). Default is pypi",
     )
     parser.add_argument(
         "--bump-only",
@@ -69,10 +66,6 @@ def parse_and_validate_arguments() -> argparse.Namespace:
     )
 
     args = parser.parse_args()
-
-    # Validate that at least one mode is specified
-    if not (args.test or args.prod or args.bump_only):
-        parser.error("Please specify --test, --prod, or --bump-only")
 
     return args
 
@@ -185,7 +178,10 @@ def git_stage_and_commit(new_version: str) -> None:
     print(colored("\n⚠️  You have uncommitted changes:", "yellow"))
     print(status.stdout)
     commit_all = input(
-        colored("\n❓ Include all changes in this version commit? (y/n): ", "yellow")
+        colored(
+            "\n❓ Include all changes in this version commit? (pyproject.toml and uv.lock will be included regardless) (y/n): ",
+            "yellow",
+        )
     )
 
     # Stage either all changes or just version files
@@ -200,13 +196,14 @@ def git_stage_and_commit(new_version: str) -> None:
     run_command(f'git commit -m "Bump version to {new_version}"')
 
 
-def create_and_push_tag(new_version: str, is_test: bool) -> None:
+def create_and_push_tag(new_version: str, target: str) -> None:
     """Create git tag and push to remote"""
     # Determine tag prefix and target based on test/prod mode
+    is_test = target == "testpypi"
     tag = f"dev-{new_version}" if is_test else f"v{new_version}"
-    target = "TestPyPI" if is_test else "PyPI"
+    target_name = "TestPyPI" if is_test else "PyPI"
 
-    print(colored(f"\n🏷️  Creating tag: {tag} (will publish to {target})", "blue"))
+    print(colored(f"\n🏷️  Creating tag: {tag} (will publish to {target_name})", "blue"))
 
     # Create tag, push commits, then push tag (triggers GitHub Actions)
     run_command(f"git tag {tag}")
@@ -214,7 +211,9 @@ def create_and_push_tag(new_version: str, is_test: bool) -> None:
     run_command(f"git push origin {tag}")
 
     # Inform user about next steps
-    print(colored(f"\n✅ Done! GitHub Actions will now publish to {target}", "green"))
+    print(
+        colored(f"\n✅ Done! GitHub Actions will now publish to {target_name}", "green")
+    )
     print(
         colored(
             "📊 Check progress: https://github.com/christianwhocodes/tawala/actions",

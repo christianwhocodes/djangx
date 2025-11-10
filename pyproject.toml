@@ -1,6 +1,6 @@
 [project]
 name = "tawala"
-version = "0.1.6"
+version = "0.1.7"
 description = "Add your description here"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -34,8 +34,3 @@ name = "testpypi"
 url = "https://test.pypi.org/simple/"
 publish-url = "https://test.pypi.org/legacy/"
 explicit = true
-
-# [tool.uv.scripts]
-# publish-test = "python publish.py --test"
-# publish-prod = "python publish.py --prod"
-# bump = "python publish.py --bump-only"
