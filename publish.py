@@ -2,9 +2,9 @@
 """
 Simple script to bump version, tag, and push to git.
 Usage:
-    uv run publish-test  # Bump patch version, tag as dev-X.X.X, push
-    uv run publish-prod  # Bump patch version, tag as vX.X.X, push
-    uv run bump          # Just bump version without pushing
+    uv run python scripts/publish.py --test         # Bump patch version, tag as dev-X.X.X, push
+    uv run python scripts/publish.py --prod         # Bump patch version, tag as vX.X.X, push
+    uv run python scripts/publish.py --bump-only    # Just bump version without pushing
 """
 
 import argparse
@@ -12,7 +12,18 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+
 from termcolor import colored
+
+
+def run_command(cmd: str, check: bool = True) -> subprocess.CompletedProcess:
+    """Run shell command"""
+    print(colored(f"▶ {cmd}", "cyan"))
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if check and result.returncode != 0:
+        print(colored(f"❌ Command failed: {result.stderr}", "red"))
+        sys.exit(1)
+    return result
 
 
 def get_pyproject_path() -> Path:
@@ -53,26 +64,75 @@ def bump_version(version: str, bump_type: str = "patch") -> str:
             return f"{major}.{minor}.{patch + 1}"
 
 
-def update_version(new_version: str) -> None:
+def confirm_version_bump(current: str, new: str) -> str:
+    """Ask user to confirm version bump, exit if declined"""
+    response = input(
+        colored(f"\n❓ Bump version from {current} to {new}? (y/n): ", "yellow")
+    )
+
+    return response.lower()
+
+
+def update_version_and_sync(new_version: str) -> None:
     """Update version in pyproject.toml"""
     pyproject = get_pyproject_path()
     content = pyproject.read_text()
     updated = re.sub(r'version = "[^"]+"', f'version = "{new_version}"', content)
     pyproject.write_text(updated)
     print(colored(f"✅ Updated version to {new_version}", "green"))
+    print(colored("\n🔄 Syncing dependencies...", "blue"))
+    run_command("uv sync")
 
 
-def run_command(cmd: str, check: bool = True) -> subprocess.CompletedProcess:
-    """Run shell command"""
-    print(colored(f"▶ {cmd}", "cyan"))
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-    if check and result.returncode != 0:
-        print(colored(f"❌ Command failed: {result.stderr}", "red"))
-        sys.exit(1)
-    return result
+def git_stage_and_commit(new_version: str) -> None:
+    """Check for changes and stage appropriate files"""
+    print(colored("\n📋 Checking for uncommitted changes...", "blue"))
+    status = run_command("git status --porcelain", check=False)
+
+    has_other_changes = bool(status.stdout.strip())
+    if not has_other_changes:
+        run_command("git add pyproject.toml uv.lock")
+        print(colored("✅ No other changes detected", "green"))
+        return
+
+    print(colored("\n⚠️  You have uncommitted changes:", "yellow"))
+    print(status.stdout)
+    commit_all = input(
+        colored("\n❓ Include all changes in this version commit? (y/n): ", "yellow")
+    )
+
+    if commit_all.lower() == "y":
+        run_command("git add -A")
+        print(colored("✅ All changes will be included", "green"))
+    else:
+        run_command("git add pyproject.toml uv.lock")
+        print(colored("✅ Only version files will be included", "green"))
+
+    run_command(f'git commit -m "Bump version to {new_version}"')
 
 
-def main() -> None:
+def create_and_push_tag(new_version: str, is_test: bool) -> None:
+    """Create git tag and push to remote"""
+    tag = f"dev-{new_version}" if is_test else f"v{new_version}"
+    target = "TestPyPI" if is_test else "PyPI"
+
+    print(colored(f"\n🏷️  Creating tag: {tag} (will publish to {target})", "blue"))
+
+    run_command(f"git tag {tag}")
+    run_command("git push")
+    run_command(f"git push origin {tag}")
+
+    print(colored(f"\n✅ Done! GitHub Actions will now publish to {target}", "green"))
+    print(
+        colored(
+            "📊 Check progress: https://github.com/christianwhocodes/tawala/actions",
+            "cyan",
+        )
+    )
+
+
+def parse_and_validate_arguments() -> argparse.Namespace:
+    """Parse and validate command line arguments"""
     parser = argparse.ArgumentParser(description="Bump version and publish")
     parser.add_argument(
         "--test",
@@ -99,67 +159,34 @@ def main() -> None:
 
     args = parser.parse_args()
 
+    # Validate that at least one mode is specified
     if not (args.test or args.prod or args.bump_only):
-        print(colored("❌ Please specify --test, --prod, or --bump-only", "red"))
-        sys.exit(1)
+        parser.error("Please specify --test, --prod, or --bump-only")
 
-    # Determine bump type
-    bump_type: str = args.bump_type
+    return args
 
-    # Get and bump version
+
+def main() -> None:
+    args = parse_and_validate_arguments()
+
+    # Get versions
     current_version = get_current_version()
-    new_version = bump_version(current_version, bump_type)
+    new_version = bump_version(current_version, args.bump_type)
 
     print(colored(f"📦 Current version: {current_version}", "blue"))
     print(colored(f"📦 New version: {new_version}", "blue"))
 
-    # Confirm
-    response = input(
-        colored(
-            f"\n❓ Bump version from {current_version} to {new_version}? (y/n): ",
-            "yellow",
-        )
-    )
-    if response.lower() != "y":
+    # Confirm with user
+    if confirm_version_bump(current_version, new_version) != "y":
         print(colored("❌ Aborted", "red"))
         sys.exit(0)
-
-    # Update version
-    update_version(new_version)
-
-    # Sync dependencies to update lock file
-    print(colored("\n🔄 Syncing dependencies...", "blue"))
-    run_command("uv sync")
-
-    # Commit version change and lock file
-    run_command("git add pyproject.toml uv.lock")
-    run_command(f'git commit -m "Bump version to {new_version}"')
-
-    if args.bump_only:
-        print(colored("✅ Version bumped. Push manually with: git push", "green"))
-        return
-
-    # Determine tag prefix
-    if args.test:
-        tag = f"dev-{new_version}"
-        print(colored(f"🏷️  Creating tag: {tag} (will publish to TestPyPI)", "blue"))
-    else:  # prod
-        tag = f"v{new_version}"
-        print(colored(f"🏷️  Creating tag: {tag} (will publish to PyPI)", "blue"))
-
-    # Create and push tag
-    run_command(f"git tag {tag}")
-    run_command("git push")
-    run_command(f"git push origin {tag}")
-
-    target = "TestPyPI" if args.test else "PyPI"
-    print(colored(f"\n✅ Done! GitHub Actions will now publish to {target}", "green"))
-    print(
-        colored(
-            "📊 Check progress: https://github.com/christianwhocodes/tawala/actions",
-            "cyan",
-        )
-    )
+    else:
+        update_version_and_sync(new_version)
+        git_stage_and_commit(new_version)
+        if args.bump_only:
+            print(colored("\n✅ Version bumped. Push manually with: git push", "green"))
+        else:
+            create_and_push_tag(new_version, is_test=args.test)
 
 
 if __name__ == "__main__":
