@@ -2,9 +2,10 @@
 """
 Simple script to bump version, tag, and push to git.
 Usage:
-    uv run python publish.py --target testpypi    # Bump patch version, tag as dev-X.X.X, push, publish to TestPyPI via GitHub Actions
-    uv run python publish.py --target pypi        # Bump patch version, tag as vX.X.X, push, publish to PyPI via GitHub Actions (default)
+    uv run python publish.py --target testpypi    # Bump version, tag as dev-X.X.X, push, publish to TestPyPI via GitHub Actions
+    uv run python publish.py --target pypi        # Bump version, tag as vX.X.X, push, publish to PyPI via GitHub Actions (default)
     uv run python publish.py --bump-only          # Just bump version without pushing
+    uv run python publish.py --no-bump            # Skip version bump, just tag and push current version
 """
 
 import argparse
@@ -22,24 +23,33 @@ def main() -> None:
     args = parse_and_validate_arguments()
 
     # Read current version and calculate new bumped version
-    current_version, new_version = get_versions(args.bump_type)
+    current_version = get_current_version()
+    print(colored(f"📦 Current version: {current_version}", "blue"))
 
-    # Ask user to confirm the version bump
-    if confirm_version_bump(current_version, new_version) != "y":
-        print(colored("❌ Aborted", "red"))
-        sys.exit(0)
+    if args.no_bump:
+        # Skip bumping, use current version
+        new_version = current_version
+        print(colored("⏭️  Skipping version bump", "yellow"))
     else:
+        new_version = get_new_version(current_version, args.bump_type)
+        print(colored(f"📦 New version: {new_version}", "blue"))
+
+        # Ask user to confirm the version bump
+        if confirm_version_bump(current_version, new_version) != "y":
+            print(colored("❌ Aborted", "red"))
+            sys.exit(0)
+
         # Update pyproject.toml with new version and sync dependencies
         update_version_and_sync(new_version)
 
         # Stage changes and create commit
         git_stage_and_commit(new_version)
 
-        # Either just bump (manual push) or create tag and push
-        if args.bump_only:
-            print(colored("\n✅ Version bumped. Push manually with: git push", "green"))
-        else:
-            create_and_push_tag(new_version, target=args.target)
+    # Either just bump (manual push) or create tag and push
+    if args.bump_only:
+        print(colored("\n✅ Version bumped. Push manually with: git push", "green"))
+    else:
+        create_and_push_tag(new_version, target=args.target)
 
 
 def parse_and_validate_arguments() -> argparse.Namespace:
@@ -58,6 +68,11 @@ def parse_and_validate_arguments() -> argparse.Namespace:
         help="Only bump version, don't tag/push",
     )
     parser.add_argument(
+        "--no-bump",
+        action="store_true",
+        help="Skip version bump, just tag and push current version",
+    )
+    parser.add_argument(
         "--bump-type",
         type=str,
         choices=["major", "minor", "patch"],
@@ -67,6 +82,10 @@ def parse_and_validate_arguments() -> argparse.Namespace:
 
     args = parser.parse_args()
 
+    # Validate that --bump-only and --no-bump are not used together
+    if args.bump_only and args.no_bump:
+        parser.error("--bump-only and --no-bump cannot be used together")
+
     return args
 
 
@@ -75,23 +94,29 @@ def get_pyproject_path() -> Path:
     return Path(__file__).resolve().parent / "pyproject.toml"
 
 
-def get_versions(bump_type: str = "patch") -> tuple[str, str]:
-    """
-    Read current version from pyproject.toml and bump it.
-
-    Returns a tuple of (current_version, new_version).
-    Expects a semantic version string like "0.1.2" and increments according to bump_type.
-    """
-    # Read and parse version from pyproject.toml
+def get_current_version() -> str:
+    """Read current version from pyproject.toml without bumping"""
     pyproject = get_pyproject_path()
     content = pyproject.read_text()
     match = re.search(r'version = "([^"]+)"', content)
     if not match:
         print(colored("❌ Could not find version in pyproject.toml", "red"))
         sys.exit(1)
+    return match.group(1)
 
+
+def get_new_version(current_version: str, bump_type: str = "patch") -> str:
+    """
+    Calculate new version based on current version and bump type.
+
+    Args:
+        current_version: Current semantic version string like "0.1.2"
+        bump_type: Type of bump - "major", "minor", or "patch"
+
+    Returns:
+        New version string after bumping
+    """
     # Validate version format (must be X.Y.Z)
-    current_version = match.group(1)
     parts = current_version.split(".")
     if len(parts) != 3:
         print(
@@ -106,17 +131,11 @@ def get_versions(bump_type: str = "patch") -> tuple[str, str]:
 
     match bump_type:
         case "major":
-            new_version = f"{major + 1}.0.0"
+            return f"{major + 1}.0.0"
         case "minor":
-            new_version = f"{major}.{minor + 1}.0"
+            return f"{major}.{minor + 1}.0"
         case _:  # patch
-            new_version = f"{major}.{minor}.{patch + 1}"
-
-    # Display version information
-    print(colored(f"📦 Current version: {current_version}", "blue"))
-    print(colored(f"📦 New version: {new_version}", "blue"))
-
-    return current_version, new_version
+            return f"{major}.{minor}.{patch + 1}"
 
 
 def confirm_version_bump(current: str, new: str) -> Literal["y", "n"]:
