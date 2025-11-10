@@ -2,9 +2,9 @@
 """
 Simple script to bump version, tag, and push to git.
 Usage:
-    uv run python scripts/publish.py --test         # Bump patch version, tag as dev-X.X.X, push
-    uv run python scripts/publish.py --prod         # Bump patch version, tag as vX.X.X, push
-    uv run python scripts/publish.py --bump-only    # Just bump version without pushing
+    uv run python publish.py --test         # Bump patch version, tag as dev-X.X.X, push, publish to TestPyPI via GitHub Actions
+    uv run python publish.py --prod         # Bump patch version, tag as vX.X.X, push, publish to PyPI via GitHub Actions
+    uv run python publish.py --bump-only    # Just bump version without pushing
 """
 
 import argparse
@@ -18,16 +18,24 @@ from termcolor import colored
 
 
 def main() -> None:
+    # Parse command line arguments to determine mode (test/prod/bump-only)
     args = parse_and_validate_arguments()
 
+    # Read current version and calculate new bumped version
     current_version, new_version = get_versions(args.bump_type)
 
+    # Ask user to confirm the version bump
     if confirm_version_bump(current_version, new_version) != "y":
         print(colored("❌ Aborted", "red"))
         sys.exit(0)
     else:
+        # Update pyproject.toml with new version and sync dependencies
         update_version_and_sync(new_version)
+
+        # Stage changes and create commit
         git_stage_and_commit(new_version)
+
+        # Either just bump (manual push) or create tag and push
         if args.bump_only:
             print(colored("\n✅ Version bumped. Push manually with: git push", "green"))
         else:
@@ -81,6 +89,7 @@ def get_versions(bump_type: str = "patch") -> tuple[str, str]:
     Returns a tuple of (current_version, new_version).
     Expects a semantic version string like "0.1.2" and increments according to bump_type.
     """
+    # Read and parse version from pyproject.toml
     pyproject = get_pyproject_path()
     content = pyproject.read_text()
     match = re.search(r'version = "([^"]+)"', content)
@@ -88,6 +97,7 @@ def get_versions(bump_type: str = "patch") -> tuple[str, str]:
         print(colored("❌ Could not find version in pyproject.toml", "red"))
         sys.exit(1)
 
+    # Validate version format (must be X.Y.Z)
     current_version = match.group(1)
     parts = current_version.split(".")
     if len(parts) != 3:
@@ -98,6 +108,7 @@ def get_versions(bump_type: str = "patch") -> tuple[str, str]:
         )
         sys.exit(1)
 
+    # Calculate new version based on bump type
     major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])
 
     match bump_type:
@@ -108,6 +119,7 @@ def get_versions(bump_type: str = "patch") -> tuple[str, str]:
         case _:  # patch
             new_version = f"{major}.{minor}.{patch + 1}"
 
+    # Display version information
     print(colored(f"📦 Current version: {current_version}", "blue"))
     print(colored(f"📦 New version: {new_version}", "blue"))
 
@@ -125,6 +137,7 @@ def confirm_version_bump(current: str, new: str) -> Literal["y", "n"]:
             .lower()
         )
 
+        # Only accept 'y' or 'n', loop on invalid input
         if response in ("y", "n"):
             return response  # type: ignore
         else:
@@ -143,32 +156,39 @@ def run_command(cmd: str, check: bool = True) -> subprocess.CompletedProcess:
 
 def update_version_and_sync(new_version: str) -> None:
     """Update version in pyproject.toml"""
+    # Replace version string in pyproject.toml
     pyproject = get_pyproject_path()
     content = pyproject.read_text()
     updated = re.sub(r'version = "[^"]+"', f'version = "{new_version}"', content)
     pyproject.write_text(updated)
     print(colored(f"✅ Updated version to {new_version}", "green"))
+
+    # Sync dependencies to update uv.lock
     print(colored("\n🔄 Syncing dependencies...", "blue"))
     run_command("uv sync")
 
 
 def git_stage_and_commit(new_version: str) -> None:
     """Check for changes and stage appropriate files"""
+    # Check if there are any uncommitted changes
     print(colored("\n📋 Checking for uncommitted changes...", "blue"))
     status = run_command("git status --porcelain", check=False)
 
     has_other_changes = bool(status.stdout.strip())
     if not has_other_changes:
+        # Only version files changed, stage them
         run_command("git add pyproject.toml uv.lock")
         print(colored("✅ No other changes detected", "green"))
         return
 
+    # There are other uncommitted changes, ask user what to do
     print(colored("\n⚠️  You have uncommitted changes:", "yellow"))
     print(status.stdout)
     commit_all = input(
         colored("\n❓ Include all changes in this version commit? (y/n): ", "yellow")
     )
 
+    # Stage either all changes or just version files
     if commit_all.lower() == "y":
         run_command("git add -A")
         print(colored("✅ All changes will be included", "green"))
@@ -176,20 +196,24 @@ def git_stage_and_commit(new_version: str) -> None:
         run_command("git add pyproject.toml uv.lock")
         print(colored("✅ Only version files will be included", "green"))
 
+    # Create commit with version bump message
     run_command(f'git commit -m "Bump version to {new_version}"')
 
 
 def create_and_push_tag(new_version: str, is_test: bool) -> None:
     """Create git tag and push to remote"""
+    # Determine tag prefix and target based on test/prod mode
     tag = f"dev-{new_version}" if is_test else f"v{new_version}"
     target = "TestPyPI" if is_test else "PyPI"
 
     print(colored(f"\n🏷️  Creating tag: {tag} (will publish to {target})", "blue"))
 
+    # Create tag, push commits, then push tag (triggers GitHub Actions)
     run_command(f"git tag {tag}")
     run_command("git push")
     run_command(f"git push origin {tag}")
 
+    # Inform user about next steps
     print(colored(f"\n✅ Done! GitHub Actions will now publish to {target}", "green"))
     print(
         colored(
