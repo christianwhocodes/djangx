@@ -6,7 +6,15 @@
 
     @each $value in $shadow {
       @if $value != null {
-        @if $value == none or $value == initial or $value == inherit or $value == unset {
+        @if $value ==
+          none or
+          $value ==
+          initial or
+          $value ==
+          inherit or
+          $value ==
+          unset
+        {
           $has-single-value: true;
           $single-value: $value;
         } @else {

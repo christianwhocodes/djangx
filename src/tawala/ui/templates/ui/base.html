@@ -1,6 +1,6 @@
 {% load ui sass_tags static %}
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -10,13 +10,16 @@
     <meta name="author" content="" />
     {% page_title %}
     <link rel="stylesheet" href="{% sass_src 'pages/global.scss' %}" />
-    <link rel="stylesheet"
-          href="{% sass_src 'ui/vendors/bootstrap-icons/font/bootstrap-icons.scss' %}" />
-    <script src="{% static 'ui/vendors/@alpinejs/csp/dist/cdn.min.js' %}" defer></script>
+    <link
+      rel="stylesheet"
+      href="{% sass_src 'ui/vendors/bootstrap-icons/font/bootstrap-icons.scss' %}"
+    />
+    <script
+      defer
+      src="{% static 'ui/vendors/@alpinejs/csp/dist/cdn.min.js' %}"
+    ></script>
   </head>
   <body>
-    <main>
-      {% block main %}{% endblock %}
-    </main>
+    <main>{% block main %}{% endblock %}</main>
   </body>
 </html>
