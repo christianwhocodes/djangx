@@ -12,8 +12,123 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import Literal
 
 from termcolor import colored
+
+
+def main() -> None:
+    args = parse_and_validate_arguments()
+
+    current_version, new_version = get_versions(args.bump_type)
+
+    if confirm_version_bump(current_version, new_version) != "y":
+        print(colored("❌ Aborted", "red"))
+        sys.exit(0)
+    else:
+        update_version_and_sync(new_version)
+        git_stage_and_commit(new_version)
+        if args.bump_only:
+            print(colored("\n✅ Version bumped. Push manually with: git push", "green"))
+        else:
+            create_and_push_tag(new_version, is_test=args.test)
+
+
+def parse_and_validate_arguments() -> argparse.Namespace:
+    """Parse and validate command line arguments"""
+    parser = argparse.ArgumentParser(description="Bump version and publish")
+    parser.add_argument(
+        "--test",
+        action="store_true",
+        help="Publish to TestPyPI (dev- tag)",
+    )
+    parser.add_argument(
+        "--prod",
+        action="store_true",
+        help="Publish to PyPI (v tag)",
+    )
+    parser.add_argument(
+        "--bump-only",
+        action="store_true",
+        help="Only bump version, don't tag/push",
+    )
+    parser.add_argument(
+        "--bump-type",
+        type=str,
+        choices=["major", "minor", "patch"],
+        default="patch",
+        help="Type of version bump (major, minor, patch). Default is patch",
+    )
+
+    args = parser.parse_args()
+
+    # Validate that at least one mode is specified
+    if not (args.test or args.prod or args.bump_only):
+        parser.error("Please specify --test, --prod, or --bump-only")
+
+    return args
+
+
+def get_pyproject_path() -> Path:
+    """Get the path to pyproject.toml"""
+    return Path(__file__).resolve().parent / "pyproject.toml"
+
+
+def get_versions(bump_type: str = "patch") -> tuple[str, str]:
+    """
+    Read current version from pyproject.toml and bump it.
+
+    Returns a tuple of (current_version, new_version).
+    Expects a semantic version string like "0.1.2" and increments according to bump_type.
+    """
+    pyproject = get_pyproject_path()
+    content = pyproject.read_text()
+    match = re.search(r'version = "([^"]+)"', content)
+    if not match:
+        print(colored("❌ Could not find version in pyproject.toml", "red"))
+        sys.exit(1)
+
+    current_version = match.group(1)
+    parts = current_version.split(".")
+    if len(parts) != 3:
+        print(
+            colored(
+                f"❌ Invalid version format: {current_version}. Expected X.Y.Z", "red"
+            )
+        )
+        sys.exit(1)
+
+    major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])
+
+    match bump_type:
+        case "major":
+            new_version = f"{major + 1}.0.0"
+        case "minor":
+            new_version = f"{major}.{minor + 1}.0"
+        case _:  # patch
+            new_version = f"{major}.{minor}.{patch + 1}"
+
+    print(colored(f"📦 Current version: {current_version}", "blue"))
+    print(colored(f"📦 New version: {new_version}", "blue"))
+
+    return current_version, new_version
+
+
+def confirm_version_bump(current: str, new: str) -> Literal["y", "n"]:
+    """Ask user to confirm version bump. Loops until valid input is received."""
+    while True:
+        response = (
+            input(
+                colored(f"\n❓ Bump version from {current} to {new}? (y/n): ", "yellow")
+            )
+            .strip()
+            .lower()
+        )
+
+        if response in ("y", "n"):
+            return response  # type: ignore
+        else:
+            print(colored("❌ Please enter 'y' or 'n'", "red"))
 
 
 def run_command(cmd: str, check: bool = True) -> subprocess.CompletedProcess:
@@ -24,53 +139,6 @@ def run_command(cmd: str, check: bool = True) -> subprocess.CompletedProcess:
         print(colored(f"❌ Command failed: {result.stderr}", "red"))
         sys.exit(1)
     return result
-
-
-def get_pyproject_path() -> Path:
-    """Get the path to pyproject.toml"""
-    return Path(__file__).resolve().parent / "pyproject.toml"
-
-
-def get_current_version() -> str:
-    """Extract version from pyproject.toml"""
-    pyproject = get_pyproject_path()
-    content = pyproject.read_text()
-    match = re.search(r'version = "([^"]+)"', content)
-    if not match:
-        print(colored("❌ Could not find version in pyproject.toml", "red"))
-        sys.exit(1)
-    return match.group(1)
-
-
-def bump_version(version: str, bump_type: str = "patch") -> str:
-    """
-    Bump version number.
-
-    Expects a semantic version string like "0.1.2" and increments according to bump_type.
-    """
-    parts = version.split(".")
-    if len(parts) != 3:
-        print(colored(f"❌ Invalid version format: {version}. Expected X.Y.Z", "red"))
-        sys.exit(1)
-
-    major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])
-
-    match bump_type:
-        case "major":
-            return f"{major + 1}.0.0"
-        case "minor":
-            return f"{major}.{minor + 1}.0"
-        case _:  # patch
-            return f"{major}.{minor}.{patch + 1}"
-
-
-def confirm_version_bump(current: str, new: str) -> str:
-    """Ask user to confirm version bump, exit if declined"""
-    response = input(
-        colored(f"\n❓ Bump version from {current} to {new}? (y/n): ", "yellow")
-    )
-
-    return response.lower()
 
 
 def update_version_and_sync(new_version: str) -> None:
@@ -129,64 +197,6 @@ def create_and_push_tag(new_version: str, is_test: bool) -> None:
             "cyan",
         )
     )
-
-
-def parse_and_validate_arguments() -> argparse.Namespace:
-    """Parse and validate command line arguments"""
-    parser = argparse.ArgumentParser(description="Bump version and publish")
-    parser.add_argument(
-        "--test",
-        action="store_true",
-        help="Publish to TestPyPI (dev- tag)",
-    )
-    parser.add_argument(
-        "--prod",
-        action="store_true",
-        help="Publish to PyPI (v tag)",
-    )
-    parser.add_argument(
-        "--bump-only",
-        action="store_true",
-        help="Only bump version, don't tag/push",
-    )
-    parser.add_argument(
-        "--bump-type",
-        type=str,
-        choices=["major", "minor", "patch"],
-        default="patch",
-        help="Type of version bump (major, minor, patch). Default is patch",
-    )
-
-    args = parser.parse_args()
-
-    # Validate that at least one mode is specified
-    if not (args.test or args.prod or args.bump_only):
-        parser.error("Please specify --test, --prod, or --bump-only")
-
-    return args
-
-
-def main() -> None:
-    args = parse_and_validate_arguments()
-
-    # Get versions
-    current_version = get_current_version()
-    new_version = bump_version(current_version, args.bump_type)
-
-    print(colored(f"📦 Current version: {current_version}", "blue"))
-    print(colored(f"📦 New version: {new_version}", "blue"))
-
-    # Confirm with user
-    if confirm_version_bump(current_version, new_version) != "y":
-        print(colored("❌ Aborted", "red"))
-        sys.exit(0)
-    else:
-        update_version_and_sync(new_version)
-        git_stage_and_commit(new_version)
-        if args.bump_only:
-            print(colored("\n✅ Version bumped. Push manually with: git push", "green"))
-        else:
-            create_and_push_tag(new_version, is_test=args.test)
 
 
 if __name__ == "__main__":
