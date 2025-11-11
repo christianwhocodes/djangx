@@ -4,7 +4,7 @@ Simple script to bump version, tag, and push to git.
 Usage:
     uv run python publish.py --target testpypi    # Bump version, tag as dev-X.X.X, push, publish to TestPyPI via GitHub Actions
     uv run python publish.py --target pypi        # Bump version, tag as vX.X.X, push, publish to PyPI via GitHub Actions (default)
-    uv run python publish.py --bump-only          # Just bump version without pushing
+    uv run python publish.py --bump-only          # Bump version without pushing
     uv run python publish.py --no-bump            # Skip version bump, just tag and push current version
 """
 
