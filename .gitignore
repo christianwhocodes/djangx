@@ -1,6 +1,2 @@
 # Python-generated files
 __pycache__/
-dist/
-
-# Virtual environments
-.venv
