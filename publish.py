@@ -186,33 +186,42 @@ def git_stage_and_commit(new_version: str) -> None:
     print(colored("\n📋 Checking for uncommitted changes...", "blue"))
     status = run_command("git status --porcelain", check=False)
 
-    has_other_changes = bool(status.stdout.strip())
-    if not has_other_changes:
-        # Only version files changed, stage them
+    # Parse the changed files from git status output
+    changed_files = [
+        line.split()[-1] for line in status.stdout.strip().split("\n") if line.strip()
+    ]
+
+    # If only pyproject.toml and uv.lock are changed, commit automatically
+    if set(changed_files) == {"pyproject.toml", "uv.lock"}:
         run_command("git add pyproject.toml uv.lock")
-        print(colored("✅ No other changes detected", "green"))
-        return
+        run_command(f'git commit -m "Bump version to {new_version}"')
+        print(colored("✅ Committed version bump automatically", "green"))
 
-    # There are other uncommitted changes, ask user what to do
-    print(colored("\n⚠️  You have uncommitted changes:", "yellow"))
-    print(status.stdout)
-    commit_all = input(
-        colored(
-            "\n❓ Include all changes in this version commit? (pyproject.toml and uv.lock will be included regardless) (y/n): ",
-            "yellow",
-        )
-    )
-
-    # Stage either all changes or just version files
-    if commit_all.lower() == "y":
-        run_command("git add -A")
-        print(colored("✅ All changes will be included", "green"))
+    # If there are other changes, ask user what to do
     else:
-        run_command("git add pyproject.toml uv.lock")
-        print(colored("✅ Only version files will be included", "green"))
+        if changed_files:
+            print(colored("\n⚠️  You have uncommitted changes:", "yellow"))
+            print(status.stdout)
+            commit_all = input(
+                colored(
+                    "\n❓ Include all changes in this version commit? (y/n): ",
+                    "yellow",
+                )
+            )
 
-    # Create commit with version bump message
-    run_command(f'git commit -m "Bump version to {new_version}"')
+            # Stage either all changes or just version files
+            if commit_all.lower() == "y":
+                run_command("git add -A")
+                print(colored("✅ All changes will be included", "green"))
+            else:
+                run_command("git add pyproject.toml uv.lock")
+                print(colored("✅ Only version files will be included", "green"))
+
+            # Create commit with version bump message
+            run_command(f'git commit -m "Bump version to {new_version}"')
+        else:
+            # No changes detected
+            print(colored("No changes to commit", "yellow"))
 
 
 def create_and_push_tag(new_version: str, target: str) -> None:
