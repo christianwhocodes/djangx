@@ -1,6 +1,3 @@
-from django.core.exceptions import ValidationError
-
-
 class OrderedChoiceMixin:
     """
     Mixin to automatically set an 'order' field based on the position of a choice
@@ -89,8 +86,7 @@ class OrderedChoiceMixin:
 class CategoryAssignmentMixin:
     """
     Mixin to automatically set a 'category' field based on a mapping from a
-    choice field. Also validates that the category matches the expected value
-    during model cleaning.
+    choice field.
 
     Configuration:
         - choice_field: Name of the field containing choices (default: 'name')
@@ -101,21 +97,9 @@ class CategoryAssignmentMixin:
         - Model must have both the choice_field and category_field defined
         - The category_field should have editable=False
         - Must define category_mapping as a class attribute
-        - IMPORTANT: Override save() to call self.full_clean() if you want
-          validation to run automatically (Django doesn't call clean() on save by default)
 
     How it works:
         - In save(): Automatically sets category based on category_mapping
-        - In clean(): Validates that category matches the expected value from mapping
-        - If validation fails, raises ValidationError
-
-    Important Notes:
-        - If you override clean() in your model, you MUST call super().clean()
-          to ensure this mixin's validation runs
-        - To enable automatic validation on save, override save() to call
-          self.full_clean() before super().save()
-        - Django forms and admin automatically call full_clean(), but programmatic
-          saves do not
 
     Example (Basic usage):
         class MyModel(CategoryAssignmentMixin, models.Model):
@@ -138,27 +122,6 @@ class CategoryAssignmentMixin:
                 Choices.CARROT: Categories.VEGETABLE,
             }
 
-            def save(self, *args, **kwargs):
-                # Call full_clean to validate before saving
-                self.full_clean()
-                super().save(*args, **kwargs)
-
-    Example (With custom clean method):
-        class MyModel(CategoryAssignmentMixin, models.Model):
-            # ... fields and mapping ...
-
-            def clean(self):
-                # Custom validation
-                if self.name == "APPLE" and some_condition:
-                    raise ValidationError("Custom error for Apple")
-
-                # MUST call super().clean() to run CategoryAssignmentMixin validation
-                super().clean()
-
-            def save(self, *args, **kwargs):
-                self.full_clean()
-                super().save(*args, **kwargs)
-
     Example (With custom field names):
         class CustomModel(CategoryAssignmentMixin, models.Model):
             choice_field = 'level'
@@ -179,41 +142,11 @@ class CategoryAssignmentMixin:
                 Levels.JUNIOR: Tiers.ENTRY,
                 Levels.SENIOR: Tiers.ADVANCED,
             }
-
-            def save(self, *args, **kwargs):
-                self.full_clean()
-                super().save(*args, **kwargs)
     """
 
     choice_field = "name"
     category_field = "category"
     category_mapping = {}  # Must be overridden in subclass
-
-    def clean(self):
-        """
-        Validates that the category field matches the expected value from the
-        category_mapping based on the choice field value.
-
-        Raises:
-            ValidationError: If category doesn't match the expected value
-        """
-        choice_value = getattr(self, self.choice_field, None)
-
-        if (
-            choice_value is not None
-            and self.category_mapping
-            and choice_value in self.category_mapping
-        ):
-            expected_category = self.category_mapping[choice_value]
-            current_category = getattr(self, self.category_field, None)
-
-            if current_category != expected_category:
-                raise ValidationError(
-                    f"The {self.category_field} for '{choice_value}' must be "
-                    f"'{expected_category}', but '{current_category}' was provided."
-                )
-
-        super().clean()  # type: ignore
 
     def save(self, *args, **kwargs):
         """
