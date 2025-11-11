@@ -29,11 +29,6 @@ class OrderedChoiceMixin:
             class Meta:
                 ordering = ["order"]
 
-        # When saved:
-        # MyModel(name="A").save() -> order = 1
-        # MyModel(name="B").save() -> order = 2
-        # MyModel(name="C").save() -> order = 3
-
     Example (Custom field names):
         class CustomModel(OrderedChoiceMixin, models.Model):
             choice_field = 'level'
@@ -58,7 +53,7 @@ class OrderedChoiceMixin:
         order_attr = getattr(self, self.order_field, None)
 
         if choice_value is not None and order_attr is not None:
-            choices = self.get_choices()
+            choices = self._meta.get_field(self.choice_field).choices  # type: ignore
             if choices:
                 choices_values = [choice[0] for choice in choices]
                 if choice_value in choices_values:
@@ -71,16 +66,6 @@ class OrderedChoiceMixin:
                     setattr(self, self.order_field, 0)
 
         super().save(*args, **kwargs)  # type: ignore
-
-    def get_choices(self):
-        """
-        Retrieve the choices defined in the model's choice field.
-        Override this method if the choices are defined differently.
-
-        Returns:
-            List of tuples: [(value, label), ...]
-        """
-        return self._meta.get_field(self.choice_field).choices  # type: ignore
 
 
 class CategoryAssignmentMixin:
