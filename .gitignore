@@ -1,4 +1,3 @@
 # uv & Python-generated files
 __pycache__/
 .venv/
-.ruff_cache/
