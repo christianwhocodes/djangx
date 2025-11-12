@@ -20,7 +20,7 @@ def main() -> None:
     script_path = None
     match command:
         case "init" | "create" | "new":
-            script_path = scripts_dir / "create_tawala_project.py"
+            script_path = scripts_dir / "create_project.py"
             if not script_path.exists():
                 print(
                     colored(
@@ -48,9 +48,9 @@ def print_help() -> None:
     print("\nAvailable commands:")
     print(" init|create|new [project-name]  Create a new Tawala project")
     print("\nUsage:")
-    print("  uvx tawala new my-project")
     print("  uvx tawala init my-project")
-    print("  uvx tawala create .")
+    print("  uvx tawala create my-project")
+    print("  uvx tawala new .")
 
 
 if __name__ == "__main__":

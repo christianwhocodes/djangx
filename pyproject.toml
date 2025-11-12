@@ -1,6 +1,6 @@
 [project]
 name = "tawala"
-version = "0.1.12"
+version = "0.1.13"
 description = "Add your description here"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["django-stubs>=5.2.7", "djlint>=1.36.4"]
+dev = ["djlint>=1.36.4"]
 
 [project.urls]
 Homepage = "https://github.com/christianwhocodes/tawala"

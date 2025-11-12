@@ -7,13 +7,13 @@ from typing import Any
 
 from django.core.management.base import BaseCommand, CommandError
 
-from ..helpers.common import check_sudo_privileges
-from ..helpers.deploy_database import setup_database
-from ..helpers.deploy_gunicorn import (
+from ..utils.management.helpers.common import check_sudo_privileges
+from ..utils.management.helpers.deploy_database import setup_database
+from ..utils.management.helpers.deploy_gunicorn import (
     check_gunicorn_deployment_option,
     setup_gunicorn,
 )
-from ..helpers.deploy_webserver import (
+from ..utils.management.helpers.deploy_webserver import (
     check_webserver_conflicts,
     setup_webserver,
 )

@@ -15,4 +15,4 @@ def configure_admin_site():
     admin.site.index_title = _(f"Welcome to {site_name} Admin")
 
 
-configure_admin_site()
+# configure_admin_site()
