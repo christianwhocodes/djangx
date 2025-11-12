@@ -6,12 +6,15 @@ from pathlib import Path
 from termcolor import colored
 
 
-def get_project_config() -> tuple[str, Path, str | None]:
+def get_project_config(command: str) -> tuple[str, Path, str | None]:
     """Determine project name and target directory from command line args."""
-    if len(sys.argv) < 2:
-        return "my-app", Path.cwd() / "my-app", None
+    if len(sys.argv) < 3:  # sys.argv[0] is script, [1] is command, [2] is first arg
+        if command in ["new", "init"]:
+            return "my-app", Path.cwd() / "my-app", None
+        elif command == "create":
+            return Path.cwd().name, Path.cwd(), "."
 
-    arg = sys.argv[1]
+    arg = sys.argv[2]  # First actual arg after command
     if arg == ".":
         target_dir = Path.cwd()
         return target_dir.name, target_dir, arg
@@ -118,7 +121,11 @@ def print_success_message(project_name: str, arg: str | None) -> None:
 
 def main() -> None:
     """Main entry point for create-olyv-app CLI."""
-    project_name, target_dir, arg = get_project_config()
+    if len(sys.argv) < 2:
+        print("Error: Command not provided.")
+        sys.exit(1)
+    command = sys.argv[1]
+    project_name, target_dir, arg = get_project_config(command)
 
     # Validate directory state
     if arg == ".":
