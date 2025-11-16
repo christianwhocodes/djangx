@@ -1,4 +1,4 @@
-{% load ui sass_tags static %}
+{% load ui static %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -9,9 +9,7 @@
     <meta name="keywords" content="" />
     <meta name="author" content="" />
     {% page_title %}
-    <link rel="stylesheet" href="{% sass_src 'app/global.scss' %}" />
-    <link rel="stylesheet"
-          href="{% sass_src 'ui/vendors/bootstrap-icons/font/bootstrap-icons.scss' %}" />
+    <link rel="stylesheet" href="{% static 'app/global.css' %}" />
     <script defer src="{% static 'ui/vendors/@alpinejs/csp/dist/cdn.min.js' %}"></script>
   </head>
   <body>

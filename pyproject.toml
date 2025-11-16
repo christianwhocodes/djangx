@@ -1,6 +1,6 @@
 [project]
 name = "tawala"
-version = "0.1.15"
+version = "0.2.0"
 description = "Add your description here"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -8,9 +8,6 @@ authors = [{ name = "christianwhocodes", email = "kevin@wakhisi.space" }]
 requires-python = ">=3.12"
 dependencies = [
     "django>=6.0b1",
-    "django-compressor>=4.6.0",
-    "django-sass-processor>=1.4.2",
-    "libsass>=0.23.0",
     "termcolor>=3.2.0",
 ]
 
