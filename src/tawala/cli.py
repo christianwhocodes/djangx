@@ -12,45 +12,40 @@ def main() -> None:
         sys.exit(1)
 
     command = sys.argv[1]
-    scripts_dir = Path(__file__).parent / "scripts"
 
     # Remove the command from sys.argv so scripts can parse remaining args
     sys.argv = [sys.argv[0]] + sys.argv[2:]
 
-    script_path = None
     match command:
-        case "init" | "create" | "new":
-            script_path = scripts_dir / "create_project.py"
-            if not script_path.exists():
-                print(
-                    colored(
-                        "❌ Script for creating a Tawala project not found.\n", "red"
-                    )
-                )
-                sys.exit(1)
-
-        case _:
-            print(colored(f"❌ Unknown command: {command}\n", "red"))
+        case "help" | "--help" | "-h":
             print_help()
-            sys.exit(1)
+            sys.exit(0)
+        case _:
+            script_path = Path(__file__).parent / "scripts" / f"{command}.py"
 
-    if script_path:
-        result = subprocess.run(
-            # Note: sys.argv[1:] now starts from the original sys.argv[2] since command was removed
-            [sys.executable, str(script_path), command] + sys.argv[1:]
-        )
-        sys.exit(result.returncode)
+            if script_path.exists():
+                result = subprocess.run(
+                    # *: sys.argv[1:] now starts from the original sys.argv[2] since command was removed
+                    [sys.executable, str(script_path), command] + sys.argv[1:]
+                )
+                sys.exit(result.returncode)
+            else:
+                print(colored(f"❌ Script not found for command: {command}\n", "red"))
+                sys.exit(1)
 
 
 def print_help() -> None:
     """Print available commands."""
     print(colored("Tawala CLI", "cyan", attrs=["bold"]))
     print("\nAvailable commands:")
-    print(" init|create|new [project-name]  Create a new Tawala project")
-    print("\nUsage:")
-    print("  uvx tawala init my-project")
-    print("  uvx tawala create my-project")
-    print("  uvx tawala new .")
+    # Create Project Command
+    print("\n" + colored("init [project-name]", "cyan", attrs=["bold"]))
+    print("  Usage: uvx tawala init my-project")
+    print("  Create / Initialize a new Tawala project")
+    # Get Random Secret Key Command
+    print("\n" + colored("generaterandom", "cyan", attrs=["bold"]))
+    print("  Usage: uvx tawala generaterandom")
+    print("  Generate a random string (suitable for Django SECRET_KEY)")
 
 
 if __name__ == "__main__":

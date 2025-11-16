@@ -120,7 +120,6 @@ def print_success_message(project_name: str, arg: str | None) -> None:
 
 
 def main() -> None:
-    """Main entry point for create-olyv-app CLI."""
     if len(sys.argv) < 2:
         print("Error: Command not provided.")
         sys.exit(1)
