@@ -9,7 +9,6 @@ requires-python = ">=3.12"
 dependencies = [
     "django>=5.2.8",
     "pyperclip>=1.11.0",
-    "python-decouple>=3.8",
     "rich>=14.2.0",
 ]
 
@@ -17,6 +16,7 @@ dependencies = [
 dev = [
     "djlint>=1.36.4",
     "psycopg[binary,pool]>=3.2.12",
+    "python-decouple>=3.8",
 ]
 
 [project.urls]
