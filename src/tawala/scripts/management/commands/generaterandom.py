@@ -4,6 +4,7 @@ from django.core.management.utils import get_random_secret_key
 
 class Command(BaseCommand):
     help = "Generate a random string (can be used for Django SECRET_KEY)."
+    requires_system_checks = []  # type: ignore[assignment]
 
     def add_arguments(self, parser):
         parser.add_argument(

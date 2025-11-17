@@ -8,6 +8,8 @@ import sys
 from pathlib import Path
 from typing import NoReturn
 
+from rich.console import Console
+
 
 class TawalaPaths:
     """Centralized path management for Tawala CLI."""
@@ -15,7 +17,7 @@ class TawalaPaths:
     def __init__(self):
         self.base_dir = Path(__file__).resolve().parent
         self.scripts_dir = self.base_dir / "scripts"
-        self.commands_dir = self.base_dir / "utils" / "management" / "commands"
+        self.commands_dir = self.scripts_dir / "management" / "commands"
 
     @property
     def package_script(self) -> Path:
@@ -111,13 +113,14 @@ class TawalaCLI:
     """Main CLI orchestrator for Tawala."""
 
     def __init__(self):
+        self.console = Console()
         self.paths = TawalaPaths()
         self.registry = CommandRegistry(self.paths)
         self.executor = CommandExecutor(self.paths)
 
     def show_error(self, message: str) -> NoReturn:
-        """Display error message and exit."""
-        print(message)
+        """Display error message and exit using Rich formatting."""
+        self.console.print(message)
         sys.exit(1)
 
     def route_command(self, command: str, args: list[str]) -> NoReturn:
@@ -139,17 +142,17 @@ class TawalaCLI:
         # Unknown command in package directory
         self.show_error(
             (
-                f"Unknown command: '{command}'"
-                "\nType 'tawala help' for usage."
-                "\n\n\033[1;93mIf this is a Django command and you have initialised a project, "
-                "please run it from your Tawala project directory.\033[0m"
+                f"[red]Unknown command: '{command}'[/red]\n"
+                "[cyan]Type 'tawala help' for usage.[/cyan]\n\n"
+                "[bold yellow]If this is a Django command and you have initialised a project, "
+                "please run it from your Tawala project directory.[/bold yellow]"
             )
         )
 
     def run(self) -> NoReturn:
         """Main entry point for CLI execution."""
         if len(sys.argv) < 2:
-            self.show_error("No command provided.")
+            self.show_error("[red]No command provided.[/red]")
 
         try:
             command = sys.argv[1]

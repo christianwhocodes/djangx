@@ -15,7 +15,9 @@ import sys
 from pathlib import Path
 from typing import Literal
 
-from termcolor import colored
+from rich.console import Console
+
+console = Console()
 
 
 def main() -> None:
@@ -24,19 +26,19 @@ def main() -> None:
 
     # Read current version and calculate new bumped version
     current_version = get_current_version()
-    print(colored(f"📦 Current version: {current_version}", "blue"))
+    console.print(f"📦 Current version: {current_version}", style="blue")
 
     if args.no_bump:
         # Skip bumping, use current version
         new_version = current_version
-        print(colored("⏭️  Skipping version bump", "yellow"))
+        console.print("⏭️  Skipping version bump", style="yellow")
     else:
         new_version = get_new_version(current_version, args.bump_type)
-        print(colored(f"📦 New version: {new_version}", "blue"))
+        console.print(f"📦 New version: {new_version}", style="blue")
 
         # Ask user to confirm the version bump
         if confirm_version_bump(current_version, new_version) != "y":
-            print(colored("❌ Aborted", "red"))
+            console.print("❌ Aborted", style="red")
             sys.exit(0)
 
         # Update pyproject.toml with new version and sync dependencies
@@ -47,7 +49,9 @@ def main() -> None:
 
     # Either just bump (manual push) or create tag and push
     if args.bump_only:
-        print(colored("\n✅ Version bumped. Push manually with: git push", "green"))
+        console.print(
+            "\n✅ Version bumped. Push manually with: git push", style="green"
+        )
     else:
         create_and_push_tag(new_version, target=args.target)
 
@@ -100,7 +104,7 @@ def get_current_version() -> str:
     content = pyproject.read_text()
     match = re.search(r'version = "([^"]+)"', content)
     if not match:
-        print(colored("❌ Could not find version in pyproject.toml", "red"))
+        console.print("❌ Could not find version in pyproject.toml", style="red")
         sys.exit(1)
     return match.group(1)
 
@@ -119,10 +123,8 @@ def get_new_version(current_version: str, bump_type: str = "patch") -> str:
     # Validate version format (must be X.Y.Z)
     parts = current_version.split(".")
     if len(parts) != 3:
-        print(
-            colored(
-                f"❌ Invalid version format: {current_version}. Expected X.Y.Z", "red"
-            )
+        console.print(
+            f"❌ Invalid version format: {current_version}. Expected X.Y.Z", style="red"
         )
         sys.exit(1)
 
@@ -141,27 +143,26 @@ def get_new_version(current_version: str, bump_type: str = "patch") -> str:
 def confirm_version_bump(current: str, new: str) -> Literal["y", "n"]:
     """Ask user to confirm version bump. Loops until valid input is received."""
     while True:
-        response = (
-            input(
-                colored(f"\n❓ Bump version from {current} to {new}? (y/n): ", "yellow")
-            )
-            .strip()
-            .lower()
+        console.print(
+            f"\n❓ Bump version from {current} to {new}? (y/n): ",
+            style="yellow",
+            end="",
         )
+        response = input().strip().lower()
 
         # Only accept 'y' or 'n', loop on invalid input
         if response in ("y", "n"):
             return response  # type: ignore
         else:
-            print(colored("❌ Please enter 'y' or 'n'", "red"))
+            console.print("❌ Please enter 'y' or 'n'", style="red")
 
 
 def run_command(cmd: str, check: bool = True) -> subprocess.CompletedProcess:
     """Run shell command"""
-    print(colored(f"▶ {cmd}", "cyan"))
+    console.print(f"▶ {cmd}", style="cyan")
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     if check and result.returncode != 0:
-        print(colored(f"❌ Command failed: {result.stderr}", "red"))
+        console.print(f"❌ Command failed: {result.stderr}", style="red")
         sys.exit(1)
     return result
 
@@ -173,17 +174,17 @@ def update_version_and_sync(new_version: str) -> None:
     content = pyproject.read_text()
     updated = re.sub(r'version = "[^"]+"', f'version = "{new_version}"', content)
     pyproject.write_text(updated)
-    print(colored(f"✅ Updated version to {new_version}", "green"))
+    console.print(f"✅ Updated version to {new_version}", style="green")
 
     # Sync dependencies to update uv.lock
-    print(colored("\n🔄 Syncing dependencies...", "blue"))
+    console.print("\n🔄 Syncing dependencies...", style="blue")
     run_command("uv sync")
 
 
 def git_stage_and_commit(new_version: str) -> None:
     """Check for changes and stage appropriate files"""
     # Check if there are any uncommitted changes
-    print(colored("\n📋 Checking for uncommitted changes...", "blue"))
+    console.print("\n📋 Checking for uncommitted changes...", style="blue")
     status = run_command("git status --porcelain", check=False)
 
     # Parse the changed files from git status output
@@ -195,33 +196,33 @@ def git_stage_and_commit(new_version: str) -> None:
     if set(changed_files) == {"pyproject.toml", "uv.lock"}:
         run_command("git add pyproject.toml uv.lock")
         run_command(f'git commit -m "Bump version to {new_version}"')
-        print(colored("✅ Committed version bump automatically", "green"))
+        console.print("✅ Committed version bump automatically", style="green")
 
     # If there are other changes, ask user what to do
     else:
         if changed_files:
-            print(colored("\n⚠️  You have uncommitted changes:", "yellow"))
+            console.print("\n⚠️  You have uncommitted changes:", style="yellow")
             print(status.stdout)
-            commit_all = input(
-                colored(
-                    "\n❓ Include all changes in this version commit? (y/n): ",
-                    "yellow",
-                )
+            console.print(
+                "\n❓ Include all changes in this version commit? (y/n): ",
+                style="yellow",
+                end="",
             )
+            commit_all = input()
 
             # Stage either all changes or just version files
             if commit_all.lower() == "y":
                 run_command("git add -A")
-                print(colored("✅ All changes will be included", "green"))
+                console.print("✅ All changes will be included", style="green")
             else:
                 run_command("git add pyproject.toml uv.lock")
-                print(colored("✅ Only version files will be included", "green"))
+                console.print("✅ Only version files will be included", style="green")
 
             # Create commit with version bump message
             run_command(f'git commit -m "Bump version to {new_version}"')
         else:
             # No changes detected
-            print(colored("No changes to commit", "yellow"))
+            console.print("No changes to commit", style="yellow")
 
 
 def create_and_push_tag(new_version: str, target: str) -> None:
@@ -231,7 +232,9 @@ def create_and_push_tag(new_version: str, target: str) -> None:
     tag = f"dev-{new_version}" if is_test else f"v{new_version}"
     target_name = "TestPyPI" if is_test else "PyPI"
 
-    print(colored(f"\n🏷️  Creating tag: {tag} (will publish to {target_name})", "blue"))
+    console.print(
+        f"\n🏷️  Creating tag: {tag} (will publish to {target_name})", style="blue"
+    )
 
     # Create tag, push commits, then push tag (triggers GitHub Actions)
     run_command(f"git tag {tag}")
@@ -239,14 +242,12 @@ def create_and_push_tag(new_version: str, target: str) -> None:
     run_command(f"git push origin {tag}")
 
     # Inform user about next steps
-    print(
-        colored(f"\n✅ Done! GitHub Actions will now publish to {target_name}", "green")
+    console.print(
+        f"\n✅ Done! GitHub Actions will now publish to {target_name}", style="green"
     )
-    print(
-        colored(
-            "📊 Check progress: https://github.com/christianwhocodes/tawala/actions",
-            "cyan",
-        )
+    console.print(
+        "📊 Check progress: https://github.com/christianwhocodes/tawala/actions",
+        style="cyan",
     )
 
 

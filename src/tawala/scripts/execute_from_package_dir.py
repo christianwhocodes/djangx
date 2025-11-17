@@ -3,7 +3,7 @@
 Tawala CLI - Package Commands Executor.
 
 This module provides a filtered Django management interface that only exposes
-commands from the tawala.utils application when run from the package directory.
+commands from the tawala.scripts application when run from the package directory.
 """
 
 import os
@@ -20,7 +20,7 @@ from django.core.management import ManagementUtility
 class PackageConfig:
     """Configuration for the Tawala CLI."""
 
-    INSTALLED_APPS = ["tawala.utils"]
+    INSTALLED_APPS = ["tawala.scripts"]
     SETTINGS_MODULE = __name__
 
 
@@ -32,17 +32,17 @@ def configure_django() -> None:
 
 def setup_command_filtering() -> None:
     """
-    Monkey-patch Django's get_commands to filter for tawala.utils commands only.
+    Monkey-patch Django's get_commands to filter for tawala.scripts commands only.
 
-    This ensures that only management commands from the tawala.utils app are
+    This ensures that only management commands from the tawala.scripts app are
     visible and executable through this CLI interface.
     """
     original_get_commands = management.get_commands
 
     def filtered_get_commands() -> Dict[str, str]:
-        """Return only commands from tawala.utils application."""
+        """Return only commands from tawala.scripts application."""
         commands = original_get_commands()
-        return {name: app for name, app in commands.items() if app == "tawala.utils"}
+        return {name: app for name, app in commands.items() if app == "tawala.scripts"}
 
     management.get_commands = filtered_get_commands
 
