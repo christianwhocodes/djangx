@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/dev/ref/settings/
 from pathlib import Path
 
 from decouple import Csv, config
+from django.core.management.utils import get_random_secret_key
 # from django.utils.csp import CSP
 
 # ==============================================================================
@@ -30,7 +31,7 @@ RESOURCES_DIR = BASE_DIR / "resources"
 # ! SECURITY WARNING: be intentional about ALLOWED_HOSTS - the specific domains/IPs allowed to run the app on.
 # ==============================================================================
 
-SECRET_KEY = config("SECRET_KEY", default="django-insecure-key-change-me")
+SECRET_KEY = get_random_secret_key()
 DEBUG = config("DEBUG", default=True, cast=bool)
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="", cast=Csv())
 
@@ -180,6 +181,14 @@ STATIC_ROOT = RESOURCES_DIR / "static"
 
 MEDIA_URL = f"/{RESOURCES_DIR.name}/media/"
 MEDIA_ROOT = RESOURCES_DIR / "media"
+
+
+# ==============================================================================
+# Default primary key field type
+# https://docs.djangoproject.com/en/dev/ref/settings/#default-auto-field
+# ==============================================================================
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # ==============================================================================
