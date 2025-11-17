@@ -400,7 +400,7 @@ wheels = [
 
 [[package]]
 name = "tawala"
-version = "0.2.11"
+version = "0.2.12"
 source = { editable = "." }
 dependencies = [
     { name = "django" },
@@ -421,7 +421,6 @@ requires-dist = [
     { name = "pyperclip", specifier = ">=1.11.0" },
     { name = "python-decouple", specifier = ">=3.8" },
     { name = "rich", specifier = ">=14.2.0" },
-    { name = "tawala", editable = "." },
 ]
 
 [package.metadata.requires-dev]

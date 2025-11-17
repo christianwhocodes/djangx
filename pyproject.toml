@@ -1,6 +1,6 @@
 [project]
 name = "tawala"
-version = "0.2.11"
+version = "0.2.12"
 description = "Add your description here"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -11,7 +11,6 @@ dependencies = [
     "pyperclip>=1.11.0",
     "python-decouple>=3.8",
     "rich>=14.2.0",
-    "tawala",
 ]
 
 [dependency-groups]
@@ -31,9 +30,6 @@ tawala = "tawala.cli.manage:main"
 [build-system]
 requires = ["uv_build>=0.9.7,<0.10.0"]
 build-backend = "uv_build"
-
-[tool.uv.sources]
-tawala = { path = ".", editable = true }
 
 [tool.djlint]
 ignore = "H016"
