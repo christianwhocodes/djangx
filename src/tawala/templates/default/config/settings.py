@@ -59,12 +59,6 @@ INSTALLED_APPS = [
     "app",
 ]
 
-if DEBUG:
-    INSTALLED_APPS += [
-        "django_browser_reload",
-        "django_watchfiles",
-    ]
-
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -75,11 +69,6 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # "django.middleware.csp.ContentSecurityPolicyMiddleware",
 ]
-
-if DEBUG:
-    MIDDLEWARE += [
-        "django_browser_reload.middleware.BrowserReloadMiddleware",
-    ]
 
 ROOT_URLCONF = "config.urls"
 
