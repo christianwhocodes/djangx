@@ -1,6 +1,6 @@
 [project]
 name = "tawala"
-version = "0.2.2"
+version = "0.2.3"
 description = "Add your description here"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -14,9 +14,9 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "djlint>=1.36.4",
     "psycopg[binary,pool]>=3.2.12",
     "python-decouple>=3.8",
-    "djlint>=1.36.4",
     "termcolor>=3.2.0",
 ]
 

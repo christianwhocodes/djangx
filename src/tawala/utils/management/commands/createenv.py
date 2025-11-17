@@ -2,7 +2,6 @@ from pathlib import Path
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
-from django.core.management.utils import get_random_secret_key
 
 
 class Command(BaseCommand):
@@ -18,10 +17,6 @@ class Command(BaseCommand):
             "--debug",
             action="store_true",
             help="Enable DEBUG mode",
-        )
-        parser.add_argument(
-            "--secret-key",
-            help="Set SECRET_KEY value (if not provided, a random one will be generated)",
         )
         parser.add_argument(
             "--allowed-hosts",
@@ -76,9 +71,6 @@ class Command(BaseCommand):
                     self.stdout.write(self.style.WARNING("Operation cancelled."))
                     return
 
-        # Generate or use provided secret key
-        secret_key = options["secret_key"] or get_random_secret_key()
-
         # Validate PG_SERVICE applicability
         if options["pg_service"] and options.get("db_backend") != "postgresql":
             self.stdout.write(
@@ -91,7 +83,6 @@ class Command(BaseCommand):
         # Define environment variables using options
         env_content = f"""# 🚀 Core Django Configuration
 DEBUG="{options["debug"]}"
-SECRET_KEY="{secret_key}"
 ALLOWED_HOSTS="{options["allowed_hosts"]}"
 
 # 🗄️ Database Configuration
