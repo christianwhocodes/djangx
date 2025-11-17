@@ -400,12 +400,11 @@ wheels = [
 
 [[package]]
 name = "tawala"
-version = "0.2.12"
+version = "0.2.13"
 source = { editable = "." }
 dependencies = [
     { name = "django" },
     { name = "pyperclip" },
-    { name = "python-decouple" },
     { name = "rich" },
 ]
 
@@ -413,13 +412,13 @@ dependencies = [
 dev = [
     { name = "djlint" },
     { name = "psycopg", extra = ["binary", "pool"] },
+    { name = "python-decouple" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "django", specifier = ">=5.2.8" },
     { name = "pyperclip", specifier = ">=1.11.0" },
-    { name = "python-decouple", specifier = ">=3.8" },
     { name = "rich", specifier = ">=14.2.0" },
 ]
 
@@ -427,6 +426,7 @@ requires-dist = [
 dev = [
     { name = "djlint", specifier = ">=1.36.4" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.2.12" },
+    { name = "python-decouple", specifier = ">=3.8" },
 ]
 
 [[package]]
