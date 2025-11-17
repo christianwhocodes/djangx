@@ -16,18 +16,17 @@ class TawalaPaths:
 
     def __init__(self):
         self.base_dir = Path(__file__).resolve().parent
-        self.scripts_dir = self.base_dir / "scripts"
-        self.commands_dir = self.scripts_dir / "management" / "commands"
+        self.commands_dir = self.base_dir.parent / "scripts" / "management" / "commands"
 
     @property
     def package_script(self) -> Path:
         """Script for executing commands from package directory."""
-        return self.scripts_dir / "execute_from_package_dir.py"
+        return self.base_dir / "execute_from_package_dir.py"
 
     @property
     def project_script(self) -> Path:
         """Script for executing commands from project directory."""
-        return self.scripts_dir / "execute_from_project_dir.py"
+        return self.base_dir / "execute_from_project_dir.py"
 
 
 class ExecutionContext:
@@ -51,7 +50,7 @@ class ExecutionContext:
         return not ExecutionContext.is_in_package_dir()
 
 
-class CommandRegistry:
+class PackageScriptsRegistry:
     """Manages available Tawala commands."""
 
     def __init__(self, paths: TawalaPaths):
@@ -64,15 +63,16 @@ class CommandRegistry:
         Returns:
             list[str]: Command names available in the commands directory.
                        Includes 'help' when in package directory.
+                       Returns empty list if not in package directory.
         """
-        commands = [
-            f.stem for f in self.paths.commands_dir.glob("*.py") if f.stem != "__init__"
-        ]
-
-        if ExecutionContext.is_in_package_dir():
-            commands.append("help")
-
-        return commands
+        if not ExecutionContext.is_in_package_dir():
+            return []
+        else:
+            return [
+                f.stem
+                for f in self.paths.commands_dir.glob("*.py")
+                if f.stem != "__init__"
+            ] + ["help"]
 
     def is_package_command(self, command: str) -> bool:
         """Check if command is a Tawala-specific command."""
@@ -115,7 +115,7 @@ class TawalaCLI:
     def __init__(self):
         self.console = Console()
         self.paths = TawalaPaths()
-        self.registry = CommandRegistry(self.paths)
+        self.registry = PackageScriptsRegistry(self.paths)
         self.executor = CommandExecutor(self.paths)
 
     def show_error(self, message: str) -> NoReturn:
@@ -134,20 +134,19 @@ class TawalaCLI:
         # Handle Tawala-specific commands
         if self.registry.is_package_command(command):
             self.executor.execute_package_command(command, args)
-
         # Handle Django commands in project directory
-        if ExecutionContext.is_in_project_dir():
+        elif ExecutionContext.is_in_project_dir():
             self.executor.execute_project_command([command] + args)
-
-        # Unknown command in package directory
-        self.show_error(
-            (
-                f"[red]Unknown command: '{command}'[/red]\n"
-                "[cyan]Type 'tawala help' for usage.[/cyan]\n\n"
-                "[bold yellow]If this is a Django command and you have initialised a project, "
-                "please run it from your Tawala project directory.[/bold yellow]"
+        else:
+            # Unknown command in package directory
+            self.show_error(
+                (
+                    f"[red]Unknown command: '{command}'[/red]\n"
+                    "[cyan]Type 'tawala help' for usage.[/cyan]\n\n"
+                    "[bold yellow]If this is a Django command and you have initialised a project, "
+                    "please run it from your Tawala project directory.[/bold yellow]"
+                )
             )
-        )
 
     def run(self) -> NoReturn:
         """Main entry point for CLI execution."""

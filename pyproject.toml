@@ -26,7 +26,7 @@ Repository = "https://github.com/christianwhocodes/tawala"
 Issues = "https://github.com/christianwhocodes/tawala/issues"
 
 [project.scripts]
-tawala = "tawala.cli:main"
+tawala = "tawala.cli.manage:main"
 
 [build-system]
 requires = ["uv_build>=0.9.7,<0.10.0"]
