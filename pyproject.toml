@@ -1,10 +1,10 @@
 [project]
 name = "tawala"
-version = "0.2.13"
+version = "0.2.14"
 description = "Add your description here"
 readme = "README.md"
 license = { file = "LICENSE" }
-authors = [{ name = "christianwhocodes", email = "kevin@wakhisi.space" }]
+authors = [{ name = "christianwhocodes", email = "kevin@tawalabora.space" }]
 requires-python = ">=3.12"
 dependencies = [
     "django>=5.2.8",
