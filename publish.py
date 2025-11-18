@@ -9,6 +9,15 @@ Usage:
     uv run python publish.py --bump-type minor    # Bump minor version instead of patch
 """
 
+
+# TODO:
+# This is my usual workflow when dealing with this -
+# I do 'python publish.py --bump-only' first to bump version and update uv.lock
+# Then I review the changes 'git commit --amend' to add more details in the commint message under the 'Bump version to [version]' commit message
+# The I do 'python publish.py --no-bump' to tag and push to GitHub, and 'python publish.py --no-bump --target pypi' as well.
+# ?: What should be improved here is to allow adding more details to the commit message so that I don't need to first necessarily do '--bump-only' (though I can if I want) if I want to straight up publish?
+# Maybe prompt the user to enter additional commit message details after confirming the version bump.
+
 import argparse
 import re
 import subprocess
@@ -30,6 +39,7 @@ class PublishConfig:
     bump_only: bool
     no_bump: bool
     bump_type: Literal["major", "minor", "patch"]
+    commit_message: str | None
 
     @property
     def should_bump(self) -> bool:
@@ -115,7 +125,9 @@ class GitManager:
         console.print("\n🔄 Syncing dependencies...", style="blue")
         self.run_command("uv sync")
 
-    def commit_changes(self, new_version: str) -> None:
+    def commit_changes(
+        self, new_version: str, additional_message: str | None = None
+    ) -> None:
         """Stage and commit changes"""
         console.print("\n📋 Checking for uncommitted changes...", style="blue")
         status_result = self.run_command("git status --porcelain", check=False)
@@ -133,8 +145,6 @@ class GitManager:
         # If only version files changed, commit automatically
         if set(changed_files) == {"pyproject.toml", "uv.lock"}:
             self.run_command("git add pyproject.toml uv.lock")
-            self.run_command(f'git commit -m "Bump version to {new_version}"')
-            console.print("✅ Committed version bump automatically", style="green")
         else:
             # Ask user about other changes
             console.print("\n⚠️  You have uncommitted changes:", style="yellow")
@@ -153,7 +163,15 @@ class GitManager:
                 self.run_command("git add pyproject.toml uv.lock")
                 console.print("✅ Only version files will be included", style="green")
 
-            self.run_command(f'git commit -m "Bump version to {new_version}"')
+        # Build commit message
+        commit_msg = f"Bump version to {new_version}"
+        if additional_message:
+            commit_msg += f"\n\n{additional_message}"
+
+        # Escape quotes in the commit message
+        commit_msg_escaped = commit_msg.replace('"', '\\"')
+        self.run_command(f'git commit -m "{commit_msg_escaped}"')
+        console.print("✅ Committed version bump", style="green")
 
     def create_and_push_tag(self, version: str, config: PublishConfig) -> None:
         """Create git tag and push to remote"""
@@ -184,6 +202,7 @@ def parse_arguments() -> PublishConfig:
     """Parse and validate command line arguments"""
     parser = argparse.ArgumentParser(description="Bump version and publish")
     parser.add_argument(
+        "-t",
         "--target",
         type=str,
         choices=["github", "pypi"],
@@ -207,6 +226,12 @@ def parse_arguments() -> PublishConfig:
         default="patch",
         help="Type of version bump (major, minor, patch). Default is patch",
     )
+    parser.add_argument(
+        "-m",
+        "--message",
+        type=str,
+        help="Additional commit message details",
+    )
 
     args = parser.parse_args()
 
@@ -218,6 +243,7 @@ def parse_arguments() -> PublishConfig:
         bump_only=args.bump_only,
         no_bump=args.no_bump,
         bump_type=args.bump_type,
+        commit_message=args.message,
     )
 
 
@@ -235,6 +261,17 @@ def confirm_version_bump(current: str, new: str) -> bool:
             return response == "y"
         else:
             console.print("❌ Please enter 'y' or 'n'", style="red")
+
+
+def prompt_for_commit_message() -> str | None:
+    """Prompt user for additional commit message details"""
+    console.print(
+        "\n💬 Add additional commit message details? (Enter for none, or type message): ",
+        style="yellow",
+        end="",
+    )
+    message = input().strip()
+    return message if message else None
 
 
 def main() -> None:
@@ -262,10 +299,15 @@ def main() -> None:
             console.print("❌ Aborted", style="red")
             sys.exit(0)
 
+        # Get additional commit message if not provided via CLI
+        additional_message = config.commit_message
+        if additional_message is None:
+            additional_message = prompt_for_commit_message()
+
         # Update version and sync dependencies
         version_manager.update_version(new_version)
         git_manager.sync_dependencies()
-        git_manager.commit_changes(new_version)
+        git_manager.commit_changes(new_version, additional_message)
     else:
         new_version = current_version
         console.print("⏭️  Skipping version bump", style="yellow")
