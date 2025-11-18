@@ -120,6 +120,18 @@ class GitManager:
             sys.exit(1)
         return result
 
+    @staticmethod
+    def run_command_with_input(
+        cmd: list[str], check: bool = True
+    ) -> subprocess.CompletedProcess:
+        """Run command with list arguments (better for complex strings)"""
+        console.print(f"▶ {' '.join(cmd)}", style="cyan")
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if check and result.returncode != 0:
+            console.print(f"❌ Command failed: {result.stderr}", style="red")
+            sys.exit(1)
+        return result
+
     def sync_dependencies(self) -> None:
         """Sync dependencies to update uv.lock"""
         console.print("\n🔄 Syncing dependencies...", style="blue")
@@ -168,9 +180,8 @@ class GitManager:
         if additional_message:
             commit_msg += f"\n\n{additional_message}"
 
-        # Escape quotes in the commit message
-        commit_msg_escaped = commit_msg.replace('"', '\\"')
-        self.run_command(f'git commit -m "{commit_msg_escaped}"')
+        # Use list-based command for proper argument handling
+        self.run_command_with_input(["git", "commit", "-m", commit_msg])
         console.print("✅ Committed version bump", style="green")
 
     def create_and_push_tag(self, version: str, config: PublishConfig) -> None:
