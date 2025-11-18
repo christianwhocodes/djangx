@@ -148,8 +148,9 @@ class GitManager:
 
         if config.pypi:
             console.print("\n🚀 Triggered PyPI publish action!", style="green")
+            console.print("📊 Check:", end=" ")
             console.print(
-                "📊 Check: https://github.com/christianwhocodes/tawala/actions",
+                "https://github.com/christianwhocodes/tawala/actions",
                 style="link cyan",
             )
         else:
