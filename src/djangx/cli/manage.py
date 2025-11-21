@@ -1,5 +1,5 @@
 """
-Command-line interface for Tawala.
+Command-line interface for DjangX.
 Handles routing commands to appropriate scripts based on execution context.
 """
 
@@ -8,11 +8,9 @@ import sys
 from pathlib import Path
 from typing import NoReturn
 
-from rich.console import Console
 
-
-class TawalaPaths:
-    """Centralized path management for Tawala CLI."""
+class DjangXPaths:
+    """Centralized path management for DjangX CLI."""
 
     def __init__(self):
         self.base_dir = Path(__file__).resolve().parent
@@ -35,7 +33,7 @@ class ExecutionContext:
     @staticmethod
     def is_in_package_dir() -> bool:
         """
-        Check if executed from Tawala package directory.
+        Check if executed from DjangX package directory.
 
         Returns:
             bool: True if in package directory (no config/settings.py),
@@ -51,14 +49,14 @@ class ExecutionContext:
 
 
 class PackageScriptsRegistry:
-    """Manages available Tawala commands."""
+    """Manages available DjangX commands."""
 
-    def __init__(self, paths: TawalaPaths):
+    def __init__(self, paths: DjangXPaths):
         self.paths = paths
 
     def get_available_commands(self) -> list[str]:
         """
-        Get list of available Tawala-specific commands.
+        Get list of available DjangX-specific commands.
 
         Returns:
             list[str]: Command names available in the commands directory.
@@ -75,19 +73,19 @@ class PackageScriptsRegistry:
             ] + ["help"]
 
     def is_package_command(self, command: str) -> bool:
-        """Check if command is a Tawala-specific command."""
+        """Check if command is a DjangX-specific command."""
         return command in self.get_available_commands()
 
 
 class CommandExecutor:
     """Executes commands in appropriate context."""
 
-    def __init__(self, paths: TawalaPaths):
+    def __init__(self, paths: DjangXPaths):
         self.paths = paths
 
     def execute_package_command(self, command: str, args: list[str]) -> NoReturn:
         """
-        Execute a Tawala-specific command from package directory.
+        Execute a DjangX-specific command from package directory.
 
         Args:
             command: The command to execute
@@ -109,18 +107,18 @@ class CommandExecutor:
         sys.exit(result.returncode)
 
 
-class TawalaCLI:
-    """Main CLI orchestrator for Tawala."""
+class DjangXCLI:
+    """Main CLI orchestrator for DjangX."""
 
     def __init__(self):
-        self.console = Console()
-        self.paths = TawalaPaths()
+        self.paths = DjangXPaths()
         self.registry = PackageScriptsRegistry(self.paths)
         self.executor = CommandExecutor(self.paths)
 
     def show_error(self, message: str) -> NoReturn:
-        """Display error message and exit using Rich formatting."""
-        self.console.print(message)
+        """Display error message and exit using ANSI escape sequences."""
+        reset = "\033[0m"
+        print(message + reset)
         sys.exit(1)
 
     def route_command(self, command: str, args: list[str]) -> NoReturn:
@@ -131,7 +129,7 @@ class TawalaCLI:
             command: The command to execute
             args: Additional command-line arguments
         """
-        # Handle Tawala-specific commands
+        # Handle DjangX-specific commands
         if self.registry.is_package_command(command):
             self.executor.execute_package_command(command, args)
         # Handle Django commands in project directory
@@ -139,19 +137,24 @@ class TawalaCLI:
             self.executor.execute_project_command([command] + args)
         else:
             # Unknown command in package directory
+            red = "\033[31m"
+            cyan = "\033[36m"
+            yellow = "\033[33m"
+            bold = "\033[1m"
             self.show_error(
                 (
-                    f"[red]Unknown command: '{command}'[/red]\n"
-                    "[cyan]Type 'tawala help' for usage.[/cyan]\n\n"
-                    "[bold yellow]If this is a Django command and you have initialised a project, "
-                    "please run it from your Tawala project directory.[/bold yellow]"
+                    f"{red}Unknown command: '{command}'\n"
+                    f"{cyan}Type 'djangx help' for usage.\n\n"
+                    f"{bold}{yellow}If this is a Django command and you have initialised a project, "
+                    "please run it from your DjangX project directory."
                 )
             )
 
     def run(self) -> NoReturn:
         """Main entry point for CLI execution."""
         if len(sys.argv) < 2:
-            self.show_error("[red]No command provided.[/red]")
+            red = "\033[31m"
+            self.show_error(f"{red}No command provided.")
 
         try:
             command = sys.argv[1]
@@ -162,8 +165,8 @@ class TawalaCLI:
 
 
 def main() -> None:
-    """Entry point for the Tawala CLI."""
-    cli = TawalaCLI()
+    """Entry point for the DjangX CLI."""
+    cli = DjangXCLI()
     cli.run()
 
 

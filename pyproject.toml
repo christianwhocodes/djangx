@@ -1,35 +1,35 @@
-[project]
-name = "tawala"
-version = "0.2.19"
-description = "Add your description here"
-readme = "README.md"
-license = { file = "LICENSE" }
-authors = [{ name = "christianwhocodes", email = "kevin@tawalabora.space" }]
-requires-python = ">=3.12"
-dependencies = [
-    "django>=5.2.8",
-    "pyperclip>=1.11.0",
-    "rich>=14.2.0",
-]
-
-[dependency-groups]
-dev = [
-    "djlint>=1.36.4",
-    "psycopg[binary,pool]>=3.2.12",
-    "python-decouple>=3.8",
-]
-
-[project.urls]
-Homepage = "https://github.com/tawalabora/tawala"
-Repository = "https://github.com/tawalabora/tawala"
-Issues = "https://github.com/tawalabora/tawala/issues"
-
-[project.scripts]
-tawala = "tawala.cli.manage:main"
-
 [build-system]
 requires = ["uv_build>=0.9.10,<0.10.0"]
 build-backend = "uv_build"
+
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true
+
+[project]
+name = "DjangX"
+version = "0.1.0.dev1"
+description = "Utilities for Django"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    { name = "christianwhocodes", email = "hey@christianwhocodes.space" },
+]
+requires-python = ">=3.12"
+dependencies = ["django>=5.2.8", "pyperclip>=1.11.0"]
+
+[project.scripts]
+djangx = "djangx.cli.manage:main"
+
+[project.urls]
+Homepage = "https://github.com/christianwhocodes/djangx"
+Repository = "https://github.com/christianwhocodes/djangx"
+Issues = "https://github.com/christianwhocodes/djangx/issues"
+
+[dependency-groups]
+dev = ["djlint>=1.36.4", "psycopg[binary,pool]>=3.2.12", "python-decouple>=3.8"]
 
 [tool.djlint]
 ignore = "H016"

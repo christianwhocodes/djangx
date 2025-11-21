@@ -12,6 +12,7 @@ from pathlib import Path
 
 from decouple import Csv, config
 from django.core.management.utils import get_random_secret_key
+
 # from django.utils.csp import CSP
 
 # ==============================================================================
@@ -54,8 +55,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "tawala.ui",
-    "tawala.utils",
+    "djangx.ui",
+    "djangx.utils",
     "app",
 ]
 

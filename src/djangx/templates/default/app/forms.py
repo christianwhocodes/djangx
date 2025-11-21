@@ -1,5 +1,5 @@
 from django import forms
-from tawala.utils.forms.mixins import UniqueChoiceMixin
+from djangx.utils.forms.mixins import UniqueChoiceMixin
 
 from .models import SchoolLevel, SchoolTerm
 

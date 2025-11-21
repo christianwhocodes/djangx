@@ -17,7 +17,7 @@ class UsernameOrEmailBackend(ModelBackend):
         Add to settings.py:
 
         AUTHENTICATION_BACKENDS = [
-            'tawala.utils.auth.backends.UsernameOrEmailBackend',
+            'djangx.utils.auth.backends.UsernameOrEmailBackend',
             'django.contrib.auth.backends.ModelBackend',  # default
         ]
     """

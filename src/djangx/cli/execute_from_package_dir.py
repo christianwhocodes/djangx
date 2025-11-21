@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 """
-Tawala CLI - Package Commands Executor.
+DjangX CLI - Package Commands Executor.
 
 This module provides a filtered Django management interface that only exposes
-commands from the tawala.scripts application when run from the package directory.
+commands from the djangx.scripts application when run from the package directory.
 """
 
 import os
@@ -18,9 +18,9 @@ from django.core.management import ManagementUtility
 
 
 class PackageConfig:
-    """Configuration for the Tawala CLI."""
+    """Configuration for the DjangX CLI."""
 
-    INSTALLED_APPS = ["tawala.scripts"]
+    INSTALLED_APPS = ["djangx.scripts"]
     SETTINGS_MODULE = __name__
 
 
@@ -32,17 +32,17 @@ def configure_django() -> None:
 
 def setup_command_filtering() -> None:
     """
-    Monkey-patch Django's get_commands to filter for tawala.scripts commands only.
+    Monkey-patch Django's get_commands to filter for djangx.scripts commands only.
 
-    This ensures that only management commands from the tawala.scripts app are
+    This ensures that only management commands from the djangx.scripts app are
     visible and executable through this CLI interface.
     """
     original_get_commands = management.get_commands
 
     def filtered_get_commands() -> Dict[str, str]:
-        """Return only commands from tawala.scripts application."""
+        """Return only commands from djangx.scripts application."""
         commands = original_get_commands()
-        return {name: app for name, app in commands.items() if app == "tawala.scripts"}
+        return {name: app for name, app in commands.items() if app == "djangx.scripts"}
 
     management.get_commands = filtered_get_commands
 
@@ -55,13 +55,13 @@ def create_management_utility() -> ManagementUtility:
         ManagementUtility: Configured utility with custom program name.
     """
     utility = ManagementUtility(sys.argv)
-    utility.prog_name = "tawala"
+    utility.prog_name = "djangx"
     return utility
 
 
 def main() -> None:
     """
-    Main entry point for the Tawala CLI.
+    Main entry point for the DjangX CLI.
 
     This function orchestrates the setup and execution of the Django
     management utility with filtered commands.

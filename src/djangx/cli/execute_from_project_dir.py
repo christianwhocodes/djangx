@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
-Tawala CLI - Project Commands Executor.
+DjangX CLI - Project Commands Executor.
 
-This module provides the standard Django management interface for Tawala projects,
+This module provides the standard Django management interface for DjangX projects,
 using the config.settings module when run from a user's project directory.
 """
 
@@ -12,10 +12,10 @@ from pathlib import Path
 
 
 class ProjectConfig:
-    """Configuration for the Tawala management script."""
+    """Configuration for the DjangX management script."""
 
     SETTINGS_MODULE = "config.settings"
-    PROG_NAME = "tawala"
+    PROG_NAME = "djangx"
 
 
 def setup_python_path() -> None:
@@ -54,10 +54,10 @@ def create_management_utility():
 
 def main() -> None:
     """
-    Main entry point for the Tawala management script.
+    Main entry point for the DjangX management script.
 
     This function orchestrates the setup and execution of Django's
-    management utility for the Tawala project.
+    management utility for the DjangX project.
     """
     # Setup environment
     setup_python_path()

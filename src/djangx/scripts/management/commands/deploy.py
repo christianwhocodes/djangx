@@ -7,14 +7,12 @@ from typing import Any
 
 from django.core.management.base import BaseCommand, CommandError
 
-from ....utils.management import check_sudo_privileges
-from ....utils.management import setup_database
 from ....utils.management import (
     check_gunicorn_deployment_option,
-    setup_gunicorn,
-)
-from ....utils.management import (
+    check_sudo_privileges,
     check_webserver_conflicts,
+    setup_database,
+    setup_gunicorn,
     setup_webserver,
 )
 
@@ -134,7 +132,7 @@ if __name__ == "__main__":
     import django
 
     # Add project root to Python path
-    # This file is at: tawala/utils/management/commands/deploy.py
+    # This file is at: djangx/utils/management/commands/deploy.py
     # Project root is 5 levels up
     current_file = Path(__file__).resolve()
     project_root = current_file.parent.parent.parent.parent.parent

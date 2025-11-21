@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
-from tawala.utils.models.fields import calculate_max_length_from_choices
-from tawala.utils.models.mixins import CategoryAssignmentMixin, OrderedChoiceMixin
+from djangx.utils.models.fields import calculate_max_length_from_choices
+from djangx.utils.models.mixins import CategoryAssignmentMixin, OrderedChoiceMixin
 
 
 class SchoolLevel(OrderedChoiceMixin, CategoryAssignmentMixin, models.Model):
