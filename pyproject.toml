@@ -10,7 +10,7 @@ explicit = true
 
 [project]
 name = "DjangX"
-version = "0.1.0"
+version = "0.1.1.dev1"
 description = "Utilities for Django"
 readme = "README.md"
 license = { file = "LICENSE" }

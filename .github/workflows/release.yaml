@@ -1,0 +1,171 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry Run? (Calculate tag but do not push/publish)"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  create-tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag-created: ${{ steps.create_tag.outputs.tag-created }}
+      tag: ${{ steps.create_tag.outputs.tag }}
+      release-type: ${{ steps.parse_version.outputs.TYPE }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Get package version
+        id: get_version
+        run: |
+          # Returns formats like: 1.0.2, 1.0.2a1, 1.0.2b2, 1.0.2.dev5
+          VERSION=$(uv version --short)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Raw Package version: $VERSION"
+
+      - name: Parse Version and Construct Tag
+        id: parse_version
+        shell: bash
+        run: |
+          VERSION='${{ steps.get_version.outputs.VERSION }}'
+          TAG=""
+          TYPE="unknown"
+
+          # BASH_REMATCH explanation:
+          # ${BASH_REMATCH[1]} is the Base Version (X.Y.Z)
+          # ${BASH_REMATCH[2]} is the Suffix Number (1, 2, 3...)
+
+          if [[ "$VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            # Stable: 1.0.2 -> v1.0.2
+            TYPE="stable"
+            TAG="v$VERSION"
+
+          elif [[ "$VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)a([0-9]+)$ ]]; then
+            # Alpha: 1.0.2a1 -> v1.0.2-alpha.1
+            TYPE="alpha"
+            TAG="v${BASH_REMATCH[1]}-alpha.${BASH_REMATCH[2]}"
+
+          elif [[ "$VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)b([0-9]+)$ ]]; then
+            # Beta: 1.0.2b1 -> v1.0.2-beta.1
+            TYPE="beta"
+            TAG="v${BASH_REMATCH[1]}-beta.${BASH_REMATCH[2]}"
+
+          elif [[ "$VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)rc([0-9]+)$ ]]; then
+            # RC: 1.0.2rc1 -> v1.0.2-rc.1
+            TYPE="rc"
+            TAG="v${BASH_REMATCH[1]}-rc.${BASH_REMATCH[2]}"
+
+          elif [[ "$VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(\.?)post([0-9]+)$ ]]; then
+            # Post: 1.0.2.post1 -> v1.0.2-post.1 (Handles optional dot)
+            TYPE="post"
+            TAG="v${BASH_REMATCH[1]}-post.${BASH_REMATCH[3]}"
+
+          elif [[ "$VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+)(\.?)dev([0-9]+)$ ]]; then
+            # Dev: 1.0.2.dev1 -> v1.0.2-dev.1 (Handles optional dot)
+            TYPE="dev"
+            TAG="v${BASH_REMATCH[1]}-dev.${BASH_REMATCH[3]}"
+          fi
+
+          if [[ "$TYPE" == "unknown" ]]; then
+            echo "Error: Could not parse version format: $VERSION"
+            exit 1
+          fi
+
+          echo "Calculated TYPE: $TYPE"
+          echo "Calculated TAG: $TAG"
+
+          echo "TYPE=$TYPE" >> "$GITHUB_OUTPUT"
+          echo "TAG=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag
+        id: create_tag
+        run: |
+          TAG="${{ steps.parse_version.outputs.TAG }}"
+          DRY_RUN="${{ inputs.dry_run }}"
+
+          # 1. Check if tag exists
+          if git ls-remote --tags origin | grep -q "refs/tags/$TAG$"; then
+            echo "Tag $TAG already exists on remote."
+            echo "tag-created=false" >> $GITHUB_OUTPUT
+            echo "tag=$TAG" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # 2. Check if this is a Dry Run
+          if [[ "$DRY_RUN" == "true" ]]; then
+            echo "--- DRY RUN MODE ---"
+            echo "Would have created tag: $TAG"
+            echo "Skipping git push and setting tag-created=false to skip publish job."
+            echo "tag-created=false" >> $GITHUB_OUTPUT
+            echo "tag=$TAG" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # 3. Actual Tag Creation
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+
+          echo "Successfully pushed tag $TAG"
+          echo "tag-created=true" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+  build-and-publish:
+    needs: create-tag
+    # Only run if we actually created a new tag (skips on Dry Run or existing tag)
+    if: needs.create-tag.outputs.tag-created == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Required for Trusted Publishing to PyPI
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.create-tag.outputs.tag }}
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Build package
+        run: |
+          uv build
+          echo "Built packages:"
+          ls -lh dist/
+
+      - name: Publish to PyPI (Stable and Post only)
+        if: needs.create-tag.outputs.release-type == 'stable' || needs.create-tag.outputs.release-type == 'post'
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        run: uv publish
+
+      - name: Publish to TestPyPI (Alpha, Beta, RC)
+        # Explicitly excluding dev builds from TestPyPI for testing with GitHub,
+        # but you can remove the `!= 'dev'` line if you want dev builds published too.
+        if: >-
+          needs.create-tag.outputs.release-type != 'stable'
+          && needs.create-tag.outputs.release-type != 'post'
+          && needs.create-tag.outputs.release-type != 'dev'
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        run: uv publish --index testpypi
