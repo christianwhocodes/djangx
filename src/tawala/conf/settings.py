@@ -1,8 +1,31 @@
+from importlib.metadata import version
 from typing import Any
 
-from django.utils.csp import CSP  # pyright: ignore[reportMissingTypeStubs]
+from django.utils.csp import CSP  # type: ignore[reportMissingTypeStubs]
 
-from .management.config import Tawala
+from .management import config, path
+
+
+class Tawala:
+    """Main configuration class that orchestrates settings."""
+
+    def __init__(self):
+        cached_base_dir = path.BasePath.get_cached_base_dir()
+
+        if cached_base_dir is not None:
+            # Already checked by CLI - reuse the cached value
+            self.base_dir = cached_base_dir
+        else:
+            # Not yet checked (ASGI/WSGI context) - check now or exit
+            self.base_dir = path.BasePath.get_base_dir_or_exit()
+
+        self.version: str = version("tawala")
+        self.security = config.SecurityConfig()
+        self.apps = config.ApplicationConfig()
+        self.db = config.DatabaseConfig()
+        self.storage = config.StorageConfig()
+        self.build = config.BuildConfig()
+
 
 T = Tawala()
 
@@ -13,6 +36,8 @@ TAWALA_VERSION = T.version
 # ==============================================================================
 
 BASE_DIR = T.base_dir
+assert BASE_DIR is not None, "BASE_DIR should have already been validated and cached."
+
 API_DIR = BASE_DIR / "api"
 APP_DIR = BASE_DIR / "app"
 PUBLIC_DIR = BASE_DIR / "public"

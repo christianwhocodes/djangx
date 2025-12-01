@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional
 
-from tawala.core.management.utils import (
+from ...core.management.utils import (
     to_bool,
     to_list_of_str,
     to_str_if_value_else_empty_str,

@@ -1,11 +1,8 @@
 import os
-import tomllib
-from importlib.metadata import version
-from pathlib import Path
 from typing import Any, Optional
 
 from .fields import BaseConfField, ConfField
-from .path import BaseDirectory, get_base_dir_or_exit
+from .path import BasePath
 
 
 class BaseConfig:
@@ -15,37 +12,9 @@ class BaseConfig:
     _config_specs: dict[str, dict[str, Any]] = {}
 
     @classmethod
-    def _load_toml(
-        cls,
-        toml_path: Optional[Path] = None,
-        section: Optional[str] = None,
-    ) -> None:
-        """Load TOML configuration from pyproject.toml file."""
-        if toml_path is None:
-            # * Base directory must have already been validated, which it should be in Tawala class
-            base_dir = BaseDirectory.get_cached_base_dir()
-            if base_dir is not None:
-                toml_path = base_dir / "pyproject.toml"
-
-        if toml_path is not None and toml_path.exists() and toml_path.is_file():
-            with toml_path.open("rb") as f:
-                all_data: dict[str, Any] = tomllib.load(f)
-
-            if section:
-                data: dict[str, Any] = all_data
-                for key in section.split("."):
-                    data = data.get(key, {})
-                cls._toml_data = data
-            else:
-                cls._toml_data = {}
-        else:
-            cls._toml_data = {}
-
-    @classmethod
     def _get_from_toml(
         cls,
         key: Optional[str],
-        section: Optional[str] = "tool.tawala",
         default: Any = None,
     ) -> Any:
         """
@@ -53,7 +22,6 @@ class BaseConfig:
 
         Args:
             key: Dot-separated path to the config value (e.g., "storage.backend")
-            section: The TOML section to load (e.g., "tool.tawala")
             default: Default value if key is not found
 
         Returns:
@@ -62,13 +30,10 @@ class BaseConfig:
         if key is None:
             return default
 
-        # Ensure TOML is loaded with the correct section
-        cls._load_toml(section=section)
-
         # Navigate through nested keys
-        current = cls._toml_data
+        current: Optional[dict[str, Any]] = BasePath.get_cached_toml_section()
         for k in key.split("."):
-            if isinstance(current, dict) and k in current:
+            if current is not None and k in current:
                 current = current[k]
             else:
                 return default
@@ -81,7 +46,6 @@ class BaseConfig:
         env_key: Optional[str] = None,
         toml_key: Optional[str] = None,
         default: Any = None,
-        toml_section: Optional[str] = "tool.tawala",
     ) -> Any:
         """
         Fetch configuration value with fallback priority: ENV -> TOML -> default.
@@ -90,7 +54,6 @@ class BaseConfig:
             env_key: Environment variable name to check
             toml_key: TOML key path to check (dot-separated)
             default: Default value if neither source has the value
-            toml_section: TOML section to search in
 
         Returns:
             The configuration value from the first available source (raw, no casting)
@@ -100,7 +63,7 @@ class BaseConfig:
             return os.environ[env_key]
 
         # Fall back to TOML config and set default as it is the final fallback
-        return cls._get_from_toml(toml_key, section=toml_section, default=default)
+        return cls._get_from_toml(toml_key, default=default)
 
     def __init_subclass__(cls) -> None:
         """
@@ -268,26 +231,3 @@ class BuildConfig(BaseConfig):
         env="BUILD_COMMANDS",
         toml="build.commands",
     )
-
-
-class Tawala:
-    """Main configuration class that orchestrates environment, security, app, and database configs."""
-
-    def __init__(self):
-        # Check if base_dir has already been validated (e.g., by CLI startup)
-        # If not, validate it now (e.g., ASGI/WSGI startup)
-        cached_base_dir = BaseDirectory.get_cached_base_dir()
-
-        if cached_base_dir is not None:
-            # Already checked by CLI - reuse the cached value
-            self.base_dir = cached_base_dir
-        else:
-            # Not yet checked (ASGI/WSGI context) - check now or exit
-            self.base_dir = get_base_dir_or_exit()
-
-        self.version: str = version("tawala")
-        self.security = SecurityConfig()
-        self.apps = ApplicationConfig()
-        self.db = DatabaseConfig()
-        self.storage = StorageConfig()
-        self.build = BuildConfig()

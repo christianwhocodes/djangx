@@ -10,13 +10,13 @@ import sys
 
 from django.core.management import ManagementUtility
 
-from .conf.management.path import get_base_dir_or_exit
+from .conf.management.path import BasePath
 
 
 def main() -> None:
     """Main entry point for the Tawala CLI."""
 
-    base_dir = get_base_dir_or_exit()
+    base_dir = BasePath.get_base_dir_or_exit()
     sys.path.insert(0, str(base_dir))
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tawala.conf.settings")
 
