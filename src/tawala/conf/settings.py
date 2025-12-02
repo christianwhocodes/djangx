@@ -16,9 +16,15 @@ TAWALA_VERSION = version("tawala")
 # Initialization
 # ==============================================================================
 
-BASE_DIR: Optional[Path] = (
-    Project.get_base_dir() if CLISetup.is_successful else Project.get_base_dir_or_exit()
-)
+
+def _get_base_dir() -> Optional[Path]:
+    if CLISetup.is_successful:
+        return Project.get_base_dir()
+    else:
+        return Project.get_base_dir_or_exit()
+
+
+BASE_DIR = _get_base_dir()
 
 assert BASE_DIR is not None, (
     "BASE_DIR should have already been validated and set. "
