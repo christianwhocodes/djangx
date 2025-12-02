@@ -1,17 +1,13 @@
-from typing import TYPE_CHECKING, Any, Literal, Optional
-
-if TYPE_CHECKING:
-    from pathlib import Path
-
-    from .types import ProjectDirsSetting
-
 from importlib.metadata import version
+from pathlib import Path
+from typing import Any, Literal, Optional
 
 from django.utils.csp import CSP  # type: ignore[reportMissingTypeStubs]
 
 from . import config
 from .base import Project
 from .checks import CLISetup
+from .types import ProjectDirsSetting
 
 TAWALA_VERSION = version("tawala")
 
@@ -158,7 +154,10 @@ def _get_database_config() -> dict[str, dict[str, Any]]:
             }
 
         case "postgresql" | "postgres" | "psql" | "pgsql" | "pg" | "psycopg":
-            options = {"pool": T.database.pool, "sslmode": T.database.ssl_mode}
+            options: dict[str, Any] = {
+                "pool": T.database.pool,
+                "sslmode": T.database.ssl_mode,
+            }
 
             # Add service or connection vars
             if T.database.use_vars:
