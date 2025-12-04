@@ -19,7 +19,7 @@ from pathlib import Path
 
 from typing import Any, Literal, NoReturn, Optional
 
-from tawala.helpers import version_placeholder
+from christianwhocodes.helpers import version_placeholder
 
 
 class _Package:

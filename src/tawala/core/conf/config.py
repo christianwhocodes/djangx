@@ -8,7 +8,7 @@ Note the order:
 import os
 from typing import Any, Dict, Optional
 
-from tawala.helpers import TypeConverter
+from christianwhocodes.helpers import TypeConverter
 
 from .pre import PKG, PROJECT
 

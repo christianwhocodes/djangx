@@ -20,8 +20,8 @@ from pathlib import Path
 from typing import Any, NoReturn, Optional
 from urllib.parse import urlparse
 
+from christianwhocodes.enums import ExitCode
 from django.core.management.color import color_style
-from tawala.helpers import ExitCode
 
 
 class ProjectConfig:
