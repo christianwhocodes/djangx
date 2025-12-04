@@ -3,8 +3,9 @@ from typing import Optional
 from django.core.files.base import ContentFile, File
 from django.core.files.storage import Storage
 from django.utils.deconstruct import deconstructible
-from tawala.core.conf.post import STORAGE_TOKEN
 from vercel.blob import BlobClient  # type: ignore[reportMissingTypeStubs]
+
+from ....conf.post import STORAGE_TOKEN
 
 
 @deconstructible

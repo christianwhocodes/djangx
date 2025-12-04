@@ -12,16 +12,16 @@ Run with --dry or --dry-run to preview the git commands without executing them.
 
 from __future__ import annotations
 
-import argparse
-import subprocess
-import sys
-import tomllib
+from argparse import ArgumentParser, Namespace, RawDescriptionHelpFormatter
 from pathlib import Path
+from subprocess import CalledProcessError, CompletedProcess, run
+from sys import exit
+from tomllib import TOMLDecodeError, load
 from typing import Any, NoReturn, Optional
 from urllib.parse import urlparse
 
-from christianwhocodes.enums import ExitCode
-from django.core.management.color import color_style
+from christianwhocodes.colors import Text, colored_print
+from christianwhocodes.helpers import ExitCode
 
 
 class ProjectConfig:
@@ -40,17 +40,14 @@ class ProjectConfig:
         base = Path(__file__).resolve().parent.parent.parent
         return cls(base / "pyproject.toml")
 
-    def load(self) -> dict[str, Any]:
-        """Load TOML only once. Raises FileNotFoundError or tomllib.TOMLDecodeError."""
-        if self._config is None:
-            with open(self.pyproject_path, "rb") as f:
-                self._config = tomllib.load(f)
-        return self._config
-
     @property
     def repo_url(self) -> str:
         """Return repository URL from TOML (raises ValueError if missing)."""
-        urls = self.load().get("project", {}).get("urls", {})
+        if self._config is None:
+            with open(self.pyproject_path, "rb") as f:
+                self._config = load(f)
+
+        urls = self._config.get("project", {}).get("urls", {})
         url = urls.get("repository")
         if not url:
             raise ValueError("No repository URL found in project.urls")
@@ -72,7 +69,7 @@ class ProjectConfig:
 
     def fetch_version(self) -> str:
         """Get version from `uv` CLI. Raises CalledProcessError or ValueError."""
-        result: subprocess.CompletedProcess[str] = subprocess.run(
+        result: CompletedProcess[str] = run(
             ["uv", "version", "--short"],
             check=True,
             capture_output=True,
@@ -91,7 +88,6 @@ class GitPublisher:
 
     def __init__(self, config: ProjectConfig) -> None:
         self.config = config
-        self.style = color_style()
 
     def tag(self, version: str, dry: bool) -> str:
         """Create git tag and return tag string (e.g. 'v1.2.3')."""
@@ -99,9 +95,9 @@ class GitPublisher:
         cmd = ["git", "tag", "-a", tag, "-m", f"Release {version}"]
 
         if dry:
-            print(self.style.WARNING(f"Would run: {' '.join(cmd)}"))
+            colored_print(f"Would run: {' '.join(cmd)}", Text.WARNING)
         else:
-            subprocess.run(cmd, check=True, capture_output=True, text=True)
+            run(cmd, check=True, capture_output=True, text=True)
 
         return tag
 
@@ -109,16 +105,14 @@ class GitPublisher:
         """Push tags to origin."""
         cmd = ["git", "push", "origin", "--tags"]
         if dry:
-            print(self.style.WARNING("Would run: git push origin --tags"))
+            colored_print("Would run: git push origin --tags", Text.WARNING)
         else:
-            subprocess.run(cmd, check=True, capture_output=True, text=True)
+            run(cmd, check=True, capture_output=True, text=True)
 
 
 def tag_and_push(dry_run: bool = False) -> ExitCode:
-    style = color_style()
-
     if dry_run:
-        print(style.NOTICE("DRY RUN MODE - no changes will be made\n"))
+        colored_print("DRY RUN MODE - no changes will be made\n", Text.INFO)
 
     try:
         cfg = ProjectConfig.from_base_dir()
@@ -133,49 +127,51 @@ def tag_and_push(dry_run: bool = False) -> ExitCode:
         # e.filename can be None; guard for that
         filename = getattr(e, "filename", None)
         if filename:
-            print(style.ERROR(f"File not found: {filename}"))
+            colored_print(f"File not found: {filename}", Text.ERROR)
         else:
-            print(style.ERROR("File not found"))
+            colored_print("File not found", Text.ERROR)
         return ExitCode.ERROR
 
-    except subprocess.CalledProcessError as e:
+    except CalledProcessError as e:
         # e.cmd may be list[str] or None; format defensively
         cmd = " ".join(map(str, e.cmd)) if e.cmd else "<cmd>"
-        print(style.ERROR(f"Command failed: {cmd}"))
-        print(style.ERROR(f"Return code: {e.returncode}"))
+        colored_print(f"Command failed: {cmd}", Text.ERROR)
+        colored_print(f"Return code: {e.returncode}", Text.ERROR)
         if getattr(e, "stdout", None):
-            print(style.ERROR(f"stdout: {e.stdout}"))
+            colored_print(f"stdout: {e.stdout}", Text.ERROR)
         if getattr(e, "stderr", None):
-            print(style.ERROR(f"stderr: {e.stderr}"))
+            colored_print(f"stderr: {e.stderr}", Text.ERROR)
         return ExitCode.ERROR
 
-    except tomllib.TOMLDecodeError as e:
-        print(style.ERROR(f"Failed to parse pyproject.toml: {str(e)}"))
+    except TOMLDecodeError as e:
+        colored_print(f"Failed to parse pyproject.toml: {str(e)}", Text.ERROR)
         return ExitCode.ERROR
 
     except ValueError as e:
-        print(style.ERROR(f"Configuration error: {str(e)}"))
+        colored_print(f"Configuration error: {str(e)}", Text.ERROR)
         return ExitCode.ERROR
 
     except Exception as e:
-        print(style.ERROR(f"Unexpected error: {str(e)}"))
+        colored_print(f"Unexpected error: {str(e)}", Text.ERROR)
         return ExitCode.ERROR
 
     else:
         if dry_run:
-            print(style.SUCCESS(f"Tag {tag} would be pushed successfully."))
-            print(style.SUCCESS("GitHub Actions workflow would trigger."))
+            colored_print(f"Tag {tag} would be pushed successfully.", Text.SUCCESS)
+            colored_print("GitHub Actions workflow would trigger.", Text.SUCCESS)
         else:
-            print(style.SUCCESS(f"Tag {tag} pushed successfully!"))
-            print(style.NOTICE(f"Monitor workflow: {actions_url}"))
+            colored_print(f"Tag {tag} pushed successfully!", Text.SUCCESS)
+            colored_print(
+                [("Monitor workflow: ", Text.INFO), (actions_url, Text.HIGHLIGHT)]
+            )
 
         return ExitCode.SUCCESS
 
 
 def main() -> NoReturn:
-    parser = argparse.ArgumentParser(
+    parser = ArgumentParser(
         description="Create and push git tag to trigger publishing workflow",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        formatter_class=RawDescriptionHelpFormatter,
         epilog="Example:\n  publish.py --dry-run",
     )
 
@@ -187,8 +183,8 @@ def main() -> NoReturn:
         help="Preview commands without execution",
     )
 
-    args = parser.parse_args()
-    sys.exit(tag_and_push(args.dry_run))
+    args: Namespace = parser.parse_args()
+    exit(tag_and_push(args.dry_run))
 
 
 if __name__ == "__main__":

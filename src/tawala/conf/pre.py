@@ -2,8 +2,8 @@
 
 The PKG and PROJECT variables are used to configure the following files which are loaded before app and settings initialization:
 
-- core/manage.py
-- core/conf/config.py
+- manage.py
+- conf/config.py
 - core/api/[a|w]sgi.py
 - components/[ui|utils]/apps.py
 
@@ -16,10 +16,10 @@ Note the order:
 """
 
 from pathlib import Path
-
 from typing import Any, Literal, NoReturn, Optional
 
-from christianwhocodes.helpers import version_placeholder
+from christianwhocodes.exceptions import DirectoryNotFoundError
+from christianwhocodes.helpers import ExitCode, version_placeholder
 
 
 class _Package:
@@ -34,12 +34,6 @@ class _Package:
             return version(package)
         except Exception:
             return version_placeholder()
-
-
-class _ProjectError(Exception):
-    """Raised when the current directory is not a project base directory."""
-
-    pass
 
 
 class _Project:
@@ -90,10 +84,11 @@ class _Project:
             )
 
         if not cls._cached_is_valid:
-            raise _ProjectError(
+            raise DirectoryNotFoundError(
                 "Are you currently executing in a Tawala app base directory? "
                 "If not navigate to your app's root or "
-                "create a new Tawala app to run the command."
+                "create a new Tawala app to run the command.",
+                expected_dir="A Tawala app root directory",
             )
 
         return cls._cached_base_dir
@@ -103,13 +98,11 @@ class _Project:
         """Get the Tawala app base directory or exit with an error."""
         try:
             return cls._get_base_dir_on_initial_load()
-        except _ProjectError as e:
+        except DirectoryNotFoundError as e:
             import sys
 
-            from django.core.management.color import color_style
-
-            print(color_style().WARNING(str(e)))
-            sys.exit(1)
+            print(str(e))
+            sys.exit(ExitCode.ERROR)
 
     @classmethod
     def get_base_dir(cls) -> Path:

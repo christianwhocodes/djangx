@@ -8,8 +8,8 @@ and continues running remaining commands even if one fails.
 from typing import Any
 
 from django.core.management.base import BaseCommand, CommandParser
-from tawala.core.conf.post import COMMANDS_BUILD, COMMANDS_INSTALL, PKG_NAME
 
+from .....conf.post import COMMANDS_BUILD, COMMANDS_INSTALL, PKG_NAME
 from ..art import ArtPrinter, ArtType
 from ..generators.command import CommandGenerator, CommandOutput
 

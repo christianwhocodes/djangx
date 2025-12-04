@@ -1,5 +1,6 @@
 from django.apps import AppConfig
-from tawala.core.conf.pre import PKG
+
+from ...conf.pre import PKG
 
 
 class UIConfig(AppConfig):

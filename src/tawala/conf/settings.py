@@ -74,6 +74,7 @@ if not DEBUG:
 # ==============================================================================
 
 ROOT_URLCONF = f"{PKG_NAME}.core.app.urls"
+
 ASGI_APPLICATION = f"{PKG_NAME}.core.api.asgi.application"
 WSGI_APPLICATION = f"{PKG_NAME}.core.api.wsgi.application"
 

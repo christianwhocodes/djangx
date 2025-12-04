@@ -3,8 +3,7 @@ import os
 import sys
 from typing import NoReturn, Optional
 
-from christianwhocodes.enums import ExitCode
-from christianwhocodes.helpers import version_placeholder
+from christianwhocodes.helpers import ExitCode, version_placeholder
 from django.core.management import ManagementUtility
 
 from .conf.pre import PKG, PROJECT
@@ -28,7 +27,7 @@ def main() -> Optional[NoReturn]:
             base_dir = PROJECT.get_base_dir_or_exit()
             sys.path.insert(0, str(base_dir))
             os.environ.setdefault(
-                "DJANGO_SETTINGS_MODULE", f"{PKG.name}.core.conf.settings"
+                "DJANGO_SETTINGS_MODULE", f"{PKG.name}.conf.settings"
             )
 
             utility = ManagementUtility(sys.argv)

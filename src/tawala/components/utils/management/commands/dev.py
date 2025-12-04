@@ -6,8 +6,8 @@ from django.contrib.staticfiles.management.commands.runserver import (
 )
 from django.core.management.base import CommandParser
 from django.utils import timezone
-from tawala.core.conf.post import PKG_NAME, PKG_VERSION
 
+from .....conf.post import PKG_NAME, PKG_VERSION
 from ..art import ArtPrinter
 
 
