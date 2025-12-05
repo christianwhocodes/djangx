@@ -46,7 +46,7 @@ BASE_DIR = SETTINGS.project.base_dir
 APP_DIR = BASE_DIR / "app"
 API_DIR = BASE_DIR / "api"
 PUBLIC_DIR = BASE_DIR / "public"
-CLI_DIR = BASE_DIR / ".cli"
+TMP_DIR = BASE_DIR / "tmp"
 
 
 # ==============================================================================
@@ -192,7 +192,7 @@ DATABASES = _get_database_config()
 TAILWIND_CLI: dict[str, Any] = {
     "PATH": SETTINGS.tailwind_cli.path
     if SETTINGS.tailwind_cli.path
-    else CLI_DIR / "tailwindcss" / "cli",
+    else TMP_DIR / "tailwindcss" / "cli",
     "VERSION": SETTINGS.tailwind_cli.version,
     "CSS": {
         "input": APP_DIR / "static" / "app" / "css" / "input.css",

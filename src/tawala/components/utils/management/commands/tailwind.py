@@ -162,7 +162,15 @@ class Command(BaseCommand):
         )
 
         tailwind_cli_path: Path = tailwind_config["PATH"]
-        tailwind_cli_path.mkdir(parents=True, exist_ok=True)
+
+        try:
+            tailwind_cli_path.parent.mkdir(parents=True, exist_ok=True)
+        except PermissionError:
+            raise CommandError(
+                f"Permission denied: Cannot create directory at {tailwind_cli_path.parent}. "
+                f"Ensure the path is writable."
+            )
+
         tailwind_cli_version: str = tailwind_config["VERSION"]
         download_url: str = self._get_download_url(
             tailwind_cli_version, platform_name, architecture
@@ -221,22 +229,22 @@ class Command(BaseCommand):
         )
 
     def handle_build(self, tailwind_config: dict[str, Any]) -> None:
-        tailwind_cli: Path | str = tailwind_config.get("PATH", "")
+        tailwind_cli_path: Path | str = tailwind_config.get("PATH", "")
         css_config: dict[str, Path | str] = tailwind_config.get("CSS", {})
-        input_css = css_config.get("input", "")
-        output_css = css_config.get("output", "")
+        input_css_path = css_config.get("input", "")
+        output_css_path = css_config.get("output", "")
 
-        if not tailwind_cli or not input_css or not output_css:
+        if not tailwind_cli_path or not input_css_path or not output_css_path:
             raise CommandError(
                 "Tailwind CLI configuration is incomplete. Confirm your TAILWIND_CLI configuration."
             )
 
         command: list[str] = [
-            str(tailwind_cli),
+            str(tailwind_cli_path),
             "-i",
-            str(input_css),
+            str(input_css_path),
             "-o",
-            str(output_css),
+            str(output_css_path),
             "--minify",
         ]
 
@@ -246,7 +254,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("✓ Tailwind CSS built successfully!"))
         except FileNotFoundError:
             raise CommandError(
-                f"Tailwind CLI not found at '{tailwind_cli}'. Run {PKG_NAME} tailwind --install first."
+                f"Tailwind CLI not found at '{tailwind_cli_path}'. Run {PKG_NAME} tailwind --install first."
             )
         except CalledProcessError as e:
             raise CommandError(f"Tailwind CSS build failed: {e}")
