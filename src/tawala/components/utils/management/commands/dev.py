@@ -7,7 +7,7 @@ from django.contrib.staticfiles.management.commands.runserver import (
 from django.core.management.base import CommandParser
 from django.utils import timezone
 
-from .....conf.postload import PKG_NAME, PKG_VERSION
+from .....core.app.postsettings import PKG_NAME, PKG_VERSION
 from ..art import ArtPrinter
 
 

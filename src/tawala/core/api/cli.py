@@ -7,7 +7,7 @@ from typing import NoReturn, Optional
 from christianwhocodes.helpers import ExitCode, version_placeholder
 from django.core.management import ManagementUtility
 
-from .conf.preload import PKG, PROJECT
+from ... import PKG, PROJECT
 
 
 def main() -> Optional[NoReturn]:
@@ -24,7 +24,9 @@ def main() -> Optional[NoReturn]:
 
         case _:
             path.insert(0, str(PROJECT.base_dir))
-            environ.setdefault("DJANGO_SETTINGS_MODULE", f"{PKG.name}.conf.settings")
+            environ.setdefault(
+                "DJANGO_SETTINGS_MODULE", f"{PKG.name}.core.app.settings"
+            )
 
             utility = ManagementUtility(argv)
             utility.prog_name = PKG.name

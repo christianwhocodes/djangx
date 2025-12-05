@@ -11,8 +11,8 @@ from os import environ
 
 from django.core.wsgi import get_wsgi_application
 
-from ...conf.preload import PKG
+from ... import PKG
 
-environ.setdefault("DJANGO_SETTINGS_MODULE", f"{PKG.name}.conf.settings")
+environ.setdefault("DJANGO_SETTINGS_MODULE", f"{PKG.name}.core.app.settings")
 
 application = get_wsgi_application()

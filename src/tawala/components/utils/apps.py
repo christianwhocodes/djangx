@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
-from ...conf.preload import PKG
+from ... import PKG
 
 
 class UtilsConfig(AppConfig):

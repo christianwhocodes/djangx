@@ -1,20 +1,10 @@
-"""
-Note the order:
-- `preload.py` configures `config.py`, which in turns is used to configure `settings.py`.
-- `preload.py` is used to load settings from `pyproject.toml` and passes it to `config.py`.
-- `config.py` chooses the which configurations - either from .env, pyproject.toml, or default - to settle on,
-- and then passes on the configs to `settings.py`.
-- `settings.py` is then loaded by Django, from which, in `postload.py`,
-- we centralize the variables that are used within core and components for easy tracking and management.
-"""
-
 from os import environ
 from pathlib import Path
 from typing import Any, Dict, Optional, cast
 
 from christianwhocodes.helpers import TypeConverter
 
-from .preload import PKG, PROJECT
+from ... import PKG, PROJECT
 
 
 class PackageConfig:

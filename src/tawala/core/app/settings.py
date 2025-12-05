@@ -1,19 +1,9 @@
-"""
-Note the order:
-- `preload.py` configures `config.py`, which in turns is used to configure `settings.py`.
-- `preload.py` is used to load settings from `pyproject.toml` and passes it to `config.py`.
-- `config.py` chooses the which configurations - either from .env, pyproject.toml, or default - to settle on,
-- and then passes on the configs to `settings.py`.
-- `settings.py` is then loaded by Django, from which, in `postload.py`,
-- we centralize the variables that are used within core and components for easy tracking and management.
-"""
-
 from pathlib import Path
 from typing import Any, Literal
 
 from django.utils.csp import CSP  # type: ignore[reportMissingTypeStubs]
 
-from .config import (
+from .presettings import (
     CommandsConfig,
     DatabaseConfig,
     PackageConfig,
@@ -80,11 +70,7 @@ if not DEBUG:
 # Application definition
 # ==============================================================================
 
-ROOT_URLCONF = f"{PKG_NAME}.core.__app__.urls"
-
-WSGI_APPLICATION = f"{PKG_NAME}.core.__api__.wsgi.application"
-
-INSTALLED_APPS: list[str] = [
+INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -93,10 +79,9 @@ INSTALLED_APPS: list[str] = [
     "django.contrib.staticfiles",
     "django_browser_reload",
     "django_watchfiles",
-    "tawala.core.__app__",
-    "app",
     f"{PKG_NAME}.components.utils",
     f"{PKG_NAME}.components.ui",
+    "app",
 ]
 
 MIDDLEWARE: list[str] = [
@@ -110,6 +95,8 @@ MIDDLEWARE: list[str] = [
     "django.middleware.csp.ContentSecurityPolicyMiddleware",
     "django_browser_reload.middleware.BrowserReloadMiddleware",
 ]
+
+ROOT_URLCONF = f"{PKG_NAME}.core.app.urls"
 
 TEMPLATES: list[dict[str, Any]] = [
     {
@@ -126,6 +113,8 @@ TEMPLATES: list[dict[str, Any]] = [
         },
     },
 ]
+
+WSGI_APPLICATION = f"{PKG_NAME}.core.api.wsgi.application"
 
 
 # ==============================================================================

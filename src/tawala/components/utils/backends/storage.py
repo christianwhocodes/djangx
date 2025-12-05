@@ -5,7 +5,7 @@ from django.core.files.storage import Storage
 from django.utils.deconstruct import deconstructible
 from vercel.blob import BlobClient  # type: ignore[reportMissingTypeStubs]
 
-from ....conf.postload import STORAGE_TOKEN
+from ....core.app.postsettings import STORAGE_TOKEN
 
 
 @deconstructible

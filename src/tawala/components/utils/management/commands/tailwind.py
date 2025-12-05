@@ -8,7 +8,7 @@ from urllib.request import urlretrieve
 
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
-from .....conf.postload import CLI_DIR, PKG_NAME, TAILWIND_CLI
+from .....core.app.postsettings import CLI_DIR, PKG_NAME, TAILWIND_CLI
 
 
 class Command(BaseCommand):
