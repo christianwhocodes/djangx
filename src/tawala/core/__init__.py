@@ -13,7 +13,7 @@ Import these symbols before Django loads apps and settings; avoid using them els
 from pathlib import Path
 from typing import Any, NoReturn, Optional
 
-from christianwhocodes.helpers import ExitCode, PyProject, version_placeholder
+from christianwhocodes.helpers import ExitCode, PyProject, Version
 from christianwhocodes.stdout import Text, print
 
 
@@ -23,15 +23,7 @@ class _Package:
     def __init__(self) -> None:
         self.dir: Path = self._file.parent.parent
         self.name: str = self.dir.stem
-
-    @property
-    def version(self) -> str:
-        try:
-            from importlib.metadata import version
-
-            return version(self.name)
-        except Exception:
-            return version_placeholder()
+        self.version = Version.get(self.name)[0]
 
 
 PKG = _Package()

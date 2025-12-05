@@ -11,7 +11,7 @@ license = { file = "LICENSE" }
 authors = [{ name = "christianwhocodes", email = "kevin@tawalabora.space" }]
 requires-python = ">=3.12"
 dependencies = [
-    "christianwhocodes>=1.1.6",
+    "christianwhocodes>=1.1.10",
     "django>=6.0",
     "django-browser-reload>=1.21.0",
     "django-watchfiles>=1.4.0",

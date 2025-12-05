@@ -4,7 +4,8 @@ from os import environ
 from sys import argv, exit, path
 from typing import NoReturn, Optional
 
-from christianwhocodes.helpers import ExitCode, version_placeholder
+from christianwhocodes.helpers import ExitCode, Version
+from christianwhocodes.stdout import print
 from django.core.management import ManagementUtility
 
 from .. import PKG, PROJECT
@@ -15,11 +16,11 @@ def main() -> Optional[NoReturn]:
 
     match argv[1]:
         case "-v" | "--version" | "version":
-            if PKG.version != version_placeholder():
+            if PKG.version != Version.placeholder():
                 print(PKG.version)
                 exit(ExitCode.SUCCESS)
             else:
-                print(f"Could not determine {PKG.name} version.")
+                print(f"{PKG.version}: Could not determine {PKG.name} version.")
                 exit(ExitCode.ERROR)
 
         case _:
