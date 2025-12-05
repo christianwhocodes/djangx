@@ -9,8 +9,8 @@ from ... import PKG, PROJECT
 
 class PackageConfig:
     def __init__(self) -> None:
-        self.name = PKG.name
         self.dir = PKG.dir
+        self.name = PKG.name
         self.version = PKG.version
 
 

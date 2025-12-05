@@ -677,7 +677,7 @@ wheels = [
 
 [[package]]
 name = "tawala"
-version = "1.0.15.post1"
+version = "1.0.15.post2"
 source = { editable = "." }
 dependencies = [
     { name = "christianwhocodes" },
