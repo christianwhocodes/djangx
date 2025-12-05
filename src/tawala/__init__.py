@@ -20,9 +20,8 @@ from christianwhocodes.stdout import Text, print
 class _Package:
     _file: Path = Path(__file__).resolve()
 
-    def __init__(self) -> None:
-        self.dir: Path = self._file.parent
-        self.name: str = self.dir.stem
+    dir: Path = _file.parent
+    name: str = dir.stem
 
     @property
     def version(self) -> str:
@@ -40,10 +39,9 @@ PKG = _Package()
 class _Project:
     """Directory path configuration and validation of project structure."""
 
-    def __init__(self) -> None:
-        self._base_dir: Optional[Path] = None
-        self._toml_section: Optional[dict[str, Any]] = None
-        self._valid_project: Optional[bool] = None
+    _base_dir: Optional[Path] = None
+    _toml_section: Optional[dict[str, Any]] = None
+    _valid_project: Optional[bool] = None
 
     @classmethod
     def _load_project(cls) -> Optional[NoReturn]:
