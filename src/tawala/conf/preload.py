@@ -28,7 +28,7 @@ from christianwhocodes.stdout import Text, print
 
 class _Package:
     name: Literal["tawala"] = "tawala"  # all lower case
-    dir: Path = Path(__file__).resolve().parent.parent.parent
+    dir: Path = Path(__file__).resolve().parent.parent
 
     @property
     def version(self) -> str:

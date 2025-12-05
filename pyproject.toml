@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "tawala"
-version = "1.0.13"
+version = "1.0.13.post1"
 description = ""
 readme = "README.md"
 license = { file = "LICENSE" }
