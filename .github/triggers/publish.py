@@ -118,9 +118,7 @@ def tag_and_push(dry_run: bool = False) -> ExitCode:
         print("DRY RUN MODE - no changes will be made\n", Text.INFO)
 
     try:
-        pyproject = PyProject(
-            Path(__file__).resolve().parent.parent.parent / "pyproject.toml"
-        )
+        pyproject = PyProject(Path(__file__).resolve().parent.parent.parent / "pyproject.toml")
 
         version = pyproject.version
 

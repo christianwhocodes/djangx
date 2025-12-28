@@ -6,3 +6,10 @@ __pycache__/
 
 # Distribution folder
 /dist/
+
+# All files in migrations except __init__.py
+/src/example/app/migrations/*
+!/src/example/app/migrations/__init__.py
+
+# Temporary files
+/.tmp/

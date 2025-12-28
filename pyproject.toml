@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "tawala"
-version = "1.1.2"
+version = "1.2.0"
 description = ""
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -23,8 +23,8 @@ repository = "https://github.com/tawalabora/tawala"
 issues = "https://github.com/tawalabora/tawala/issues"
 
 [project.scripts]
-tawala = "tawala.core.api.cli:main"
-twl = "tawala.core.api.cli:main"
+tawala = "tawala.api.cli:main"
+twl = "tawala.api.cli:main"
 
 [dependency-groups]
 dev = [
@@ -35,7 +35,13 @@ dev = [
 ]
 
 [tool.djlint]
-ignore = "H016"
+max_line_length = 300
+ignore = "H016,H006,H021"
+blank_line_before_tag = "block"
+blank_line_after_tag = "extend,endblock"
+
+[tool.ruff]
+line-length = 101
 
 [[tool.uv.index]]
 name = "testpypi"

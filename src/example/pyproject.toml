@@ -1,0 +1,24 @@
+[project]
+name = "tawala-app"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pillow>=12.0.0",
+    "psycopg[binary,pool]>=3.3.2",
+    "tawala>=1.2.0",
+    "vercel>=0.3.6",
+]
+
+[tool.tawala]
+allowed-hosts = ["localhost", "127.0.0.1"]
+secret-key = "django-insecure-change-me-in-production-via-envvar"
+commands = { install = [
+    "tailwindcss -i -y --use-cache",
+], build = [
+    "makemigrations",
+    "migrate",
+    "tailwindcss -b",
+    "collectstatic --noinput",
+] }

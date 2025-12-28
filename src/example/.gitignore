@@ -1,0 +1,17 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# Virtual environment
+/.venv/
+
+# Static and media files
+/public/
+
+# Environment variables files
+/.env*
+
+# SQLite database file
+/db.sqlite3
+
+# TailwindCSS CLI
+/tailwindcss.exe
