@@ -22,6 +22,7 @@ class Command(RunserverCommand):
     protocol: str
     use_ipv6: bool
     no_clipboard: bool
+    no_tailwind_watch: bool
 
     def add_arguments(self, parser: CommandParser) -> None:
         """Add custom arguments to the command.
@@ -37,6 +38,11 @@ class Command(RunserverCommand):
             action="store_true",
             help="Disable copying the server URL to clipboard",
         )
+        parser.add_argument(
+            "--no-tailwind-watch",
+            action="store_true",
+            help="Disable Tailwind CSS file watcher (still builds once on startup)",
+        )
 
     def handle(self, *args: object, **options: Any) -> str | None:
         """Handle the dev command execution.
@@ -47,11 +53,20 @@ class Command(RunserverCommand):
             *args: Positional arguments from the command.
             **options: Command options including:
                 - no_clipboard (bool): If True, skip clipboard copying.
+                - no_tailwind_watch (bool): If True, disable Tailwind watcher.
 
         Returns:
             Result from parent command or None.
         """
         self.no_clipboard = options.get("no_clipboard", False)
+        self.no_tailwind_watch = options.get("no_tailwind_watch", False)
+
+        # Disable the Tailwind watcher if flag is set
+        if self.no_tailwind_watch:
+            from ....ui.templatetags.tailwindcss import TailwindWatcher
+
+            TailwindWatcher.disable()
+
         return super().handle(*args, **options)
 
     def inner_run(self, *args: Any, **options: Any) -> None:

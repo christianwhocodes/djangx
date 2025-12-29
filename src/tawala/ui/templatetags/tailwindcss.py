@@ -21,6 +21,7 @@ class TailwindWatcher:
 
     _instance: ClassVar["Optional[TailwindWatcher]"] = None
     _lock: ClassVar[Lock] = Lock()
+    _disabled: ClassVar[bool] = False
 
     def __init__(self) -> None:
         """Initialize the watcher (use get_instance() instead)."""
@@ -41,6 +42,20 @@ class TailwindWatcher:
                     cls._instance = cls()
         return cls._instance
 
+    @classmethod
+    def disable(cls) -> None:
+        """Disable the watcher globally."""
+        cls._disabled = True
+
+    @classmethod
+    def is_disabled(cls) -> bool:
+        """Check if the watcher is disabled.
+
+        Returns:
+            True if the watcher is disabled, False otherwise
+        """
+        return cls._disabled
+
     def start(self, source_css: Path, output_css: Path, cli_path: Path) -> None:
         """Start the watcher if not already running.
 
@@ -49,6 +64,9 @@ class TailwindWatcher:
             output_css: Path to the output CSS file
             cli_path: Path to the Tailwind CLI executable
         """
+        if self._disabled:
+            return
+
         with self._lock:
             if self._started:
                 return
@@ -155,8 +173,8 @@ def tailwindcss() -> SafeString:
         config: dict[str, Path] = settings.TAILWINDCSS
         output_css: Path = config["OUTPUT"]
 
-        # Start watcher on first template tag use (only in DEBUG mode)
-        if settings.DEBUG:
+        # Start watcher on first template tag use (only in DEBUG mode and if not disabled)
+        if settings.DEBUG and not TailwindWatcher.is_disabled():
             watcher: TailwindWatcher = TailwindWatcher.get_instance()
             watcher.start(source_css=config["SOURCE"], output_css=output_css, cli_path=config["CLI"])
 

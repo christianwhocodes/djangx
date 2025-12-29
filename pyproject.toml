@@ -34,9 +34,6 @@ dev = [
     "vercel>=0.3.6",
 ]
 
-[tool.djlint]
-ignore = "H016,H006,H021"
-
 [tool.ruff]
 line-length = 101
 

@@ -8,9 +8,10 @@
      TYPOGRAPHY
      --------------------------------------------------------------------------- */
   /* Default body text font */
-  --font-default: "Roboto", system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-default:
+    "Roboto", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   /* Headings font family */
   --font-heading: "Mulish", system-ui, -apple-system, sans-serif;
   /* Navigation font family */
@@ -67,18 +68,12 @@
 @layer utilities {
   /* Full-width container */
   .container-full {
-    @apply w-full px-8 mx-auto;
+    @apply mx-auto w-full px-8;
   }
 
   /* Responsive container (Mobile→SM→MD→LG→XL→2XL: 100%→92%→83%→80%→75%→1400px max) */
   .container {
-    @apply w-full px-8 
-    sm:w-11/12 sm:px-4
-    md:w-5/6
-    lg:w-4/5
-    xl:w-3/4 xl:px-0
-    2xl:max-w-[1400px]
-    mx-auto;
+    @apply mx-auto w-full px-8 sm:w-11/12 sm:px-4 md:w-5/6 lg:w-4/5 xl:w-3/4 xl:px-0 2xl:max-w-[1400px];
   }
 }
 

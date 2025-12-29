@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+{% load tailwindcss %}
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -6,20 +7,27 @@
     <meta name="description" content="" />
     <meta name="keywords" content="" />
     <meta name="author" content="" />
-    {% block metatags %}{% endblock %}
-    {% block title %}<title>Tawala App</title>{% endblock %}
-    {% block fonts %}{% endblock %}
-    {% include "ui/vendors/tailwindcss.html" %}
+    {% block metatags %}
+    {% endblock metatags %}
+    {% block title %}
+      <title>Tawala App</title>
+    {% endblock title %}
+    {% block fonts %}
+    {% endblock fonts %}
+    {% tailwindcss %}
     {% include "ui/vendors/bootstrap-icons.html" %}
     {% include "ui/vendors/aos.html" %}
-    {% block styles %}{% endblock %}
-    {% block scripts %}{% endblock %}
+    {% block styles %}
+    {% endblock styles %}
+    {% block scripts %}
+    {% endblock scripts %}
   </head>
   <body>
     {% include "ui/widgets/preloader.html" %}
     {% include "ui/widgets/scroll-top.html" %}
     {% include "ui/sections/header.html" %}
-    {% block main %}{% endblock %}
+    {% block main %}
+    {% endblock main %}
     {% include "ui/sections/footer.html" %}
   </body>
 </html>

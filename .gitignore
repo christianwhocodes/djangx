@@ -1,8 +1,12 @@
 # Python bytecode files
 __pycache__/
 
-# Virtual environment folder
+# Package virtual environments
 /.venv/
+/node_modules/
+
+# Ruff cache
+/.ruff_cache/
 
 # Distribution folder
 /dist/

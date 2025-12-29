@@ -299,9 +299,9 @@ class TailwindCSSConfig(BaseConfig, PackageConfig):
     _version: str = "v4.1.18"
 
     def __init__(self) -> None:
-        self.source: Path = self.project_dir / "tailwind.css"
+        self.source: Path = self.project_dir / "app" / "static" / "app" / "global.css"
         self.output: Path = (
-            self.pkg_dir / "ui" / "static" / "ui" / "vendors" / "tailwindcss" / "tailwind.css"
+            self.pkg_dir / "ui" / "static" / "ui" / "global.css"
         )
 
     version = ConfField(env="TAILWINDCSS_VERSION", toml="tailwindcss.version", default=_version)
