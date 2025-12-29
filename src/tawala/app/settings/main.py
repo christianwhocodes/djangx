@@ -268,5 +268,13 @@ AUTH_PASSWORD_VALIDATORS: list[dict[Literal["NAME"], str]] = [
 SECURE_CSP: dict[str, list[str]] = {
     "default-src": [CSP.SELF],
     "script-src": [CSP.SELF, CSP.NONCE],
-    "style-src": [CSP.SELF, CSP.NONCE],
+    "style-src": [
+        CSP.SELF,
+        CSP.NONCE,
+        "https://fonts.googleapis.com",  # Google Fonts CSS
+    ],
+    "font-src": [
+        CSP.SELF,
+        "https://fonts.gstatic.com",  # Google Fonts font files
+    ],
 }

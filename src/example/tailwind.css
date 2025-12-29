@@ -1,2 +1,79 @@
 @import "tailwindcss";
-@source "app/templates/**/*.html";
+
+@theme {
+  /* Font families */
+  --font-default: "Roboto", system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-heading: "Mulish", system-ui, -apple-system, sans-serif;
+  --font-nav: "Raleway", system-ui, -apple-system, sans-serif;
+
+  /* Global Colors - The following color variables are used throughout the website. Updating them here will change the color scheme of the entire website */
+  --color-background: #141414; /* Background color for the entire website, including individual sections */
+  --color-default: #d9d9d9; /* Default color used for the majority of the text content across the entire website */
+  --color-heading: #ededed; /* Color for headings, subheadings and title throughout the website */
+  --color-accent: #ff4d4f; /* Accent color that represents your brand on the website. It's used for buttons, links, and other elements that need to stand out */
+  --color-surface: #1c1c1c; /* The surface color is used as a background of boxed elements within sections, such as cards, icon boxes, or other elements that require a visual separation from the global background. */
+  --color-contrast: #ffffff; /* Contrast color for text, ensuring readability against backgrounds of accent, heading, or default colors. */
+
+  /* Nav Menu Colors - The following color variables are used specifically for the navigation menu. They are separate from the global colors to allow for more customization options */
+  --color-nav: #d9d9d9; /* The default color of the main navmenu links */
+  --color-nav-hover: #ff4d4f; /* Applied to main navmenu links when they are hovered over or active */
+  --color-nav-mobile-bg: #2e2e2e; /* Used as the background color for mobile navigation menu */
+  --color-nav-dropdown-bg: #2e2e2e; /* Used as the background color for dropdown items that appear when hovering over primary navigation items */
+  --color-nav-dropdown: #d9d9d9; /* Used for navigation links of the dropdown items in the navigation menu. */
+  --color-nav-dropdown-hover: #ff4d4f; /* Similar to --nav-hover-color, this color is applied to dropdown navigation links when they are hovered over. */
+}
+
+/* Color Presets - These classes override global colors when applied to any section or element, providing reuse of the sam color scheme. */
+@theme light-background {
+  --color-background: rgba(41, 41, 41, 0.8);
+  --color-surface: #484848;
+}
+
+@theme dark-background {
+  --color-background: #060606;
+  --color-default: #ffffff;
+  --color-heading: #ffffff;
+  --color-surface: #252525;
+  --color-contrast: #ffffff;
+}
+
+/* Base styles */
+@layer base {
+  :root {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    color: var(--color-default);
+    background-color: var(--color-background);
+    font-family: var(--font-default);
+  }
+
+  a {
+    color: var(--color-accent);
+    text-decoration: none;
+    transition-property: color;
+    transition-duration: 300ms;
+  }
+
+  a:hover {
+    color: color-mix(in srgb, var(--color-accent), transparent 25%);
+    text-decoration: none;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: var(--color-heading);
+    font-family: var(--font-heading);
+  }
+}
+
+/* Content sources */
+@source "../tawala/**/*.html";
+@source "./app/templates/**/*.html";

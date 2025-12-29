@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="" />
+    <meta name="keywords" content="" />
+    <meta name="author" content="" />
+    {% block metatags %}{% endblock %}
+    {% block title %}<title>Tawala App</title>{% endblock %}
+    {% block fonts %}{% endblock %}
+    {% include "ui/vendors/tailwindcss.html" %}
+    {% include "ui/vendors/bootstrap-icons.html" %}
+    {% include "ui/vendors/aos.html" %}
+    {% block styles %}{% endblock %}
+    {% block scripts %}{% endblock %}
+  </head>
+  <body>
+    {% include "ui/widgets/preloader.html" %}
+    {% include "ui/widgets/scroll-top.html" %}
+    {% include "ui/sections/header.html" %}
+    {% block main %}{% endblock %}
+    {% include "ui/sections/footer.html" %}
+  </body>
+</html>

@@ -1,4 +1,4 @@
-let scrollTop = document.querySelector(".scroll-top");
+const scrollTop = document.getElementById("scroll-top");
 
 function toggleScrollTop() {
   if (scrollTop) {

@@ -35,10 +35,7 @@ dev = [
 ]
 
 [tool.djlint]
-max_line_length = 300
 ignore = "H016,H006,H021"
-blank_line_before_tag = "block"
-blank_line_after_tag = "extend,endblock"
 
 [tool.ruff]
 line-length = 101
