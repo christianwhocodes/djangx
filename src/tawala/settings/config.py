@@ -14,7 +14,10 @@ class PackageConfig:
 
 
 class ProjectConfig:
-    project_dir: Path = PROJECT.dir
+    base_dir: Path = PROJECT.dir
+    app_dir: Path = base_dir / "app"
+    api_dir: Path = base_dir / "api"
+    public_dir: Path = base_dir / "public"
     toml_section: dict[str, Any] = PROJECT.toml_section
 
 
@@ -257,7 +260,7 @@ class DatabaseConfig(BaseConfig):
     """Database configuration settings."""
 
     def __init__(self) -> None:
-        self.sqlite3: Path = self.project_dir / "db.sqlite3"
+        self.sqlite3: Path = self.base_dir / "db.sqlite3"
 
     backend = ConfField(env="DB_BACKEND", toml="db.backend", default="sqlite3")
     service = ConfField(env="DB_SERVICE", toml="db.service")
@@ -275,8 +278,8 @@ class StorageConfig(BaseConfig):
     """Storage configuration settings."""
 
     def __init__(self) -> None:
-        self.static_root: Path = self.project_dir / "public" / "static"
-        self.media_root: Path = self.project_dir / "public" / "media"
+        self.static_root: Path = self.public_dir / "static"
+        self.media_root: Path = self.public_dir / "media"
 
     backend = ConfField(
         env="STORAGE_BACKEND",
@@ -299,8 +302,8 @@ class TailwindCSSConfig(BaseConfig, PackageConfig):
     _version: str = "v4.1.18"
 
     def __init__(self) -> None:
-        self.source: Path = self.project_dir / "app" / "static" / "app" / "source.css"
-        self.output: Path = self.pkg_dir / "static" / "tawala.css"
+        self.source: Path = self.app_dir / "static" / "app.css"
+        self.output: Path = self.pkg_dir / "static" / f"{self.pkg_name}.css"
 
     version = ConfField(env="TAILWINDCSS_VERSION", toml="tailwindcss.version", default=_version)
     cli = ConfField(

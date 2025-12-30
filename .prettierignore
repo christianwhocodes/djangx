@@ -1,0 +1,3 @@
+/src/tawala/static/*.css
+/src/example/public/static/
+/.ruff_cache/

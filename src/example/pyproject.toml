@@ -15,10 +15,10 @@ dependencies = [
 allowed-hosts = ["localhost", "127.0.0.1"]
 secret-key = "django-insecure-change-me-in-production-via-envvar"
 commands = { install = [
-    "tailwindcss -i -y --use-cache",
+    "tailwindcss install -y --use-cache",
 ], build = [
     "makemigrations",
     "migrate",
-    "tailwindcss -b",
+    "tailwindcss build",
     "collectstatic --noinput",
 ] }

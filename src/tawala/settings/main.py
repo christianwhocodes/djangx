@@ -35,7 +35,10 @@ SETTINGS = Settings()
 
 PKG_NAME = SETTINGS.package.pkg_name
 PKG_VERSION = SETTINGS.package.pkg_version
-BASE_DIR = SETTINGS.project.project_dir
+BASE_DIR = SETTINGS.project.base_dir
+APP_DIR = SETTINGS.project.app_dir
+API_DIR = SETTINGS.project.api_dir
+PUBLIC_DIR = SETTINGS.project.public_dir
 
 
 # ==============================================================================
@@ -60,16 +63,16 @@ if not DEBUG:
 # ==============================================================================
 
 INSTALLED_APPS = [
+    PKG_NAME,
+    "app",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    PKG_NAME,
     "django.contrib.staticfiles",
     "django_browser_reload",
     "django_watchfiles",
-    "app",
 ]
 
 MIDDLEWARE: list[str] = [

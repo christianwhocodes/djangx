@@ -64,7 +64,7 @@ class ASGIFileGenerator(FileGenerator):
     @property
     def file_path(self) -> Path:
         """Return the path for the asgi.py"""
-        return settings.BASE_DIR / "api" / "asgi.py"
+        return settings.API_DIR / "asgi.py"
 
     @property
     def data(self) -> str:
@@ -83,7 +83,7 @@ class WSGIFileGenerator(FileGenerator):
     @property
     def file_path(self) -> Path:
         """Return the path for the wsgi.py."""
-        return settings.BASE_DIR / "api" / "wsgi.py"
+        return settings.API_DIR / "wsgi.py"
 
     @property
     def data(self) -> str:
