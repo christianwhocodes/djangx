@@ -1,24 +1,30 @@
-{% load tailwindcss %}
+{% load app %}
 <!doctype html>
 <html lang="en">
   <head>
+    {# Meta Tags #}
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="" />
+    <meta name="description" content="{% app_description %}" />
     <meta name="keywords" content="" />
     <meta name="author" content="" />
     {% block metatags %}
     {% endblock metatags %}
+    {# Title #}
     {% block title %}
-      <title>Tawala App</title>
+      <title>{% app_name %}</title>
     {% endblock title %}
+    {# Fonts #}
     {% block fonts %}
     {% endblock fonts %}
-    {% tailwindcss %}
+    {# Vendors #}
+    {% include "vendors/tailwindcss.html" %}
     {% include "vendors/bootstrap-icons.html" %}
     {% include "vendors/aos.html" %}
+    {# App CSS #}
     {% block styles %}
     {% endblock styles %}
+    {# App JavaScript #}
     {% block scripts %}
     {% endblock scripts %}
   </head>

@@ -3,20 +3,21 @@ from typing import Any, Literal
 
 from django.utils.csp import CSP  # type: ignore[reportMissingTypeStubs]
 
-from . import config
+from . import conf
 
 
 class Settings:
     """Main configuration class that orchestrates settings."""
 
     def __init__(self) -> None:
-        self.package = config.PackageConfig()
-        self.project = config.ProjectConfig()
-        self.security = config.SecurityConfig()
-        self.database = config.DatabaseConfig()
-        self.storage = config.StorageConfig()
-        self.tailwindcss = config.TailwindCSSConfig()
-        self.commands = config.CommandsConfig()
+        self.package = conf.PackageConf()
+        self.project = conf.ProjectConf()
+        self.security = conf.SecurityConf()
+        self.app = conf.AppConf()
+        self.database = conf.DatabaseConf()
+        self.storage = conf.StorageConf()
+        self.tailwindcss = conf.TailwindCSSConf()
+        self.commands = conf.CommandsConf()
 
 
 SETTINGS = Settings()
@@ -60,6 +61,12 @@ if not DEBUG:
 # ==============================================================================
 # Application definition
 # ==============================================================================
+
+APP = {
+    "NAME": SETTINGS.app.name or "Tawala",
+    "SHORT_NAME": SETTINGS.app.short_name or "Tawala",
+    "DESCRIPTION": SETTINGS.app.description or "Tawala Application",
+}
 
 INSTALLED_APPS: list[str] = [
     PKG_NAME,
@@ -232,8 +239,8 @@ def _get_tailwindcss_config() -> dict[str, str | Path]:
     return {
         "VERSION": version,
         "CLI": cli_path,
-        "SOURCE": APP_DIR / "static" / "app.css",
-        "OUTPUT": PKG_DIR / "static" / f"{PKG_NAME}.css",
+        "SOURCE": APP_DIR / "static" / "app" / "css" / "source.css",
+        "OUTPUT": PKG_DIR / "static" / "vendors" / "tailwindcss" / "output.css",
     }
 
 

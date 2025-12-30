@@ -8,7 +8,7 @@ from christianwhocodes.helpers import TypeConverter
 from .. import PKG, PROJECT
 
 
-class PackageConfig:
+class PackageConf:
     def __init__(self) -> None:
         self.pkg_dir: pathlib.Path = PKG.dir
         self.pkg_name: str = PKG.name
@@ -104,7 +104,7 @@ class ConfField:
         )
 
 
-class ProjectConfig:
+class ProjectConf:
     """Base configuration class that handles loading from environment variables and TOML files."""
 
     _toml_section: dict[str, Any] = PROJECT.toml_section
@@ -186,7 +186,7 @@ class ProjectConfig:
 
             # Create property getter
             def make_getter(name: str, cfg: dict[str, Any]):
-                def getter(self: "ProjectConfig") -> Any:
+                def getter(self: "ProjectConf") -> Any:
                     env_key = cfg["env"]
                     toml_key = cfg["toml"]
                     target_type = cfg["type"]
@@ -204,7 +204,7 @@ class ProjectConfig:
             )
 
 
-class SecurityConfig(ProjectConfig):
+class SecurityConf(ProjectConf):
     """Security-related configuration settings."""
 
     secret_key = ConfField(env="SECRET_KEY", toml="secret-key", type=str)
@@ -212,7 +212,15 @@ class SecurityConfig(ProjectConfig):
     allowed_hosts = ConfField(env="ALLOWED_HOSTS", toml="allowed-hosts", type=list)
 
 
-class DatabaseConfig(ProjectConfig):
+class AppConf(ProjectConf):
+    """Site-related configuration settings."""
+
+    name = ConfField(env="APP_NAME", toml="app.name", type=str)
+    short_name = ConfField(env="APP_SHORT_NAME", toml="app.short-name", type=str)
+    description = ConfField(env="APP_DESCRIPTION", toml="app.description", type=str)
+
+
+class DatabaseConf(ProjectConf):
     """Database configuration settings."""
 
     backend = ConfField(env="DB_BACKEND", toml="db.backend", type=str)
@@ -227,7 +235,7 @@ class DatabaseConfig(ProjectConfig):
     port = ConfField(env="DB_PORT", type=str)
 
 
-class StorageConfig(ProjectConfig):
+class StorageConf(ProjectConf):
     """Storage configuration settings."""
 
     backend = ConfField(
@@ -238,7 +246,7 @@ class StorageConfig(ProjectConfig):
     token = ConfField(env="BLOB_READ_WRITE_TOKEN", toml="storage.token", type=str)
 
 
-class TailwindCSSConfig(ProjectConfig):
+class TailwindCSSConf(ProjectConf):
     """TailwindCSS configuration settings."""
 
     version = ConfField(
@@ -253,7 +261,7 @@ class TailwindCSSConfig(ProjectConfig):
     )
 
 
-class CommandsConfig(ProjectConfig):
+class CommandsConf(ProjectConf):
     """Install/Build Commands to be executed settings."""
 
     install = ConfField(env="COMMANDS_INSTALL", toml="commands.install", type=list)

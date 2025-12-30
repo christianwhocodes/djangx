@@ -1,7 +1,10 @@
 {% extends "tawala.html" %}
+{% load app %}
+
 {% block title %}
-  <title>Welcome - Tawala App</title>
+  <title>Welcome - {% app_name %} App</title>
 {% endblock title %}
+
 {% block fonts %}
   <link href="https://fonts.googleapis.com" rel="preconnect" />
   <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin />
@@ -10,6 +13,7 @@
     rel="stylesheet"
   />
 {% endblock fonts %}
+
 {% block main %}
   <main>
     <section class="container-full py-8">
