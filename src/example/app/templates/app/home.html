@@ -1,5 +1,5 @@
 {% extends "tawala.html" %}
-{% load app %}
+{% load app contact %}
 
 {% block title %}
   <title>Welcome - {% app_name %} App</title>
@@ -19,8 +19,11 @@
     <section class="container-full py-8">
       <h1>
         <span>{% app_short_name %}</span>
-        <span> - </span>
-        <span class="text-accent">{% app_description %}</span>
+        {% contact_email_additional as emails %}
+        {% for email in emails %}
+          <span> - </span>
+          <span class="text-accent">{{ email }}</span>
+        {% endfor %}
       </h1>
     </section>
     {# text-blue-700 #} {# Adding space to test the scroll-top widget #}

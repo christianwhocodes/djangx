@@ -18,9 +18,12 @@ class Settings:
         self.storage = conf.StorageConf()
         self.tailwindcss = conf.TailwindCSSConf()
         self.commands = conf.CommandsConf()
+        self.contact_address = conf.ContactAddressConf()
+        self.contact_email = conf.ContactEmailConf()
+        self.contact_number = conf.ContactNumberConf()
 
 
-SETTINGS = Settings()
+SETTINGS: Settings = Settings()
 
 # ==============================================================================
 # Package
@@ -55,14 +58,14 @@ if not DEBUG:
     SECURE_SSL_REDIRECT: bool = True
     SESSION_COOKIE_SECURE: bool = True
     CSRF_COOKIE_SECURE: bool = True
-    # SECURE_HSTS_SECONDS = 3600
+    # SECURE_HSTS_SECONDS: int = 3600
 
 
 # ==============================================================================
 # Application definition
 # ==============================================================================
 
-APP = {
+APP: dict[str, str] = {
     "NAME": SETTINGS.app.name or "Tawala",
     "SHORT_NAME": SETTINGS.app.short_name or "Tawala",
     "DESCRIPTION": SETTINGS.app.description or "Tawala Application",
@@ -130,7 +133,7 @@ TEMPLATES: list[dict[str, Any]] = [
 def _get_database_config() -> dict[str, dict[str, Any]]:
     """Generate database configuration based on backend type."""
 
-    backend = SETTINGS.database.backend.lower() or "sqlite3"
+    backend: str = SETTINGS.database.backend.lower() or "sqlite3"
 
     match backend:
         case "sqlite" | "sqlite3":
@@ -150,7 +153,7 @@ def _get_database_config() -> dict[str, dict[str, Any]]:
             if (
                 SETTINGS.database.use_vars if SETTINGS.database.use_vars is not None else False
             ) is True:
-                config = {
+                config: dict[str, str] = {
                     "USER": SETTINGS.database.user,
                     "PASSWORD": SETTINGS.database.password,
                     "NAME": SETTINGS.database.name,
@@ -194,14 +197,15 @@ STATIC_ROOT: Path = PUBLIC_DIR / "static"
 def _get_storage_config() -> dict[str, Any]:
     """Generate storage configuration based on backend type."""
 
-    backend = SETTINGS.storage.backend.lower() or "filesystem"
+    backend: str = SETTINGS.storage.backend.lower() or "filesystem"
 
-    base_config: dict[str, dict[str, str] | str] = {
+    base_config: dict[str, dict[str, str]] = {
         "staticfiles": {
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         }
     }
 
+    storage_backend: str
     match backend:
         case "filesystem" | "local" | "fs":
             storage_backend = "django.core.files.storage.FileSystemStorage"
@@ -231,8 +235,8 @@ STORAGE_TOKEN: str = SETTINGS.storage.token
 def _get_tailwindcss_config() -> dict[str, str | Path]:
     """Generate TailwindCSS configuration."""
 
-    version = SETTINGS.tailwindcss.version or "v4.1.18"
-    cli_path = (
+    version: str = SETTINGS.tailwindcss.version or "v4.1.18"
+    cli_path: Path = (
         SETTINGS.tailwindcss.cli or Path(f"~/.local/bin/tailwindcss-{version}.exe").expanduser()
     )
 
@@ -244,7 +248,7 @@ def _get_tailwindcss_config() -> dict[str, str | Path]:
     }
 
 
-TAILWINDCSS = _get_tailwindcss_config()
+TAILWINDCSS: dict[str, str | Path] = _get_tailwindcss_config()
 
 
 # ==============================================================================
@@ -268,10 +272,10 @@ COMMANDS: dict[str, list[str]] = {
 # https://docs.djangoproject.com/en/stable/topics/i18n/
 # ==============================================================================
 
-LANGUAGE_CODE = "en-us"
-TIME_ZONE = "Africa/Nairobi"
-USE_I18N = True
-USE_TZ = True
+LANGUAGE_CODE: str = "en-us"
+TIME_ZONE: str = "Africa/Nairobi"
+USE_I18N: bool = True
+USE_TZ: bool = True
 
 
 # ==============================================================================
@@ -307,4 +311,26 @@ SECURE_CSP: dict[str, list[str]] = {
         CSP.SELF,
         "https://fonts.gstatic.com",  # Google Fonts font files
     ],
+}
+
+
+# ==============================================================================
+# Contact Information
+# ==============================================================================
+
+CONTACT: dict[str, dict[str, str | list[str]]] = {
+    "ADDRESS": {
+        "COUNTRY": SETTINGS.contact_address.country,
+        "STATE": SETTINGS.contact_address.state,
+        "CITY": SETTINGS.contact_address.city,
+        "STREET": SETTINGS.contact_address.street,
+    },
+    "EMAIL": {
+        "PRIMARY": SETTINGS.contact_email.primary,
+        "ADDITIONAL": SETTINGS.contact_email.additional,
+    },
+    "PHONE": {
+        "PRIMARY": SETTINGS.contact_number.primary,
+        "ADDITIONAL": SETTINGS.contact_number.additional,
+    },
 }

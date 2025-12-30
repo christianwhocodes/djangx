@@ -1,8 +1,10 @@
 import builtins
 import pathlib
-from typing import Any, Optional, cast
+from typing import Any, Literal, Optional, cast
 
 from christianwhocodes.helpers import TypeConverter
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 
 from .. import ENV, PKG, PROJECT
 
@@ -24,14 +26,26 @@ class ConfField:
     Args:
         env: Environment variable name to read from
         toml: TOML key path (dot-separated) to read from
-        type: Type to convert the value to (str, bool, list, or Path)
+        type: Type to convert the value to. Supports:
+            - str, bool, pathlib.Path
+            - "email" for validated email strings
+            - list[str] for list of strings
+            - list["email"] for list of validated emails
     """
 
     def __init__(
         self,
         env: Optional[str] = None,
         toml: Optional[str] = None,
-        type: type[str] | type[bool] | type[list[str]] | type[pathlib.Path] = str,
+        type: (
+            type[str]
+            | type[bool]
+            | type[list[str]]
+            | type[pathlib.Path]
+            | Literal["email"]
+            | Literal["list[str]"]
+            | Literal["list[email]"]
+        ) = str,
     ):
         self.name: Optional[str] = None
         self.env = env
@@ -58,39 +72,104 @@ class ConfField:
         }
 
     @staticmethod
-    def convert_value(value: Any, target_type: type) -> Any:
+    def validate_email_value(value: Any) -> str:
+        """
+        Validate a single email address using Django's validator.
+
+        Args:
+            value: Email address to validate
+
+        Returns:
+            The validated email string
+
+        Raises:
+            ValueError: If the email is invalid
+        """
+        if value is None or value == "":
+            return ""
+
+        email_str = str(value).strip()
+        try:
+            validate_email(email_str)
+            return email_str
+        except ValidationError as e:
+            raise ValueError(f"Invalid email address '{email_str}': {e.message}")
+
+    @staticmethod
+    def parse_list_type(type_spec: Any) -> tuple[bool, Optional[str]]:
+        """
+        Parse a type specification to determine if it's a list and what the item type is.
+
+        Args:
+            type_spec: Type specification (e.g., list[str], "list[email]", list)
+
+        Returns:
+            Tuple of (is_list, item_type) where item_type is "str", "email", or None
+        """
+        # Handle string type specifications like "list[str]" or "list[email]"
+        if isinstance(type_spec, str):
+            if type_spec.startswith("list[") and type_spec.endswith("]"):
+                item_type = type_spec[5:-1]  # Extract content between "list[" and "]"
+                return (True, item_type)
+            return (False, None)
+
+        # Handle actual type objects like list[str]
+        if type_spec is builtins.list:
+            return (True, "str")  # Default to str for backwards compatibility
+
+        return (False, None)
+
+    @staticmethod
+    def convert_value(value: Any, target_type: Any) -> Any:
         """
         Convert the raw value to the appropriate type.
 
         Args:
             value: Raw value from env or TOML
-            target_type: The type to convert to (str, bool, list[str], or Path)
+            target_type: The type to convert to
 
         Returns:
             Converted value of the appropriate type
         """
+        # Parse if this is a list type
+        is_list, item_type = ConfField.parse_list_type(target_type)
 
+        # Handle None values
         if value is None:
-            match target_type:
-                case builtins.list:
-                    return []
-                case builtins.str:
-                    # instead of returning None, allows use of string methods in settings.py without checks
-                    return ""
-                case _:
-                    return None
-        else:
-            match target_type:
-                case builtins.bool:
-                    return TypeConverter.to_bool(value)
-                case pathlib.Path:
-                    return TypeConverter.to_path(value)
-                case builtins.list:
-                    return TypeConverter.to_list_of_str(value, str.lower)
-                case builtins.str:
-                    return str(value)
-                case _:
-                    raise ValueError(f"Unsupported target type: {target_type}")
+            if is_list:
+                return []
+            elif target_type == "email" or target_type is str:
+                return ""
+            else:
+                return None
+
+        # Handle list types
+        if is_list:
+            # Convert to list of strings first
+            string_list = TypeConverter.to_list_of_str(value, str.strip)
+
+            # Then validate/convert each item based on item_type
+            if item_type == "email":
+                validated_emails: list[str] = []
+                for email in string_list:
+                    if email:  # Skip empty strings
+                        validated_emails.append(ConfField.validate_email_value(email))
+                return validated_emails
+            else:  # item_type == "str" or None (default to str)
+                return string_list
+
+        # Handle scalar types
+        match target_type:
+            case builtins.bool:
+                return TypeConverter.to_bool(value)
+            case pathlib.Path:
+                return TypeConverter.to_path(value)
+            case builtins.str:
+                return str(value)
+            case "email":
+                return ConfField.validate_email_value(value)
+            case _:
+                raise ValueError(f"Unsupported target type: {target_type}")
 
     def __get__(self, instance: Any, owner: type) -> Any:
         """
@@ -206,7 +285,7 @@ class SecurityConf(ProjectConf):
 
     secret_key = ConfField(env="SECRET_KEY", toml="secret-key", type=str)
     debug = ConfField(env="DEBUG", toml="debug", type=bool)
-    allowed_hosts = ConfField(env="ALLOWED_HOSTS", toml="allowed-hosts", type=list)
+    allowed_hosts = ConfField(env="ALLOWED_HOSTS", toml="allowed-hosts", type="list[str]")
 
 
 class AppConf(ProjectConf):
@@ -235,31 +314,61 @@ class DatabaseConf(ProjectConf):
 class StorageConf(ProjectConf):
     """Storage configuration settings."""
 
-    backend = ConfField(
-        env="STORAGE_BACKEND",
-        toml="storage.backend",
-        type=str,
-    )
+    backend = ConfField(env="STORAGE_BACKEND", toml="storage.backend", type=str)
     token = ConfField(env="BLOB_READ_WRITE_TOKEN", toml="storage.token", type=str)
 
 
 class TailwindCSSConf(ProjectConf):
     """TailwindCSS configuration settings."""
 
-    version = ConfField(
-        env="TAILWINDCSS_VERSION",
-        toml="tailwindcss.version",
-        type=str,
-    )
-    cli = ConfField(
-        env="TAILWINDCSS_CLI",
-        toml="tailwindcss.cli",
-        type=pathlib.Path,
-    )
+    version = ConfField(env="TAILWINDCSS_VERSION", toml="tailwindcss.version", type=str)
+    cli = ConfField(env="TAILWINDCSS_CLI", toml="tailwindcss.cli", type=pathlib.Path)
 
 
 class CommandsConf(ProjectConf):
     """Install/Build Commands to be executed settings."""
 
-    install = ConfField(env="COMMANDS_INSTALL", toml="commands.install", type=list)
-    build = ConfField(env="COMMANDS_BUILD", toml="commands.build", type=list)
+    install = ConfField(env="COMMANDS_INSTALL", toml="commands.install", type="list[str]")
+    build = ConfField(env="COMMANDS_BUILD", toml="commands.build", type="list[str]")
+
+
+class EmailConf(ProjectConf):
+    """Email configuration settings."""
+
+    backend = ConfField(env="EMAIL_BACKEND", toml="email.backend", type=str)
+    host = ConfField(env="EMAIL_HOST", toml="email.host", type=str)
+    port = ConfField(env="EMAIL_PORT", toml="email.port", type=str)
+    use_tls = ConfField(env="EMAIL_USE_TLS", toml="email.use-tls", type=bool)
+    host_user = ConfField(env="EMAIL_HOST_USER", toml="email.host-user", type=str)
+    host_password = ConfField(env="EMAIL_HOST_PASSWORD", toml="email.host-password", type=str)
+
+
+class ContactAddressConf(ProjectConf):
+    """Contact Address configuration settings."""
+
+    country = ConfField(env="CONTACT_ADDRESS_COUNTRY", toml="contact.address.country", type=str)
+    state = ConfField(env="CONTACT_ADDRESS_STATE", toml="contact.address.state", type=str)
+    city = ConfField(env="CONTACT_ADDRESS_CITY", toml="contact.address.city", type=str)
+    street = ConfField(env="CONTACT_ADDRESS_STREET", toml="contact.address.street", type=str)
+
+
+class ContactEmailConf(ProjectConf):
+    """Contact Email configuration settings."""
+
+    primary = ConfField(env="CONTACT_EMAIL_PRIMARY", toml="contact.email.primary", type="email")
+    additional = ConfField(
+        env="CONTACT_EMAIL_ADDITIONAL",
+        toml="contact.email.additional",
+        type="list[email]",
+    )
+
+
+class ContactNumberConf(ProjectConf):
+    """Contact Phone Number configuration settings."""
+
+    primary = ConfField(env="CONTACT_NUMBER_PRIMARY", toml="contact.number.primary", type=str)
+    additional = ConfField(
+        env="CONTACT_NUMBER_ADDITIONAL",
+        toml="contact.number.additional",
+        type="list[str]",
+    )
