@@ -1,11 +1,11 @@
-{% load site %}
+{% load org %}
 <!doctype html>
 <html lang="en">
   <head>
     {# Meta Tags #}
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="{% site_description %}" />
+    <meta name="description" content="{% org_description %}" />
     <meta name="keywords" content="" />
     <meta name="author" content="" />
     {% block metatags %}
@@ -13,13 +13,13 @@
     {# Favicons #}
     <link
       rel="shortcut icon"
-      href="{% site_favicon_url %}"
+      href="{% org_favicon_url %}"
       type="image/x-icon"
     />
-    <link rel="apple-touch-icon" href="{% site_apple_touch_icon_url %}" />
+    <link rel="apple-touch-icon" href="{% org_apple_touch_icon_url %}" />
     {# Title #}
     {% block title %}
-      <title>{% site_name %}</title>
+      <title>{% org_name %}</title>
     {% endblock title %}
     {# Fonts #}
     {% block fonts %}
@@ -38,9 +38,10 @@
   <body>
     {% include "widgets/preloader.html" %}
     {% include "widgets/scroll-top.html" %}
-    {% include "sections/header.html" %}
+    {% include "sections/header-topbar.html" %}
+    {% include "sections/hero-breadcrumbs.html" %}
     {% block main %}
     {% endblock main %}
-    {% include "sections/footer.html" %}
+    {% include "sections/footer-bottombar.html" %}
   </body>
 </html>

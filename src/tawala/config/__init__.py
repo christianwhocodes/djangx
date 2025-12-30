@@ -5,7 +5,7 @@ from .email import *  # noqa: F403
 from .pkg import *  # noqa: F403
 from .project import *  # noqa: F403
 from .security import *  # noqa: F403
-from .site import *  # noqa: F403
+from .org import *  # noqa: F403
 from .social_media import *  # noqa: F403
 from .storages import *  # noqa: F403
 from .tailwindcss import *  # noqa: F403

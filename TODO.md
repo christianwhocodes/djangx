@@ -1,0 +1,5 @@
+- A way to toggle dark class on html or body
+- HeaderConf
+- HeroConf
+- AboutConf
+- FooterConf

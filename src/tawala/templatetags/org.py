@@ -48,41 +48,41 @@ _asset_resolver = StaticAssetResolver(settings.PROJECT["dirs"]["APP"])
 
 
 @register.simple_tag
-def site_name() -> str:
-    """Return the site name from settings.
+def org_name() -> str:
+    """Return the organization name from settings.
 
     Returns:
-        The site name
+        The organization name
     """
-    return settings.SITE["name"]
+    return settings.ORG["name"]
 
 
 @register.simple_tag
-def site_short_name() -> str:
-    """Return the site short name from settings.
+def org_short_name() -> str:
+    """Return the organization short name from settings.
 
     Returns:
-        The site shortname
+        The organization shortname
     """
-    return settings.SITE["short_name"]
+    return settings.ORG["short_name"]
 
 
 @register.simple_tag
-def site_description() -> str:
-    """Return the site description from settings.
+def org_description() -> str:
+    """Return the organization description from settings.
 
     Returns:
-        The site description
+        The organization description
     """
-    return settings.SITE["description"]
+    return settings.ORG["description"]
 
 
 @register.simple_tag
-def site_logo_url() -> str:
-    """Return the site logo URL from settings.
+def org_logo_url() -> str:
+    """Return the organization logo URL from settings.
 
     Returns:
-        The site logo URL
+        The organization logo URL
     """
     return _asset_resolver.get_asset_url(
         relative_path="app/img/logo.png", fallback_path="defaults/logo.png"
@@ -90,11 +90,11 @@ def site_logo_url() -> str:
 
 
 @register.simple_tag
-def site_favicon_url() -> str:
-    """Return the site favicon URL from settings.
+def org_favicon_url() -> str:
+    """Return the organization favicon URL from settings.
 
     Returns:
-        The site favicon URL
+        The organization favicon URL
     """
     return _asset_resolver.get_asset_url(
         relative_path="app/img/favicon.ico", fallback_path="defaults/favicon.ico"
@@ -102,11 +102,11 @@ def site_favicon_url() -> str:
 
 
 @register.simple_tag
-def site_apple_touch_icon_url() -> str:
-    """Return the site Apple Touch Icon URL from settings.
+def org_apple_touch_icon_url() -> str:
+    """Return the organization Apple Touch Icon URL from settings.
 
     Returns:
-        The site Apple Touch Icon URL
+        The organization Apple Touch Icon URL
     """
     return _asset_resolver.get_asset_url(
         relative_path="app/img/apple-touch-icon.png",
