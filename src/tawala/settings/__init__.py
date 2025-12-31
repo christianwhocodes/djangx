@@ -13,6 +13,7 @@ from .security import *  # noqa: F403
 from .social_media import *  # noqa: F403
 from .storages import *  # noqa: F403
 from .tailwind import *  # noqa: F403
+from .urls import *  # noqa: F403
 
 # ==============================================================================
 # Application definition

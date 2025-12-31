@@ -1,4 +1,8 @@
-from typing import NotRequired, TypedDict, Optional
+# ==============================================================================
+# Security & deployment checklist
+# See https://docs.djangoproject.com/en/stable/howto/deployment/checklist/
+# ==============================================================================
+from typing import TypedDict
 
 from .conf import Conf, ConfField
 
@@ -14,60 +18,44 @@ class SecurityConf(Conf):
 _security = SecurityConf()
 
 
-class SecuritySettingsDict(TypedDict):
+class SecurityDict(TypedDict):
     """Type definition for security settings."""
 
-    SECRET_KEY: str
-    DEBUG: bool
-    ALLOWED_HOSTS: list[str]
-    SECURE_SSL_REDIRECT: NotRequired[bool]
-    SESSION_COOKIE_SECURE: NotRequired[bool]
-    CSRF_COOKIE_SECURE: NotRequired[bool]
-    # SECURE_HSTS_SECONDS: NotRequired[int]
+    secret_key: str
+    debug: bool
+    allowed_hosts: list[str]
+    secure_ssl_redirect: bool
+    session_cookie_secure: bool
+    csrf_cookie_secure: bool
+    secure_hsts_seconds: int
 
 
-# ==============================================================================
-# Security & deployment checklist
-# See https://docs.djangoproject.com/en/stable/howto/deployment/checklist/
-# ==============================================================================
+SECURITY: SecurityDict = {
+    "secret_key": _security.secret_key,
+    "debug": _security.debug,
+    "allowed_hosts": _security.allowed_hosts,
+    "secure_ssl_redirect": True if not _security.debug else False,
+    "session_cookie_secure": True if not _security.debug else False,
+    "csrf_cookie_secure": True if not _security.debug else False,
+    "secure_hsts_seconds": 3600 if not _security.debug else 0,
+}
 
 
-def _get_security_settings() -> SecuritySettingsDict:
-    """Generate security settings based on DEBUG mode."""
-
-    settings: SecuritySettingsDict = {
-        "SECRET_KEY": _security.secret_key,
-        "DEBUG": _security.debug,
-        "ALLOWED_HOSTS": _security.allowed_hosts,
-    }
-
-    # Production security settings
-    if not _security.debug:
-        settings["SECURE_SSL_REDIRECT"] = True
-        settings["SESSION_COOKIE_SECURE"] = True
-        settings["CSRF_COOKIE_SECURE"] = True
-        # settings["SECURE_HSTS_SECONDS"] = 3600
-
-    return settings
-
-
-_settings = _get_security_settings()
-
-SECRET_KEY: str = _settings["SECRET_KEY"]
-DEBUG: bool = _settings["DEBUG"]
-ALLOWED_HOSTS: list[str] = _settings["ALLOWED_HOSTS"]
-SECURE_SSL_REDIRECT: Optional[bool] = _settings.get("SECURE_SSL_REDIRECT")
-SESSION_COOKIE_SECURE: Optional[bool] = _settings.get("SESSION_COOKIE_SECURE")
-CSRF_COOKIE_SECURE: Optional[bool] = _settings.get("CSRF_COOKIE_SECURE")
-# SECURE_HSTS_SECONDS: Optional[int] = _settings.get("SECURE_HSTS_SECONDS")
-
+SECRET_KEY: str = SECURITY["secret_key"]
+DEBUG: bool = SECURITY["debug"]
+ALLOWED_HOSTS: list[str] = SECURITY["allowed_hosts"]
+SECURE_SSL_REDIRECT: bool = SECURITY.get("secure_ssl_redirect")
+SESSION_COOKIE_SECURE: bool = SECURITY.get("session_cookie_secure")
+CSRF_COOKIE_SECURE: bool = SECURITY.get("csrf_cookie_secure")
+SECURE_HSTS_SECONDS: int = SECURITY.get("secure_hsts_seconds")
 
 __all__ = [
+    "SECURITY",
     "SECRET_KEY",
     "DEBUG",
     "ALLOWED_HOSTS",
     "SECURE_SSL_REDIRECT",
     "SESSION_COOKIE_SECURE",
     "CSRF_COOKIE_SECURE",
-    # "SECURE_HSTS_SECONDS",
+    "SECURE_HSTS_SECONDS",
 ]

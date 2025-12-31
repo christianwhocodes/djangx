@@ -1,7 +1,8 @@
-- A way to toggle dark class on html or body
-- HeaderConf
-- HeroConf
-- AboutConf
-- FooterConf
-- URLsConf
-- Is AOS Init really needed?
+- [ ] A way to toggle dark class on html or body
+- [ ] HeaderConf
+- [ ] HeroConf
+- [ ] AboutConf
+- [ ] FooterConf
+- [x] URLConf
+- [ ] AOSInitConf
+- [ ] Have defaults being set via the ConfField. The EnvFileGenerator should also show the defaults that variables use.

@@ -1,142 +1,148 @@
-from django import template
-from django.conf import settings
+from typing import Any
 
-register = template.Library()
+from django.conf import settings
+from django.template import Library
+from django.utils.html import format_html
+from django.utils.safestring import SafeString
+
+register = Library()
 
 
 @register.simple_tag
-def get_social_media() -> dict[str, dict[str, str]]:
+def social_media_links() -> dict[str, dict[str, str]]:
     """
-    Get all configured social media platforms.
+    Returns the complete social media configuration dictionary.
 
-    Usage in template:
-        {% load social_media %}
-        {% get_social_media as social_media %}
-        {% for platform, config in social_media.items %}
-            <a href="{{ config.URL }}" target="_blank" rel="noopener noreferrer">
-                <i class="{{ config.ICON }}"></i>
-            </a>
-        {% endfor %}
-
-    Returns:
-        Dictionary of social media platforms with URL and ICON
+    Usage: {% social_media_links as social_links %}
     """
     return settings.SOCIAL_MEDIA
 
 
-@register.inclusion_tag(f"{settings.PKG['name']}/social_media_links.html")
-def social_media_links(
-    css_class: str = "", icon_size: str = "1.5rem"
-) -> dict[str, str | dict[str, dict[str, str]]]:
+@register.simple_tag
+def social_media_url(platform: str) -> str:
     """
-    Render social media links with icons.
+    Get the URL for a specific social media platform.
 
-    Usage in template:
-        {% load social_media %}
-        {% social_media_links css_class="d-flex gap-3" icon_size="2rem" %}
-
-    Args:
-        css_class: CSS classes to apply to the container
-        icon_size: Size of the icons (CSS value)
-
-    Returns:
-        Context dictionary for the template
+    Usage: {% social_media_url 'facebook' %}
     """
-    return {
-        "social_media": settings.SOCIAL_MEDIA,
-        "css_class": css_class,
-        "icon_size": icon_size,
-    }
+    platform_config = settings.SOCIAL_MEDIA.get(platform, {})
+    return platform_config.get("URL", "")
 
 
-@register.filter
-def has_social_media(platform: str) -> bool:
+@register.simple_tag
+def social_media_icon(platform: str) -> str:
     """
-    Check if a social media platform is configured.
+    Get the icon class for a specific social media platform.
 
-    Usage in template:
-        {% load social_media %}
-        {% if "facebook"|has_social_media %}
-            <!-- Facebook is configured -->
-        {% endif %}
-
-    Args:
-        platform: The social media platform name
-
-    Returns:
-        True if the platform is configured, False otherwise
+    Usage: {% social_media_icon 'facebook' %}
     """
+    platform_config = settings.SOCIAL_MEDIA.get(platform, {})
+    return platform_config.get("ICON", "")
+
+
+@register.simple_tag
+def has_social_media(platform: str | None = None) -> bool:
+    """
+    Check if social media is configured.
+
+    If platform is specified, checks if that specific platform is configured.
+    If platform is None, checks if any social media platform is configured.
+
+    Usage:
+        {% has_social_media %}  # Returns True if any platform configured
+        {% has_social_media 'facebook' %}  # Returns True if Facebook configured
+    """
+    if platform is None:
+        return bool(settings.SOCIAL_MEDIA)
     return platform in settings.SOCIAL_MEDIA
 
 
 @register.simple_tag
-def get_facebook_url() -> str:
-    """Returns the Facebook URL."""
-    return settings.SOCIAL_MEDIA["facebook"]["URL"]
+def social_media_count() -> int:
+    """
+    Returns the number of configured social media platforms.
+
+    Usage: {% social_media_count %}
+    """
+    return len(settings.SOCIAL_MEDIA)
+
+
+@register.inclusion_tag("social_media/links.html")
+def render_social_media_links(css_class: str = "social-links") -> dict[str, Any]:
+    """
+    Renders social media links using a template.
+
+    Usage: {% render_social_media_links %}
+           {% render_social_media_links css_class="my-custom-class" %}
+    """
+    return {
+        "social_media": settings.SOCIAL_MEDIA,
+        "css_class": css_class,
+    }
 
 
 @register.simple_tag
-def get_twitter_x_url() -> str:
-    """Returns the Twitter/X URL."""
-    return settings.SOCIAL_MEDIA["twitter-x"]["URL"]
+def social_media_link_html(
+    platform: str,
+    link_text: str = "",
+    css_class: str = "social-link",
+    show_icon: bool = True,
+    target: str = "_blank",
+    rel: str = "noopener noreferrer",
+) -> SafeString:
+    """
+    Generate HTML for a single social media link.
+
+    Usage:
+        {% social_media_link_html 'facebook' %}
+        {% social_media_link_html 'twitter_x' link_text='Follow us' %}
+        {% social_media_link_html 'instagram' show_icon=False %}
+    """
+    platform_config = settings.SOCIAL_MEDIA.get(platform)
+
+    if not platform_config:
+        return format_html("")
+
+    url = platform_config.get("URL", "")
+    icon = platform_config.get("ICON", "")
+
+    if not url:
+        return format_html("")
+
+    # Build icon HTML
+    icon_html = format_html('<i class="{}"></i> ', icon) if show_icon and icon else ""
+
+    # Build link text
+    display_text = link_text if link_text else platform.replace("_", " ").title()
+
+    return format_html(
+        '<a href="{}" class="{}" target="{}" rel="{}">{}{}</a>',
+        url,
+        css_class,
+        target,
+        rel,
+        icon_html,
+        display_text,
+    )
 
 
-@register.simple_tag
-def get_instagram_url() -> str:
-    """Returns the Instagram URL."""
-    return settings.SOCIAL_MEDIA["instagram"]["URL"]
+@register.filter
+def get_platform_config(
+    social_media_dict: dict[str, dict[str, str]], platform: str
+) -> dict[str, str]:
+    """
+    Get configuration for a specific platform from the social media dictionary.
+
+    Usage: {{ SOCIAL_MEDIA|get_platform_config:'facebook' }}
+    """
+    return social_media_dict.get(platform, {})
 
 
-@register.simple_tag
-def get_linkedin_url() -> str:
-    """Returns the LinkedIn URL."""
-    return settings.SOCIAL_MEDIA["linkedin"]["URL"]
+@register.filter
+def platform_exists(social_media_dict: dict[str, dict[str, str]], platform: str) -> bool:
+    """
+    Check if a platform exists in the social media configuration.
 
-
-@register.simple_tag
-def get_whatsapp_url() -> str:
-    """Returns the WhatsApp URL."""
-    return settings.SOCIAL_MEDIA["whatsapp"]["URL"]
-
-
-@register.simple_tag
-def get_youtube_url() -> str:
-    """Returns the YouTube URL."""
-    return settings.SOCIAL_MEDIA["youtube"]["URL"]
-
-
-# Specific getters for each platform - Icon
-@register.simple_tag
-def get_facebook_icon() -> str:
-    """Returns the Facebook icon class."""
-    return settings.SOCIAL_MEDIA["facebook"]["ICON"]
-
-
-@register.simple_tag
-def get_twitter_x_icon() -> str:
-    """Returns the Twitter/X icon class."""
-    return settings.SOCIAL_MEDIA["twitter-x"]["ICON"]
-
-
-@register.simple_tag
-def get_instagram_icon() -> str:
-    """Returns the Instagram icon class."""
-    return settings.SOCIAL_MEDIA["instagram"]["ICON"]
-
-
-@register.simple_tag
-def get_linkedin_icon() -> str:
-    """Returns the LinkedIn icon class."""
-    return settings.SOCIAL_MEDIA["linkedin"]["ICON"]
-
-
-@register.simple_tag
-def get_whatsapp_icon() -> str:
-    """Returns the WhatsApp icon class."""
-    return settings.SOCIAL_MEDIA["whatsapp"]["ICON"]
-
-
-@register.simple_tag
-def get_youtube_icon() -> str:
-    """Returns the YouTube icon class."""
-    return settings.SOCIAL_MEDIA["youtube"]["ICON"]
+    Usage: {% if SOCIAL_MEDIA|platform_exists:'facebook' %}
+    """
+    return platform in social_media_dict

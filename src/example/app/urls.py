@@ -5,5 +5,5 @@ from . import views
 
 urlpatterns: list[URLPattern | URLResolver] = [
     path("admin/", admin.site.urls),
-    path("", views.HomeView.as_view(), name="home"),
+    path("", views.HomeView.as_view()),
 ]

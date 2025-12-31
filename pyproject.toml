@@ -14,6 +14,7 @@ dependencies = [
     "christianwhocodes>=1.2.3",
     "django>=6.0",
     "django-browser-reload>=1.21.0",
+    "django-phonenumber-field[phonenumberslite]>=8.4.0",
     "django-watchfiles>=1.4.0",
     "python-dotenv>=1.2.1",
 ]
