@@ -1,8 +1,0 @@
-# Tailwind CSS generated file
-/src/tawala/static/vendors/tailwindcss/*.css
-
-# Public static files
-/src/example/public/static/
-
-# Ruff cache
-/.ruff_cache/

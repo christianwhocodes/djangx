@@ -5,8 +5,17 @@ __pycache__/
 /.venv/
 /node_modules/
 
+# Ruff cache
+/.ruff_cache/
+
 # Distribution folder
 /dist/
+
+# Tailwind CSS generated file
+/src/tawala/static/vendors/tailwindcss/*.css
+
+# Public static files
+/src/example/public/static/
 
 # All files in migrations except __init__.py
 /src/example/app/migrations/*
