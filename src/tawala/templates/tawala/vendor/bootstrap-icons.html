@@ -1,0 +1,7 @@
+{% load static pkg %}
+{% pkg_name as pkg_name %}
+
+<link
+  rel="stylesheet"
+  href="{% static pkg_name|add:'/vendor/bootstrap-icons.min.css' %}"
+/>

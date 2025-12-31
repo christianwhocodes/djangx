@@ -110,5 +110,5 @@
 /* =============================================================================
    SOURCE PATHS - Files to scan for Tailwind classes
    ============================================================================= */
-@source "../../../../../tawala/templates/tawala/**/*.html";
-@source "../../../templates/app/**/*.html";
+@source "../../../../tawala/templates/tawala/**/*.html";
+@source "../../templates/app/**/*.html";

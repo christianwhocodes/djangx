@@ -1,0 +1,5 @@
+{% load static pkg %}
+{% pkg_name as pkg_name %}
+
+<link rel="stylesheet" href="{% static pkg_name|add:'/vendor/aos.css' %}" />
+<script defer src="{% static pkg_name|add:'/vendor/aos.js' %}"></script>

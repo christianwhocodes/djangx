@@ -3,7 +3,6 @@
 <!doctype html>
 <html lang="en">
   <head>
-    {# Meta Tags #}
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="{% org_description %}" />
@@ -11,36 +10,29 @@
     <meta name="author" content="" />
     {% block metatags %}
     {% endblock metatags %}
-    {# Favicons #}
     <link
       rel="shortcut icon"
       href="{% org_favicon_url %}"
       type="image/x-icon"
     />
     <link rel="apple-touch-icon" href="{% org_apple_touch_icon_url %}" />
-    {# Title #}
     {% block title %}<title>{% org_name %}</title>{% endblock title %}
-    {# Fonts #}
     {% block fonts %}
     {% endblock fonts %}
-    {# Vendor Files #}
-    {% include "vendors/bootstrap-icons.html" %}
-    {% include "vendors/aos.html" %}
-    {# Main CSS Files #}
+    {% include pkg_name|add:"/vendor/bootstrap-icons.html" %}
+    {% include pkg_name|add:"/vendor/aos.html" %}
+    {% include pkg_name|add:"/init/aos.html" %}
     {% tailwind_css %}
-    {% block css %}
-    {% endblock css %}
-    {# Main JS Files #}
-    {% block js %}
-    {% endblock js %}
+    {% block scripts %}
+    {% endblock scripts %}
   </head>
   <body>
-    {% include pkg_name|add:"/widgets/preloader.html" %}
-    {% include pkg_name|add:"/widgets/scroll-top.html" %}
-    {% include pkg_name|add:"/sections/header-topbar.html" %}
-    {% include pkg_name|add:"/sections/hero-breadcrumbs.html" %}
+    {% include pkg_name|add:"/widget/preloader.html" %}
+    {% include pkg_name|add:"/widget/scroll-top.html" %}
+    {% include pkg_name|add:"/section/header-topbar.html" %}
+    {% include pkg_name|add:"/section/hero-breadcrumbs.html" %}
     {% block main %}
     {% endblock main %}
-    {% include pkg_name|add:"/sections/footer-bottombar.html" %}
+    {% include pkg_name|add:"/section/footer-bottombar.html" %}
   </body>
 </html>

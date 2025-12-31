@@ -34,8 +34,8 @@ def _get_tailwind_config() -> TailwindDict:
     return {
         "version": version,
         "cli": cli_path,
-        "source": PROJECT["dirs"]["APP"] / "static" / "app" / "css" / "global.css",
-        "output": PKG["dir"] / "static" / PKG["name"] / "css" / "global.css",
+        "source": PROJECT["dirs"]["APP"] / "static" / "app" / "global.css",
+        "output": PKG["dir"] / "static" / PKG["name"] / "global" / "output.css",
     }
 
 

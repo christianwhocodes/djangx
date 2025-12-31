@@ -3,5 +3,9 @@
     "prettier": "^3.7.4",
     "prettier-plugin-django-template": "^0.1.1",
     "prettier-plugin-tailwindcss": "^0.7.2"
+  },
+  "dependencies": {
+    "aos": "^2.3.4",
+    "bootstrap-icons": "^1.13.1"
   }
 }

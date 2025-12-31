@@ -1,0 +1,4 @@
+{% load static pkg %}
+{% pkg_name as pkg_name %}
+
+<script defer src="{% static pkg_name|add:'/init/aos.js' %}"></script>

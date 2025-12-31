@@ -85,7 +85,7 @@ def org_logo_url() -> str:
         The organization logo URL
     """
     return _asset_resolver.get_asset_url(
-        relative_path="app/img/logo.png", fallback_path=f"{settings.PKG['name']}/img/logo.png"
+        relative_path="app/global/logo.png", fallback_path=f"{settings.PKG['name']}/global/logo.png"
     )
 
 
@@ -97,7 +97,7 @@ def org_favicon_url() -> str:
         The organization favicon URL
     """
     return _asset_resolver.get_asset_url(
-        relative_path="app/img/favicon.ico", fallback_path=f"{settings.PKG['name']}/img/favicon.ico"
+        relative_path="app/global/favicon.ico", fallback_path=f"{settings.PKG['name']}/global/favicon.ico"
     )
 
 
@@ -109,6 +109,6 @@ def org_apple_touch_icon_url() -> str:
         The organization Apple Touch Icon URL
     """
     return _asset_resolver.get_asset_url(
-        relative_path="app/img/apple-touch-icon.png",
-        fallback_path=f"{settings.PKG['name']}/img/apple-touch-icon.png",
+        relative_path="app/global/apple-touch-icon.png",
+        fallback_path=f"{settings.PKG['name']}/global/apple-touch-icon.png",
     )

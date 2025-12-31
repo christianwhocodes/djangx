@@ -11,12 +11,6 @@ __pycache__/
 # Distribution folder
 /dist/
 
-# Tailwind CSS generated file
-/src/tawala/static/tawala/css/global.css
-
-# Public static files
-/src/example/public/static/
-
 # All files in migrations except __init__.py
 /src/example/app/migrations/*
 !/src/example/app/migrations/__init__.py
