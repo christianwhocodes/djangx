@@ -10,9 +10,9 @@ from dotenv import dotenv_values
 
 PKG_PATH: pathlib.Path = pathlib.Path(__file__).resolve().parent
 
-PKG_NAME: str = PKG_PATH.name  # djangx
+PKG_NAME: str = PKG_PATH.name
 
-PKG_DISPLAY_NAME: str = PKG_NAME[:-1].capitalize() + PKG_NAME[-1].upper()  # DjangX
+PKG_DISPLAY_NAME: str = PKG_NAME.capitalize()
 
 _ValueType: TypeAlias = str | bool | list[str] | pathlib.Path | int | None
 
