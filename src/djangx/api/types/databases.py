@@ -28,4 +28,4 @@ class DatabasesDict(TypedDict):
     default: DatabaseDict
 
 
-__all__ = ["DatabaseOptionsDict", "DatabaseDict", "DatabasesDict"]
+__all__: list[str] = ["DatabaseOptionsDict", "DatabaseDict", "DatabasesDict"]

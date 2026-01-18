@@ -1,7 +1,7 @@
-from django.utils.csp import CSP  # type: ignore[reportMissingTypeStubs]
+from django.utils.csp import CSP
 
 from .api.settings import *  # noqa: F403
-from .cli.settings import *  # noqa: F403
+from .management.settings import *  # noqa: F403
 from .ui.settings import *  # noqa: F403
 
 # ==============================================================================

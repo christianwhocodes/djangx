@@ -3,19 +3,16 @@ import importlib.util
 import pathlib
 import sys
 from os import environ
-from typing import Any, NoReturn, Optional, TypeAlias, cast
+from typing import Any, NoReturn, Optional, TypeAlias
 
-from christianwhocodes.utils.enums import ExitCode
-from christianwhocodes.utils.pyproject import PyProject
-from christianwhocodes.utils.stdout import Text, print
-from christianwhocodes.utils.types import TypeConverter
+from christianwhocodes.utils import ExitCode, PyProject, Text, TypeConverter, print
 from dotenv import dotenv_values
 
 PKG_PATH: pathlib.Path = pathlib.Path(__file__).resolve().parent
 
 PKG_NAME: str = PKG_PATH.name  # djangx
 
-PKG_DISPLAY_NAME: str = PKG_NAME[:-1] + PKG_NAME[-1].upper()  # djangX
+PKG_DISPLAY_NAME: str = PKG_NAME[:-1].capitalize() + PKG_NAME[-1].upper()  # DjangX
 
 _ValueType: TypeAlias = str | bool | list[str] | pathlib.Path | int | None
 
@@ -147,15 +144,15 @@ class Conf:
 
     @classmethod
     def _check_pyproject_toml(cls) -> dict[str, Any]:
-        """
-        Validate and extract djangX configuration from pyproject.toml.
+        f"""
+        Validate and extract 'tool.{PKG_NAME}' configuration from 'pyproject.toml'.
 
         Returns:
-            The djangX configuration section from pyproject.toml
+            The 'tool.{PKG_NAME}' configuration section from 'pyproject.toml'
 
         Raises:
-            FileNotFoundError: If pyproject.toml doesn't exist
-            KeyError: If tool section or djangX section is missing
+            FileNotFoundError: If 'pyproject.toml' doesn't exist
+            KeyError: If 'tool.{PKG_NAME}' section is missing
         """
         pyproject_path = pathlib.Path.cwd() / "pyproject.toml"
 
@@ -164,49 +161,44 @@ class Conf:
 
         tool_section = PyProject(pyproject_path).data.get("tool", {})
 
-        # Try to find djangX configuration (lowercase or display name)
         if PKG_NAME in tool_section:
             return tool_section[PKG_NAME]
-        elif PKG_DISPLAY_NAME in tool_section:
-            return tool_section[PKG_DISPLAY_NAME]
         else:
-            raise KeyError(
-                f"Neither 'tool.{PKG_NAME}' nor 'tool.{PKG_DISPLAY_NAME}' section in pyproject.toml"
-            )
+            raise KeyError(f"Missing 'tool.{PKG_NAME}' section in pyproject.toml")
 
     @classmethod
     def _check_urls_py(cls) -> None:
         """
-        Validate that app folder exists and contains urls.py with urlpatterns.
+        Validate that home folder exists and contains urls.py with urlpatterns.
 
         Raises:
-            FileNotFoundError: If app/urls.py doesn't exist
+            FileNotFoundError: If home/urls.py doesn't exist
             ValueError: If urlpatterns variable doesn't exist in urls.py
         """
-        urls_py = pathlib.Path.cwd() / "app" / "urls.py"
+        urls_py = pathlib.Path.cwd() / "home" / "urls.py"
 
         if not (urls_py.exists() and urls_py.is_file()):
-            raise FileNotFoundError(f"'app/urls.py' not found at {urls_py}")
+            raise FileNotFoundError(f"'home/urls.py' not found at {urls_py}")
 
         # Check if urlpatterns variable exists by attempting to import it
-        spec = importlib.util.spec_from_file_location("app.urls", urls_py)
+        spec = importlib.util.spec_from_file_location("home.urls", urls_py)
         if spec is None or spec.loader is None:
-            raise ValueError("Failed to load app/urls.py module")
+            raise ValueError("Failed to load home/urls.py module")
 
         module = importlib.util.module_from_spec(spec)
-        sys.modules["app.urls"] = module
+        sys.modules["home.urls"] = module
 
         try:
             spec.loader.exec_module(module)
         except Exception as e:
-            raise Exception(f"Error executing app/urls.py: {e}")
+            raise Exception(f"Error executing home/urls.py: {e}")
 
         if not hasattr(module, "urlpatterns"):
-            raise ValueError("'urlpatterns' variable not found in app/urls.py")
+            raise ValueError("'urlpatterns' variable not found in home/urls.py")
 
     @classmethod
     def _load_project(cls) -> Optional[NoReturn]:
-        """Load and validate djangX project configuration."""
+        """Load and validate project configuration."""
         try:
             toml_section = cls._check_pyproject_toml()
             cls._check_urls_py()
@@ -215,10 +207,10 @@ class Conf:
             cls._validated = False
             print(
                 f"Are you currently executing in a {PKG_DISPLAY_NAME} project base directory?\n"
-                f"If not, navigate to your project's root or create a new {PKG_DISPLAY_NAME} app to run the command.\n\n"
-                f"A valid {PKG_DISPLAY_NAME} project requires:\n"
+                f"If not, navigate to your project's root or create a new {PKG_DISPLAY_NAME} project to run the command.\n\n"
+                "A valid project requires:\n"
                 f"  1. A 'pyproject.toml' file with a 'tool.{PKG_NAME}' section (even if empty)\n"
-                f"  2. An 'app' folder containing 'urls.py' with a 'urlpatterns' variable\n\n"
+                "  2. An 'home' folder containing 'urls.py' with a 'urlpatterns' variable\n\n"
                 f"Validation failed: {e}",
                 Text.WARNING,
             )
@@ -265,7 +257,7 @@ class Conf:
         current: Any = self._toml
         for k in key.split("."):
             if isinstance(current, dict) and k in current:
-                current = cast(Any, current[k])
+                current = current[k]
             else:
                 return None
 

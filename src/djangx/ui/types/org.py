@@ -1,6 +1,5 @@
 from typing import Literal, TypeAlias
 
-
 OrgKey: TypeAlias = Literal[
     "name",
     "short-name",
@@ -10,4 +9,4 @@ OrgKey: TypeAlias = Literal[
     "apple-touch-icon-url",
 ]
 
-__all__ = ["OrgKey"]
+__all__: list[str] = ["OrgKey"]

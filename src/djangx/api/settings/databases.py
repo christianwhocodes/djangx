@@ -66,7 +66,7 @@ def _get_databases_config() -> DatabasesDict:
                 }
             else:
                 options["service"] = _DATABASE.service
-                config = {
+                config: DatabaseDict = {
                     "ENGINE": "django.db.backends.postgresql",
                     "NAME": _DATABASE.name,
                     "OPTIONS": options,
@@ -80,4 +80,4 @@ def _get_databases_config() -> DatabasesDict:
 DATABASES: DatabasesDict = _get_databases_config()
 
 
-__all__ = ["DATABASES"]
+__all__: list[str] = ["DATABASES"]

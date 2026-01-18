@@ -11,8 +11,8 @@ __pycache__/
 /dist/
 
 # All files in migrations except __init__.py
-/src/example/app/migrations/*
-!/src/example/app/migrations/__init__.py
+/src/mock/home/migrations/*
+!/src/mock/home/migrations/__init__.py
 
 # Temporary files
 /.tmp/

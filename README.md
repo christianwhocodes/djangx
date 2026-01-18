@@ -1,1 +1,1 @@
-# djangX framework
+# DjangX framework

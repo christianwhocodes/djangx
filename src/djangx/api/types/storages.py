@@ -14,4 +14,4 @@ class StoragesDict(TypedDict):
     default: StorageBackendDict
 
 
-__all__ = ["StorageBackendDict", "StoragesDict"]
+__all__: list[str] = ["StorageBackendDict", "StoragesDict"]

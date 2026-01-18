@@ -42,4 +42,4 @@ class OrgConf(Conf):
 ORG = OrgConf()
 
 
-__all__ = ["ORG"]
+__all__: list[str] = ["ORG"]

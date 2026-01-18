@@ -68,7 +68,7 @@ EMAIL_HOST_USER: str = _EMAIL.host_user
 EMAIL_HOST_PASSWORD: str = _EMAIL.host_password
 
 
-__all__ = [
+__all__: list[str] = [
     "CONTACTINFO_ADDRESS",
     "CONTACTINFO_EMAIL",
     "CONTACTINFO_PHONE",

@@ -3,7 +3,7 @@ from typing import Optional
 from django.core.files.base import ContentFile, File
 from django.core.files.storage import Storage
 from django.utils.deconstruct import deconstructible
-from vercel.blob import BlobClient  # type: ignore[reportMissingTypeStubs]
+from vercel.blob import BlobClient
 
 from ..settings import BLOB_READ_WRITE_TOKEN
 

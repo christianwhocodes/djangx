@@ -58,4 +58,4 @@ STATIC_ROOT: Path = Path.cwd() / "public" / "static"
 MEDIA_ROOT: Path = Path.cwd() / "public" / "media"
 
 
-__all__ = ["STORAGES", "BLOB_READ_WRITE_TOKEN", "STATIC_ROOT", "MEDIA_ROOT"]
+__all__: list[str] = ["STORAGES", "BLOB_READ_WRITE_TOKEN", "STATIC_ROOT", "MEDIA_ROOT"]

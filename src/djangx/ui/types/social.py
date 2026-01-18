@@ -10,4 +10,4 @@ SocialKey: TypeAlias = Literal[
 ]
 
 
-__all__ = ["SocialKey"]
+__all__: list[str] = ["SocialKey"]
