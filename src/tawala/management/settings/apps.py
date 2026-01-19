@@ -256,7 +256,15 @@ MIDDLEWARE: list[str] = _get_middleware(INSTALLED_APPS)
 
 
 # ===============================================================
+# ROOT URLCONF
+# ===============================================================
+
+
+ROOT_URLCONF: str = f"{PKG_NAME}.management.urls"
+
+
+# ===============================================================
 # EXPORTS
 # ===============================================================
 
-__all__: list[str] = ["INSTALLED_APPS", "TEMPLATES", "MIDDLEWARE"]
+__all__: list[str] = ["INSTALLED_APPS", "TEMPLATES", "MIDDLEWARE", "ROOT_URLCONF"]

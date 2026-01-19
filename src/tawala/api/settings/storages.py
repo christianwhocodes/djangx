@@ -53,9 +53,23 @@ def _get_storages_config() -> StoragesDict:
 
 
 STORAGES: StoragesDict = _get_storages_config()
+
 BLOB_READ_WRITE_TOKEN: str = _STORAGE.token
+
 STATIC_ROOT: Path = Path.cwd() / "public" / "static"
+
+STATIC_URL: str = "static/"
+
 MEDIA_ROOT: Path = Path.cwd() / "public" / "media"
 
+MEDIA_URL: str = "media/"
 
-__all__: list[str] = ["STORAGES", "BLOB_READ_WRITE_TOKEN", "STATIC_ROOT", "MEDIA_ROOT"]
+
+__all__: list[str] = [
+    "STORAGES",
+    "BLOB_READ_WRITE_TOKEN",
+    "STATIC_ROOT",
+    "STATIC_URL",
+    "MEDIA_ROOT",
+    "MEDIA_URL",
+]
