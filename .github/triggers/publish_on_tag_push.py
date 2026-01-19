@@ -1,4 +1,4 @@
-"""Trigger the 'Publish to PyPI' GitHub Actions workflow by tagging and pushing.
+"""Trigger the 'Publish to PyPI or TestPyPI on tag push or manual trigger' GitHub workflow by tagging and pushing.
 
 This script:
 - Reads repository metadata from pyproject.toml to build the Actions URL.

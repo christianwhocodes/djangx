@@ -1,4 +1,4 @@
-name: Publish to PyPI
+name: Publish to PyPI or TestPyPI on tag push or manual trigger
 
 on:
   push:
@@ -13,7 +13,7 @@ on:
         options:
           - pypi
           - testpypi
-        default: "testpypi"
+        default: "pypi"
       version:
         description: "Version to publish (e.g., 1.0.0a1). Leave empty to use current project version."
         required: false
@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v7
@@ -125,7 +125,7 @@ jobs:
           echo "Publishing version ${{ steps.config.outputs.version }} to PyPI..."
           uv publish
 
-      - name: Skip dev versions notification
+      - name: Skip dev versions
         if: steps.config.outputs.type == 'dev' && github.event_name == 'push'
         run: |
           echo "⚠️  Dev version detected - skipping publication"
@@ -138,3 +138,10 @@ jobs:
         run: |
           echo "Publishing version ${{ steps.config.outputs.version }} to TestPyPI..."
           uv publish --index testpypi
+
+          # Add this to pyproject.toml for TestPyPI configuration
+          # [[tool.uv.index]]
+          # name = "testpypi"
+          # url = "https://test.pypi.org/simple/"
+          # publish-url = "https://test.pypi.org/legacy/"
+          # explicit = true
