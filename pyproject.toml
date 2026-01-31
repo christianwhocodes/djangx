@@ -1,5 +1,5 @@
 [build-system]
-requires = ["uv_build>=0.9.26,<0.10.0"]
+requires = ["uv_build>=0.9.27,<0.10.0"]
 build-backend = "uv_build"
 
 [project.urls]
@@ -13,7 +13,7 @@ twl = "tawala.management.cli:main"
 
 [project]
 name = "tawala"
-version = "1.5.4.post1"
+version = "1.5.5"
 description = "Build and deploy Django apps with confidence."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -38,8 +38,8 @@ dev = [
     "djlint>=1.36.4",
     "pillow>=12.1.0",
     "psycopg[binary,pool]>=3.3.2",
-    "ruff>=0.14.13",
-    "vercel>=0.3.7",
+    "ruff>=0.14.14",
+    "vercel>=0.3.8",
 ]
 
 [tool.djlint]
