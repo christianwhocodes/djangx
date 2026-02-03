@@ -4,7 +4,12 @@ from ... import PKG_NAME, Conf, ConfField
 class ServerConfig(Conf):
     """api configuration settings."""
 
-    use_asgi = ConfField(env="SERVER_USE_ASGI", toml="server.use-asgi", type=bool, default=False)
+    use_asgi = ConfField(
+        type=bool,
+        env="SERVER_USE_ASGI",
+        toml="server.use-asgi",
+        default=False,
+    )
 
 
 _SERVER = ServerConfig()

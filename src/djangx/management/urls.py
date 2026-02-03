@@ -1,6 +1,6 @@
 from django.urls import URLPattern, URLResolver, include, path
 
-from .. import PKG_NAME
+from .. import PKG_NAME, PROJECT_MAIN_APP_NAME
 from .settings import INSTALLED_APPS
 
 urlpatterns: list[URLPattern | URLResolver] = [
@@ -11,5 +11,5 @@ urlpatterns: list[URLPattern | URLResolver] = [
     ),
     path("api/", include(f"{PKG_NAME}.api.urls")),
     path("ui/", include(f"{PKG_NAME}.ui.urls")),
-    path("", include("home.urls")),
+    path("", include(f"{PROJECT_MAIN_APP_NAME}.urls")),
 ]

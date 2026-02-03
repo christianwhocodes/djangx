@@ -3,24 +3,23 @@
 import sys
 from typing import NoReturn, Optional
 
-from .. import PKG_NAME
+from .. import PKG_NAME, PROJECT_DIR
 
 
 def main() -> Optional[NoReturn]:
     """Main entry point for the CLI."""
     match sys.argv[1]:
         case "-v" | "--version" | "version":
-            from christianwhocodes.utils.version import print_version
+            from christianwhocodes.utils import print_version
 
             sys.exit(print_version(PKG_NAME))
 
         case _:
             from os import environ
-            from pathlib import Path
 
             from django.core.management import ManagementUtility
 
-            sys.path.insert(0, str(Path.cwd()))
+            sys.path.insert(0, str(PROJECT_DIR))
             environ.setdefault("DJANGO_SETTINGS_MODULE", f"{PKG_NAME}.settings")
 
             utility = ManagementUtility(sys.argv)

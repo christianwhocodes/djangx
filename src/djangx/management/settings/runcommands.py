@@ -5,15 +5,16 @@ class RunCommandsConf(Conf):
     """Install/Build Commands to be executed settings."""
 
     install = ConfField(
+        type=list,
         env="RUNCOMMANDS_INSTALL",
         toml="runcommands.install",
-        type=list,
+        default=[],
     )
     build = ConfField(
+        type=list,
         env="RUNCOMMANDS_BUILD",
         toml="runcommands.build",
         default=["makemigrations", "migrate", "collectstatic --noinput"],
-        type=list,
     )
 
 

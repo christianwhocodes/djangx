@@ -8,7 +8,7 @@
 # ==============================================================================
 from pathlib import Path
 
-from ... import PKG_NAME, Conf, ConfField
+from ... import PKG_NAME, PROJECT_PUBLIC_DIR, Conf, ConfField
 from ..types import StoragesDict
 
 
@@ -16,13 +16,19 @@ class StorageConf(Conf):
     """Storage configuration settings."""
 
     backend = ConfField(
-        choices=["filesystem", "blob"],
+        type=str,
+        choices=["filesystem", "vercelblob"],
         env="STORAGE_BACKEND",
         toml="storage.backend",
         default="filesystem",
-        type=str,
     )
-    token = ConfField(env="BLOB_READ_WRITE_TOKEN", toml="storage.blob-token", type=str)
+    # vercelblob specific
+    token = ConfField(
+        type=str,
+        env="BLOB_READ_WRITE_TOKEN",
+        toml="storage.blob-token",
+        default="",
+    )
 
 
 _STORAGE = StorageConf()
@@ -56,11 +62,11 @@ STORAGES: StoragesDict = _get_storages_config()
 
 BLOB_READ_WRITE_TOKEN: str = _STORAGE.token
 
-STATIC_ROOT: Path = Path.cwd() / "public" / "static"
+STATIC_ROOT: Path = PROJECT_PUBLIC_DIR / "static"
 
 STATIC_URL: str = "static/"
 
-MEDIA_ROOT: Path = Path.cwd() / "public" / "media"
+MEDIA_ROOT: Path = PROJECT_PUBLIC_DIR / "media"
 
 MEDIA_URL: str = "media/"
 

@@ -1,18 +1,18 @@
 [build-system]
-requires = ["uv_build>=0.9.28,<0.10.0"]
+requires = ["uv_build>=0.9.29,<0.10.0"]
 build-backend = "uv_build"
 
 [project.urls]
-homepage = "https://github.com/christianwhocodes/pkg-tawala#readme"
-repository = "https://github.com/christianwhocodes/pkg-tawala"
-issues = "https://github.com/christianwhocodes/pkg-tawala/issues"
+homepage = "https://github.com/christianwhocodes/djangx#readme"
+repository = "https://github.com/christianwhocodes/djangx"
+issues = "https://github.com/christianwhocodes/djangx/issues"
 
 [project.scripts]
-tawala = "tawala.management.cli:main"
-twl = "tawala.management.cli:main"
+djangx = "djangx.management.cli:main"
+djx = "djangx.management.cli:main"
 
 [project]
-name = "tawala"
+name = "djangx"
 version = "1.5.5"
 description = "Build and deploy Django apps with confidence."
 readme = "README.md"
@@ -23,7 +23,7 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "christianwhocodes>=1.2.6",
-    "django>=6.0.1",
+    "django>=6.0.2",
     "django-browser-reload>=1.21.0",
     "django-http-compression[brotli]>=1.2.0",
     "django-minify-html>=1.14.0",
@@ -38,7 +38,7 @@ dev = [
     "djlint>=1.36.4",
     "pillow>=12.1.0",
     "psycopg[binary,pool]>=3.3.2",
-    "ruff>=0.14.14",
+    "ruff>=0.15.0",
     "vercel>=0.3.8",
 ]
 

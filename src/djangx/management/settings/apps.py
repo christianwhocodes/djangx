@@ -1,6 +1,17 @@
+"""# DjangX settings: Installed apps, middleware, templates, context processors."""
+# TODO: Refactor so that the user can specify the order of apps, middleware, and context processors more flexibly.
+
 from enum import StrEnum
 
-from ... import PKG_NAME, Conf, ConfField
+from ... import (
+    PKG_API_NAME,
+    PKG_MANAGEMENT_NAME,
+    PKG_NAME,
+    PKG_UI_NAME,
+    PROJECT_MAIN_APP_NAME,
+    Conf,
+    ConfField,
+)
 from ..types import TemplatesDict
 
 # ===============================================================
@@ -26,8 +37,18 @@ class _Apps(StrEnum):
 class AppsConf(Conf):
     """Apps configuration settings."""
 
-    extend = ConfField(env="APPS_EXTEND", toml="apps.extend", type=list)
-    remove = ConfField(env="APPS_REMOVE", toml="apps.remove", type=list)
+    extend = ConfField(
+        type=list,
+        env="APPS_EXTEND",
+        toml="apps.extend",
+        default=[],
+    )
+    remove = ConfField(
+        type=list,
+        env="APPS_REMOVE",
+        toml="apps.remove",
+        default=[],
+    )
 
 
 _APPS_CONF = AppsConf()
@@ -39,10 +60,14 @@ def _get_installed_apps() -> list[str]:
     Order: Local apps → Third-party apps → Django apps
     This ensures local apps can override templates/static files from third-party and Django apps.
     """
-    # Local/project apps come FIRST for template/static file precedence
-    base_apps: list[str] = [PKG_NAME, f"{PKG_NAME}.api", f"{PKG_NAME}.ui", "home"]
 
-    # Third-party apps come SECOND
+    base_apps: list[str] = [
+        PROJECT_MAIN_APP_NAME,
+        PKG_NAME,
+        f"{PKG_NAME}.{PKG_API_NAME}",
+        f"{PKG_NAME}.{PKG_UI_NAME}",
+    ]
+
     third_party_apps: list[str] = [
         _Apps.HTTP_COMPRESSION,
         _Apps.MINIFY_HTML,
@@ -50,7 +75,6 @@ def _get_installed_apps() -> list[str]:
         _Apps.WATCHFILES,
     ]
 
-    # Django contrib apps come LAST
     django_apps: list[str] = [
         _Apps.ADMIN,
         _Apps.AUTH,
@@ -64,11 +88,11 @@ def _get_installed_apps() -> list[str]:
     apps_to_remove: list[str] = [app for app in _APPS_CONF.remove if app not in base_apps]
 
     # Remove apps that are in the remove list
-    third_party_apps: list[str] = [app for app in third_party_apps if app not in apps_to_remove]
     django_apps: list[str] = [app for app in django_apps if app not in apps_to_remove]
+    third_party_apps: list[str] = [app for app in third_party_apps if app not in apps_to_remove]
 
     # Combine: local apps + third-party apps + django apps + custom extensions
-    all_apps: list[str] = base_apps + third_party_apps + django_apps + _APPS_CONF.extend
+    all_apps: list[str] = _APPS_CONF.extend + base_apps + third_party_apps + django_apps
 
     # Remove duplicates while preserving order
     return list(dict.fromkeys(all_apps))
@@ -102,14 +126,16 @@ class ContextProcessorsConf(Conf):
     """Context processors configuration settings."""
 
     extend = ConfField(
+        type=list,
         env="CONTEXT_PROCESSORS_EXTEND",
         toml="context-processors.extend",
-        type=list,
+        default=[],
     )
     remove = ConfField(
+        type=list,
         env="CONTEXT_PROCESSORS_REMOVE",
         toml="context-processors.remove",
-        type=list,
+        default=[],
     )
 
 
@@ -143,7 +169,7 @@ def _get_context_processors(installed_apps: list[str]) -> list[str]:
     ]
 
     # Add custom context processors at the end
-    all_context_processors: list[str] = django_context_processors + _CONTEXT_PROCESSORS_CONF.extend
+    all_context_processors: list[str] = _CONTEXT_PROCESSORS_CONF.extend + django_context_processors
 
     # Remove duplicates while preserving order
     return list(dict.fromkeys(all_context_processors))
@@ -195,8 +221,18 @@ _APP_MIDDLEWARE_MAP: dict[_Apps, list[_Middlewares]] = {
 class MiddlewareConf(Conf):
     """Middleware configuration settings."""
 
-    extend = ConfField(env="MIDDLEWARE_EXTEND", toml="middleware.extend", type=list)
-    remove = ConfField(env="MIDDLEWARE_REMOVE", toml="middleware.remove", type=list)
+    extend = ConfField(
+        type=list,
+        env="MIDDLEWARE_EXTEND",
+        toml="middleware.extend",
+        default=[],
+    )
+    remove = ConfField(
+        type=list,
+        env="MIDDLEWARE_REMOVE",
+        toml="middleware.remove",
+        default=[],
+    )
 
 
 _MIDDLEWARE_CONF = MiddlewareConf()
@@ -260,7 +296,7 @@ MIDDLEWARE: list[str] = _get_middleware(INSTALLED_APPS)
 # ===============================================================
 
 
-ROOT_URLCONF: str = f"{PKG_NAME}.management.urls"
+ROOT_URLCONF: str = f"{PKG_NAME}.{PKG_MANAGEMENT_NAME}.urls"
 
 
 # ===============================================================

@@ -1,5 +1,4 @@
 import builtins
-import importlib.util
 import pathlib
 import sys
 from os import environ
@@ -8,13 +7,42 @@ from typing import Any, NoReturn, Optional, TypeAlias, cast
 from christianwhocodes.utils import ExitCode, PyProject, Text, TypeConverter, print
 from dotenv import dotenv_values
 
-PKG_PATH: pathlib.Path = pathlib.Path(__file__).resolve().parent
+# Directories
 
-PKG_NAME: str = PKG_PATH.name
+PKG_DIR: pathlib.Path = pathlib.Path(__file__).parent.resolve()
 
-PKG_DISPLAY_NAME: str = PKG_NAME.capitalize()
+PKG_UI_DIR: pathlib.Path = PKG_DIR / "ui"
 
-_ValueType: TypeAlias = str | bool | list[str] | pathlib.Path | int | None
+PKG_API_DIR: pathlib.Path = PKG_DIR / "api"
+
+PKG_MANAGEMENT_DIR: pathlib.Path = PKG_DIR / "management"
+
+PROJECT_DIR: pathlib.Path = pathlib.Path.cwd()
+
+PROJECT_MAIN_APP_DIR: pathlib.Path = PROJECT_DIR / "home"
+
+PROJECT_PUBLIC_DIR: pathlib.Path = PROJECT_DIR / "public"
+
+PROJECT_API_DIR: pathlib.Path = PROJECT_DIR / "api"
+
+
+# Names
+
+PKG_NAME: str = PKG_DIR.name
+
+PKG_DISPLAY_NAME: str = "DjangX"
+
+PKG_UI_NAME: str = "ui"
+
+PKG_API_NAME: str = "api"
+
+PKG_MANAGEMENT_NAME: str = "management"
+
+PROJECT_MAIN_APP_NAME: str = "home"
+
+# Settings configuration classes
+
+_ValueType: TypeAlias = Optional[str | bool | list[str] | pathlib.Path | int]
 
 
 class ConfField:
@@ -35,17 +63,17 @@ class ConfField:
 
     def __init__(
         self,
+        type: type[str] | type[bool] | type[list[str]] | type[pathlib.Path] | type[int] = str,
         choices: Optional[list[str]] = None,
         env: Optional[str] = None,
         toml: Optional[str] = None,
         default: _ValueType = None,
-        type: type[str] | type[bool] | type[list[str]] | type[pathlib.Path] | type[int] = str,
     ):
+        self.type = type
         self.choices = choices
         self.env = env
         self.toml = toml
         self.default = default
-        self.type = type
 
     @property
     def as_dict(self) -> dict[str, Any]:
@@ -154,7 +182,7 @@ class Conf:
             FileNotFoundError: If 'pyproject.toml' doesn't exist
             KeyError: If 'tool.{PKG_NAME}' section is missing
         """
-        pyproject_path = pathlib.Path.cwd() / "pyproject.toml"
+        pyproject_path = PROJECT_DIR / "pyproject.toml"
 
         if not pyproject_path.exists():
             raise FileNotFoundError(f"pyproject.toml not found at {pyproject_path}")
@@ -167,41 +195,11 @@ class Conf:
             raise KeyError(f"Missing 'tool.{PKG_NAME}' section in pyproject.toml")
 
     @classmethod
-    def _check_urls_py(cls) -> None:
-        """
-        Validate that home folder exists and contains urls.py with urlpatterns.
-
-        Raises:
-            FileNotFoundError: If home/urls.py doesn't exist
-            ValueError: If urlpatterns variable doesn't exist in urls.py
-        """
-        urls_py = pathlib.Path.cwd() / "home" / "urls.py"
-
-        if not (urls_py.exists() and urls_py.is_file()):
-            raise FileNotFoundError(f"'home/urls.py' not found at {urls_py}")
-
-        # Check if urlpatterns variable exists by attempting to import it
-        spec = importlib.util.spec_from_file_location("home.urls", urls_py)
-        if spec is None or spec.loader is None:
-            raise ValueError("Failed to load home/urls.py module")
-
-        module = importlib.util.module_from_spec(spec)
-        sys.modules["home.urls"] = module
-
-        try:
-            spec.loader.exec_module(module)
-        except Exception as e:
-            raise Exception(f"Error executing home/urls.py: {e}")
-
-        if not hasattr(module, "urlpatterns"):
-            raise ValueError("'urlpatterns' variable not found in home/urls.py")
-
-    @classmethod
     def _load_project(cls) -> Optional[NoReturn]:
         """Load and validate project configuration."""
         try:
+            # ?: Should other project indicators be added?
             toml_section = cls._check_pyproject_toml()
-            cls._check_urls_py()
 
         except (FileNotFoundError, KeyError, ValueError) as e:
             cls._validated = False
@@ -209,8 +207,7 @@ class Conf:
                 f"Are you currently executing in a {PKG_DISPLAY_NAME} project base directory?\n"
                 f"If not, navigate to your project's root or create a new {PKG_DISPLAY_NAME} project to run the command.\n\n"
                 "A valid project requires:\n"
-                f"  1. A 'pyproject.toml' file with a 'tool.{PKG_NAME}' section (even if empty)\n"
-                "  2. An 'home' folder containing 'urls.py' with a 'urlpatterns' variable\n\n"
+                f"  - `pyproject.toml` file with a 'tool.{PKG_NAME}' section (even if empty)\n"
                 f"Validation failed: {e}",
                 Text.WARNING,
             )
@@ -237,7 +234,7 @@ class Conf:
         if not self._validated:
             self._load_project()
         return {
-            **dotenv_values(pathlib.Path.cwd() / ".env"),
+            **dotenv_values(PROJECT_DIR / ".env"),
             **environ,  # override loaded values with environment variables
         }
 

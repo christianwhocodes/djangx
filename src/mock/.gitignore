@@ -1,8 +1,19 @@
-# Byte-compiled / optimized / DLL files
+# Python-generated files
 __pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
 
-# Virtual environment
+# Virtual environments
 /.venv/
+
+# Ruff cache
+/.ruff_cache/
+
+# Temporary files
+/.tmp/
 
 # Static and media files
 /public/
@@ -11,4 +22,4 @@ __pycache__/
 /.env*
 
 # SQLite database file
-/db.sqlite3*
+/db.sqlite3

@@ -10,40 +10,46 @@ class SecurityConf(Conf):
     """Security-related configuration settings."""
 
     secret_key = ConfField(
+        type=str,
         env="SECRET_KEY",
         toml="secret-key",
         default="django-insecure-change-me-in-production-via-env-variable",
-        type=str,
     )
-    debug = ConfField(env="DEBUG", toml="debug", default=True, type=bool)
+    debug = ConfField(
+        type=bool,
+        env="DEBUG",
+        toml="debug",
+        default=True,
+    )
     allowed_hosts = ConfField(
+        type=list,
         env="ALLOWED_HOSTS",
         toml="allowed-hosts",
         default=["localhost", "127.0.0.1"],
-        type=list,
     )
     secure_ssl_redirect = ConfField(
+        type=bool,
         env="SECURE_SSL_REDIRECT",
         toml="secure-ssl-redirect",
         default=False,
-        type=bool,
     )
     session_cookie_secure = ConfField(
+        type=bool,
         env="SESSION_COOKIE_SECURE",
         toml="session-cookie-secure",
         default=False,
-        type=bool,
     )
     csrf_cookie_secure = ConfField(
+        type=bool,
         env="CSRF_COOKIE_SECURE",
         toml="csrf-cookie-secure",
         default=False,
-        type=bool,
     )
     secure_hsts_seconds = ConfField(
+        type=int,
         env="SECURE_HSTS_SECONDS",
         toml="secure-hsts-seconds",
-        type=int,
+        default=0,
     )
 
 

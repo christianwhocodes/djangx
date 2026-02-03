@@ -1,18 +1,21 @@
-# Python bytecode files
+# Python-generated files
 __pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
 
-# Package virtual environments
+# Virtual environments
 /.venv/
 
 # Ruff cache
 /.ruff_cache/
 
-# Distribution folder
-/dist/
+# Temporary files
+/.tmp/
+/src/tmp/
 
 # All files mock migration files
 /src/mock/home/migrations/*
 !/src/mock/home/migrations/__init__.py
-
-# Temporary files
-/src/tmp/
