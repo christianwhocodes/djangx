@@ -1,18 +1,11 @@
-from pathlib import Path
-from socket import gaierror, gethostbyname, gethostname
-from threading import Thread
+import signal
+from threading import Event, Thread
 from typing import Any
 
-from christianwhocodes.utils.version import Version
 from django.contrib.staticfiles.management.commands.runserver import (
     Command as RunserverCommand,
 )
-from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import CommandParser
-from django.db import DEFAULT_DB_ALIAS, connections
-from django.db.migrations.executor import MigrationExecutor
-from django.utils import timezone
-from pyperclip import copy
 
 from ... import PKG_DISPLAY_NAME, PKG_NAME
 from ..settings import TAILWIND
@@ -31,20 +24,20 @@ class Command(RunserverCommand):
     use_ipv6: bool
     no_clipboard: bool
     no_tailwind_watch: bool
+    verbose: bool
     _watcher_thread: Thread | None
+    _stop_watcher_event: Event | None
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._watcher_thread = None
+        self._stop_watcher_event = None
+        self._original_sigint_handler = None
+        self._shutdown_in_progress = False
+        self.verbose = False
 
     def add_arguments(self, parser: CommandParser) -> None:
-        """Add custom arguments to the command.
-
-        Extends the parent runserver arguments with specific options.
-
-        Args:
-            parser: The argument parser to add arguments to.
-        """
+        """Add custom arguments to the command."""
         super().add_arguments(parser)
         parser.add_argument(
             "--no-clipboard",
@@ -56,151 +49,207 @@ class Command(RunserverCommand):
             action="store_true",
             help="Disable Tailwind CSS file watching",
         )
+        parser.add_argument(
+            "--verbose",
+            action="store_true",
+            help="Show detailed Tailwind operations and status messages",
+        )
 
     def handle(self, *args: object, **options: Any) -> str | None:
-        """Handle the dev command execution.
-
-        Processes command options and invokes the parent runserver command.
-
-        Args:
-            *args: Positional arguments from the command.
-            **options: Command options including:
-                - no_clipboard (bool): If True, skip clipboard copying.
-                - no_tailwind_watch (bool): If True, skip Tailwind watcher.
-
-        Returns:
-            Result from parent command or None.
-        """
+        """Handle the dev command execution."""
         self.no_clipboard = options.get("no_clipboard", False)
         self.no_tailwind_watch = options.get("no_tailwind_watch", False)
+        self.verbose = options.get("verbose", False)
 
-        return super().handle(*args, **options)
+        self._setup_signal_handlers()
+
+        try:
+            return super().handle(*args, **options)
+        except KeyboardInterrupt:
+            # Expected during shutdown - propagate after cleanup
+            raise
+        finally:
+            # Ensure cleanup happens even if parent class has issues
+            self._cleanup_watcher()
 
     def inner_run(self, *args: Any, **options: Any) -> None:
-        """Run before the development server starts.
-
-        Prepares Tailwind CSS by cleaning old files and either building once
-        or starting the watcher (which builds initially then watches).
-        """
+        """Run before the development server starts."""
         self._prepare_tailwind()
-        return super().inner_run(*args, **options)  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType, reportAttributeAccessIssue]
+        return super().inner_run(*args, **options)  # pyright: ignore
 
     def check_migrations(self) -> None:
-        f"""Check for unapplied migrations and display a warning.
+        """Check for unapplied migrations and display a warning."""
+        from django.core.exceptions import ImproperlyConfigured
+        from django.db import DEFAULT_DB_ALIAS, connections
+        from django.db.migrations.executor import MigrationExecutor
 
-        Overrides Django's default check_migrations to use '{PKG_NAME} migrate'
-        instead of 'python manage.py migrate' in the warning message.
-
-        Prints a notice if there are unapplied migrations that could affect
-        the project's functionality.
-        """
         try:
             executor = MigrationExecutor(connections[DEFAULT_DB_ALIAS])
         except ImproperlyConfigured:
             return
 
         plan = executor.migration_plan(executor.loader.graph.leaf_nodes())
-        if plan:
-            apps_waiting_migration = sorted({migration.app_label for migration, backwards in plan})  # pyright: ignore[reportUnusedVariable]
-            self.stdout.write(
-                self.style.NOTICE(
-                    "\nYou have %(unapplied_migration_count)s unapplied migration(s). "
-                    "Your project may not work properly until you apply the "
-                    "migrations for app(s): %(apps_waiting_migration)s."
-                    % {
-                        "unapplied_migration_count": len(plan),
-                        "apps_waiting_migration": ", ".join(apps_waiting_migration),
-                    }
-                )
+        if not plan:
+            return
+
+        apps_waiting_migration = sorted({migration.app_label for migration, _ in plan})
+        self.stdout.write(
+            self.style.NOTICE(
+                f"\nYou have {len(plan)} unapplied migration(s). "
+                f"Your project may not work properly until you apply the "
+                f"migrations for app(s): {', '.join(apps_waiting_migration)}."
             )
-            OVERRIDE = f"{PKG_NAME} migrate"  # Only thing we're overriding
-            self.stdout.write(self.style.NOTICE(f"Run {OVERRIDE} to apply them."))
+        )
+        self.stdout.write(self.style.NOTICE(f"Run {PKG_NAME} migrate to apply them."))
 
     def on_bind(self, server_port: int) -> None:
-        """Custom server startup message and initialization.
-
-        Overrides Django's default on_bind to provide a custom startup
-        banner, server information, and clipboard functionality.
-        Called when the development server binds to a port. Displays startup
-        banner, server information, and optionally copies the URL to clipboard.
-
-        Args:
-            server_port: The port the server is bound to.
-        """
+        """Display server startup information."""
         self._print_startup_banner()
         self._print_server_info(server_port)
 
         if not self.no_clipboard:
             self._copy_to_clipboard(server_port)
 
-        self.stdout.write("")  # spacing
+        self.stdout.write("")
 
-    def _prepare_tailwind(self) -> None:
-        """Prepare Tailwind CSS before starting the server.
+    # ========== Signal Handling ==========
 
-        Cleans old output files, then either:
-        - Starts watcher (which builds initially + watches for changes), or
-        - Builds once if watching is disabled
-        """
-        # Always clean old output first
-        clean_handler = CleanHandler(verbose=False)
-        clean_handler.clean()
+    def _setup_signal_handlers(self) -> None:
+        """Set up custom signal handlers for graceful shutdown."""
+        self._original_sigint_handler = signal.getsignal(signal.SIGINT)
+        signal.signal(signal.SIGINT, self._handle_shutdown_signal)
+        signal.signal(signal.SIGTERM, self._handle_shutdown_signal)
 
-        # Either watch (default) or build once
-        if not self.no_tailwind_watch:
-            self._start_watcher_with_initial_build()
-        else:
-            """Build Tailwind CSS once without watching."""
-            BuildHandler(verbose=False).build(skip_if_no_source=True)
-
-    def _start_watcher_with_initial_build(self) -> None:
-        """Build Tailwind CSS initially, then start watcher in background.
-
-        Performs initial build synchronously to ensure styles are ready
-        before the server starts accepting requests. Then starts a background
-        thread to watch for changes.
-
-        Silently skips if source file doesn't exist (for non-Tailwind users).
-        """
-        source_css: Path = TAILWIND.source
-        if not source_css.exists() or not source_css.is_file():
-            # Silently skip for non-Tailwind users
+    def _handle_shutdown_signal(self, signum: int, frame: Any) -> None:
+        """Handle shutdown signals (Ctrl+C, SIGTERM) with proper synchronization."""
+        # If already shutting down, ignore subsequent signals to let cleanup finish
+        if self._shutdown_in_progress:
             return
 
-        # Build synchronously first to avoid unstyled flash on first page load
-        BuildHandler(verbose=False).build(skip_if_no_source=True)
+        self._shutdown_in_progress = True
 
-        # Start watcher in background thread for subsequent changes
+        # Show shutdown message if verbose
+        if self.verbose:
+            self.stdout.write(self.style.WARNING("\n\n🛑 Shutting down gracefully..."))
+
+        # Clean up watcher before restoring signal handler
+        self._cleanup_watcher()
+
+        # Restore original handler for any subsequent signals
+        if self._original_sigint_handler:
+            signal.signal(signal.SIGINT, self._original_sigint_handler)
+
+        # Now propagate the interrupt
+        raise KeyboardInterrupt
+
+    def _cleanup_watcher(self) -> None:
+        """Stop the Tailwind watcher thread gracefully."""
+        if not self._watcher_thread or not self._watcher_thread.is_alive():
+            return
+
+        if self.verbose:
+            self.stdout.write(self.style.WARNING("   ⏹ Stopping Tailwind watcher..."))
+
+        # Signal the thread to stop
+        if self._stop_watcher_event:
+            self._stop_watcher_event.set()
+
+        # Wait for thread to finish with timeout
+        self._watcher_thread.join(timeout=3.0)
+
+        if self._watcher_thread.is_alive():
+            if self.verbose:
+                self.stdout.write(
+                    self.style.WARNING(
+                        "   ⚠ Tailwind watcher did not stop in time (will be terminated)"
+                    )
+                )
+        else:
+            if self.verbose:
+                self.stdout.write(self.style.SUCCESS("   ✓ Tailwind watcher stopped"))
+
+        self._watcher_thread = None
+        self._stop_watcher_event = None
+
+    # ========== Tailwind Management ==========
+
+    def _prepare_tailwind(self) -> None:
+        """Prepare Tailwind CSS before starting the server."""
+        # Check if Tailwind source exists
+        tailwind_available = TAILWIND.source.exists() and TAILWIND.source.is_file()
+
+        if self.verbose:
+            self.stdout.write("\n" + "=" * 60)
+            self.stdout.write(self.style.HTTP_INFO("TAILWIND PREPARATION"))
+            self.stdout.write("=" * 60)
+
+        # Clean old output
+        CleanHandler(verbose=self.verbose).clean()
+
+        if not tailwind_available:
+            if self.verbose:
+                self.stdout.write(
+                    self.style.WARNING(f"⚠ Tailwind source not found at: {TAILWIND.source}")
+                )
+                self.stdout.write(self.style.NOTICE("  Skipping Tailwind CSS operations"))
+                self.stdout.write("=" * 60 + "\n")
+            return
+
+        if self.verbose:
+            self.stdout.write(self.style.SUCCESS(f"✓ Found Tailwind source: {TAILWIND.source}"))
+
+        # Build initial CSS
+        if self.verbose:
+            self.stdout.write(self.style.HTTP_INFO("\n📦 Building Tailwind CSS..."))
+
+        build_success = BuildHandler(verbose=self.verbose).build(skip_if_no_source=True)
+
+        if build_success and self.verbose:
+            self.stdout.write(self.style.SUCCESS(f"✓ Output saved to: {TAILWIND.output}"))
+
+        # Start watcher if not disabled
+        if not self.no_tailwind_watch:
+            if self.verbose:
+                self.stdout.write(self.style.HTTP_INFO("\n👀 Starting file watcher..."))
+
+            self._start_watcher()
+
+            if self.verbose:
+                self.stdout.write(
+                    self.style.SUCCESS("✓ Watching for changes in Tailwind source files")
+                )
+        else:
+            if self.verbose:
+                self.stdout.write(
+                    self.style.NOTICE("\n⏭ Tailwind watch disabled (--no-tailwind-watch)")
+                )
+
+        if self.verbose:
+            self.stdout.write("=" * 60 + "\n")
+
+    def _start_watcher(self) -> None:
+        """Start the Tailwind watcher thread."""
+        self._stop_watcher_event = Event()
+
         def run_watcher() -> None:
-            """Run the watcher process in a background thread."""
-            handler = WatchHandler(verbose=False)
-            handler.watch(skip_if_no_source=True)
+            handler = WatchHandler(verbose=self.verbose)
+            handler.watch(skip_if_no_source=True, stop_event=self._stop_watcher_event)
 
         self._watcher_thread = Thread(
             target=run_watcher,
-            daemon=True,
+            daemon=False,  # Non-daemon ensures proper cleanup before exit
             name="TailwindWatcher",
         )
         self._watcher_thread.start()
 
-    def _print_startup_banner(self) -> None:
-        """Print ASCII banner based on terminal width.
+    # ========== Display Methods ==========
 
-        Displays either a full ASCII art banner or a compact version depending
-        on whether the terminal is wide enough. Includes warning messages and
-        control instructions appropriate for the terminal size.
-        """
+    def _print_startup_banner(self) -> None:
+        """Print ASCII banner."""
         ArtPrinter(self).print_dev_server_banner()
 
     def _print_server_info(self, server_port: int) -> None:
-        """Print server and version information.
-
-        Displays the current date/time with timezone, version,
-        local server address, and network address (if applicable).
-
-        Args:
-            server_port: The port the server is bound to.
-        """
+        """Print server and version information."""
         self._print_timestamp()
         self._print_version()
         self._print_local_url(server_port)
@@ -210,59 +259,43 @@ class Command(RunserverCommand):
 
     def _print_timestamp(self) -> None:
         """Print current date and time with timezone."""
+        from django.utils import timezone
+
         tz = timezone.get_current_timezone()
         now = timezone.localtime(timezone.now(), timezone=tz)
         timestamp = now.strftime("%B %d, %Y - %X")
         tz_name = now.strftime("%Z")
 
+        date_display = f"\n  📅 Date: {self.style.HTTP_NOT_MODIFIED(timestamp)}"
         if tz_name:
-            self.stdout.write(f"\n  📅 Date: {self.style.HTTP_NOT_MODIFIED(timestamp)} ({tz_name})")
-        else:
-            self.stdout.write(f"\n  📅 Date: {self.style.HTTP_NOT_MODIFIED(timestamp)}")
+            date_display += f" ({tz_name})"
+
+        self.stdout.write(date_display)
 
     def _print_version(self) -> None:
         """Print version."""
+        from christianwhocodes.utils import Version
 
+        version = Version.get(PKG_NAME)[0]
         self.stdout.write(
-            f"  🔧 {PKG_DISPLAY_NAME} version: {self.style.HTTP_NOT_MODIFIED(Version.get(PKG_NAME)[0])}"
+            f"  🔧 {PKG_DISPLAY_NAME} version: {self.style.HTTP_NOT_MODIFIED(version)}"
         )
 
     def _print_local_url(self, server_port: int) -> None:
-        """Print local server URL.
-
-        Args:
-            server_port: The port the server is bound to.
-        """
-        addr = self._format_address()
-        url = f"{self.protocol}://{addr}:{server_port}/"
+        """Print local server URL."""
+        url = f"{self.protocol}://{self._format_address()}:{server_port}/"
         self.stdout.write(f"  🌐 Local address:   {self.style.SUCCESS(url)}")
 
     def _format_address(self) -> str:
-        """Format address for display.
-
-        Handles IPv6 addresses by wrapping them in brackets and formats
-        0.0.0.0 for display.
-
-        Returns:
-            The formatted address string ready for display.
-        """
+        """Format address for display."""
         if self._raw_ipv6:
             return f"[{self.addr}]"
-        elif self.addr == "0":
-            return "0.0.0.0"
-        else:
-            return self.addr
+        return "0.0.0.0" if self.addr == "0" else self.addr
 
     def _print_network_url(self, server_port: int) -> None:
-        """Print LAN IP address if available.
+        """Print LAN IP address if available."""
+        from socket import gaierror, gethostbyname, gethostname
 
-        Attempts to determine the local network IP address and displays
-        the network URL for accessing the dev server from other machines
-        on the same network. Silently fails if the address cannot be determined.
-
-        Args:
-            server_port: The port the server is bound to.
-        """
         try:
             hostname = gethostname()
             local_ip = gethostbyname(hostname)
@@ -272,18 +305,11 @@ class Command(RunserverCommand):
             pass
 
     def _copy_to_clipboard(self, server_port: int) -> None:
-        """Copy server URL to clipboard.
-
-        Attempts to copy the server URL to the system clipboard using pyperclip.
-        Gracefully handles missing pyperclip or clipboard unavailability.
-
-        Args:
-            server_port: The port the server is bound to.
-        """
+        """Copy server URL to clipboard."""
         try:
-            addr = self._format_address()
-            url = f"{self.protocol}://{addr}:{server_port}/"
+            from pyperclip import copy
 
+            url = f"{self.protocol}://{self._format_address()}:{server_port}/"
             copy(url)
             self.stdout.write(f"  📋 {self.style.SUCCESS('Copied to clipboard!')}")
         except ImportError:
