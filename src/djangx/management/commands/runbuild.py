@@ -9,8 +9,6 @@ from typing import Any
 
 from django.core.management.base import BaseCommand, CommandParser
 
-from ..settings import RUNCOMMANDS
-from .helpers.art import ArtType
 from .helpers.run import CommandGenerator, CommandOutput, Output
 
 
@@ -19,11 +17,14 @@ class BuildCommandGenerator(CommandGenerator):
 
     def get_runcommands(self) -> list[str]:
         """Retrieve build commands."""
-        runcommands_conf = RUNCOMMANDS
-        return runcommands_conf.build
+        from ..settings import RUNCOMMANDS
+
+        return RUNCOMMANDS.build
 
     def create_output_handler(self) -> CommandOutput:
         """Create the output handler for build commands."""
+        from .helpers.art import ArtType
+
         return Output(self.django_command, ArtType.BUILD)
 
     def get_mode(self) -> str:

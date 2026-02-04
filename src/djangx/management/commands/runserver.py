@@ -1,6 +1,6 @@
 import signal
 from threading import Event, Thread
-from typing import Any
+from typing import Any, Optional
 
 from django.contrib.staticfiles.management.commands.runserver import (
     Command as RunserverCommand,
@@ -9,7 +9,6 @@ from django.core.management.base import CommandParser
 
 from ... import PKG_DISPLAY_NAME, PKG_NAME
 from ..settings import TAILWIND
-from .helpers.art import ArtPrinter
 from .tailwind import BuildHandler, CleanHandler, WatchHandler
 
 
@@ -25,8 +24,8 @@ class Command(RunserverCommand):
     no_clipboard: bool
     no_tailwind_watch: bool
     verbose: bool
-    _watcher_thread: Thread | None
-    _stop_watcher_event: Event | None
+    _watcher_thread: Optional[Thread]
+    _stop_watcher_event: Optional[Event]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -55,7 +54,7 @@ class Command(RunserverCommand):
             help="Show detailed Tailwind operations and status messages",
         )
 
-    def handle(self, *args: object, **options: Any) -> str | None:
+    def handle(self, *args: object, **options: Any) -> Optional[str]:
         """Handle the dev command execution."""
         self.no_clipboard = options.get("no_clipboard", False)
         self.no_tailwind_watch = options.get("no_tailwind_watch", False)
@@ -246,6 +245,8 @@ class Command(RunserverCommand):
 
     def _print_startup_banner(self) -> None:
         """Print ASCII banner."""
+        from .helpers.art import ArtPrinter
+
         ArtPrinter(self).print_dev_server_banner()
 
     def _print_server_info(self, server_port: int) -> None:

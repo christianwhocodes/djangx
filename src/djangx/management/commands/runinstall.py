@@ -9,13 +9,7 @@ from typing import Any
 
 from django.core.management.base import BaseCommand, CommandParser
 
-from ..settings import RUNCOMMANDS
-from .helpers.art import ArtType
-from .helpers.run import (
-    CommandGenerator,
-    CommandOutput,
-    Output,
-)
+from .helpers.run import CommandGenerator, CommandOutput, Output
 
 
 class InstallCommandGenerator(CommandGenerator):
@@ -23,11 +17,14 @@ class InstallCommandGenerator(CommandGenerator):
 
     def get_runcommands(self) -> list[str]:
         """Retrieve install commands."""
-        runcommands_conf = RUNCOMMANDS
-        return runcommands_conf.install
+        from ..settings import RUNCOMMANDS
+
+        return RUNCOMMANDS.install
 
     def create_output_handler(self) -> CommandOutput:
         """Create the output handler for install commands."""
+        from .helpers.art import ArtType
+
         return Output(self.django_command, ArtType.INSTALL)
 
     def get_mode(self) -> str:

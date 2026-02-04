@@ -8,7 +8,7 @@ copying with appropriate error handling and user prompts.
 from abc import ABC, abstractmethod
 from pathlib import Path
 from shutil import copy2, copytree, rmtree
-from typing import Any, cast
+from typing import Any
 
 from django.core.management.base import BaseCommand, CommandParser
 
@@ -195,7 +195,6 @@ class DirectoryCopier(Copier):
 
 class Command(BaseCommand):
     help = "Copy files or folders with their contents from one location to another."
-    requires_system_checks: bool = cast(bool, [])
 
     def add_arguments(self, parser: CommandParser) -> None:
         """Define command-line arguments.
