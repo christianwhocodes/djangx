@@ -213,18 +213,18 @@ class HomeView(TemplateView):
     @staticmethod
     def tailwind_css() -> str:
         """Generate Tailwind CSS content."""
-        return """@import "tailwindcss";
+        return f"""@import "tailwindcss";
 
 /* =============================================================================
    SOURCE FILES
    ============================================================================= */
-@source "../../../../.venv/**/djangx/ui/templates/ui/**/*.html";
+@source "../../../../.venv/**/{PKG_NAME}/ui/templates/ui/**/*.html";
 @source "../../../templates/home/**/*.html";
 
 /* =============================================================================
    THEME CONFIGURATION
    ============================================================================= */
-@theme {
+@theme {{
   /* ---------------------------------------------------------------------------
      TYPOGRAPHY
      --------------------------------------------------------------------------- */
@@ -263,70 +263,70 @@ class HomeView(TemplateView):
   --color-nav-dropdown-bg: #2e2e2e; /* Dropdown background */
   --color-nav-dropdown: #d9d9d9; /* Dropdown text color */
   --color-nav-dropdown-hover: #ff4d4f; /* Dropdown hover state */
-}
+}}
 
 /* =============================================================================
    LIGHT THEME OVERRIDES
    ============================================================================= */
-@theme light {
+@theme light {{
   --color-background: rgba(41, 41, 41, 0.8);
   --color-surface: #484848;
-}
+}}
 
 /* =============================================================================
    DARK THEME OVERRIDES
    ============================================================================= */
-@theme dark {
+@theme dark {{
   --color-background: #060606;
   --color-surface: #252525;
   --color-default: #ffffff;
   --color-heading: #ffffff;
-}
+}}
 
 /* =============================================================================
    UTILITY CLASSES
    ============================================================================= */
-@layer utilities {
+@layer utilities {{
   /* Full-width container */
-  .container-full {
+  .container-full {{
     @apply mx-auto w-full px-8;
-  }
+  }}
 
   /* Responsive container (Mobile→SM→MD→LG→XL→2XL: 100%→92%→83%→80%→75%→1400px max) */
-  .container {
+  .container {{
     @apply mx-auto w-full px-8 sm:w-11/12 sm:px-4 md:w-5/6 lg:w-4/5 xl:w-3/4 xl:px-0 2xl:max-w-[1400px];
-  }
-}
+  }}
+}}
 
 /* =============================================================================
    BASE STYLES - Global element styling
    ============================================================================= */
-@layer base {
-  :root {
+@layer base {{
+  :root {{
     @apply scroll-smooth;
-  }
+  }}
 
-  body {
+  body {{
     @apply bg-background text-default font-default antialiased;
-  }
+  }}
 
   h1,
   h2,
   h3,
   h4,
   h5,
-  h6 {
+  h6 {{
     @apply text-heading font-heading text-balance;
-  }
+  }}
 
-  a {
+  a {{
     @apply text-accent no-underline transition-colors duration-200 ease-in-out;
-  }
+  }}
 
-  a:hover {
+  a:hover {{
     color: color-mix(in srgb, var(--color-accent), white 15%);
-  }
-}
+  }}
+}}
 """
 
 

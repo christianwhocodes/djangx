@@ -1,4 +1,3 @@
-"""# DjangX settings: Installed apps, middleware, templates, context processors."""
 # TODO: Refactor so that the user can specify the order of apps, middleware, and context processors more flexibly.
 
 from enum import StrEnum
