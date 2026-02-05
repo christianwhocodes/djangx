@@ -141,15 +141,15 @@ wheels = [
 
 [[package]]
 name = "christianwhocodes"
-version = "1.2.6"
+version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pyperclip" },
     { name = "rich" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/49/26/309f7e47c975eb0aff703e8afe50a33f89c8fc943663cae4f759399b830a/christianwhocodes-1.2.6.tar.gz", hash = "sha256:17e4dcfb7c9aa7a3934bb0e021c4b000a1e5789baacf69bc8e58fdd35f9e0cac", size = 9127, upload-time = "2026-01-18T19:17:03.842Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1f/cb/508d54d2fa6ac4203f557a02e5484ed63b2a70eb3de913c5c4bdd313ba84/christianwhocodes-1.3.1.tar.gz", hash = "sha256:3168ca5f1b903e196bf2da21d29f9f3c43a4a79549a121e975e86dc22d73905b", size = 13783, upload-time = "2026-02-05T01:47:28.023Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c8/1f/1ebb28fb69c4b9fda05ecc3c3e1262a36240ec5635c0b210a10e5ac897d8/christianwhocodes-1.2.6-py3-none-any.whl", hash = "sha256:49611c3a5ce6bd05b2853a2a83d199efae526131b9f817b04d021dee09bfaf52", size = 13686, upload-time = "2026-01-18T19:17:03.098Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/34/22a67cd9c5c873ee408ae2191479ecc6fa3f170a35db5ef701317791582d/christianwhocodes-1.3.1-py3-none-any.whl", hash = "sha256:5d47b252aa97958aaf23d5be96c912ca88b7b06679b9ffbe38d55f713f3a070c", size = 22411, upload-time = "2026-02-05T01:47:29.274Z" },
 ]
 
 [[package]]
@@ -305,7 +305,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "christianwhocodes", specifier = ">=1.2.6" },
+    { name = "christianwhocodes", specifier = ">=1.3.1" },
     { name = "django", specifier = ">=6.0.2" },
     { name = "django-browser-reload", specifier = ">=1.21.0" },
     { name = "django-http-compression", extras = ["brotli"], specifier = ">=1.2.0" },

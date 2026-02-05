@@ -4,7 +4,8 @@ import sys
 from os import environ
 from typing import Any, NoReturn, Optional, TypeAlias, cast
 
-from christianwhocodes.utils import ExitCode, PyProject, Text, TypeConverter, print
+from christianwhocodes.core import ExitCode, PyProject, TypeConverter
+from christianwhocodes.io import Text, print
 from dotenv import dotenv_values
 
 # Directories

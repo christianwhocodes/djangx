@@ -1,5 +1,5 @@
 [build-system]
-requires = ["uv_build>=0.9.29,<0.10.0"]
+requires = ["uv_build>=0.9.30,<0.10.0"]
 build-backend = "uv_build"
 
 [project.urls]
@@ -22,7 +22,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "christianwhocodes>=1.2.6",
+    "christianwhocodes>=1.3.1",
     "django>=6.0.2",
     "django-browser-reload>=1.21.0",
     "django-http-compression[brotli]>=1.2.0",
@@ -41,6 +41,9 @@ dev = [
     "ruff>=0.15.0",
     "vercel>=0.3.8",
 ]
+
+# [tool.uv.sources]
+# christianwhocodes = { path = "../christianwhocodes", editable = true }
 
 [tool.djlint]
 profile = "django"

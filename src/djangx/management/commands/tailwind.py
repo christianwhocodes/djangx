@@ -13,7 +13,8 @@ from subprocess import DEVNULL, CalledProcessError, Popen, run
 from threading import Event
 from typing import Any, Callable
 
-from christianwhocodes.utils import PlatformInfo, Text, print
+from christianwhocodes.core import Platform
+from christianwhocodes.io import Text, print
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 from ... import PKG_NAME
@@ -77,12 +78,12 @@ class TailwindDownloader:
     def __init__(self, verbose: bool = True) -> None:
         self.verbose = verbose
 
-    def get_download_url(self, version: str, platform: PlatformInfo) -> str:
+    def get_download_url(self, version: str, platform: Platform) -> str:
         """Generate the download URL for the Tailwind CLI binary."""
         filename = self._get_filename(platform)
         return f"{self.BASE_URL}/download/{version}/{filename}"
 
-    def _get_filename(self, platform: PlatformInfo) -> str:
+    def _get_filename(self, platform: Platform) -> str:
         """Determine the appropriate filename based on platform."""
         template = self.PLATFORM_FILENAMES.get(platform.os_name)
         if not template:
@@ -163,7 +164,7 @@ class InstallHandler:
 
     def install(self, force: bool = False, use_cache: bool = False) -> None:
         """Install the Tailwind CLI binary."""
-        platform = PlatformInfo()
+        platform = Platform()
         cli_path = TAILWIND.cli
         version = TAILWIND.version
 
@@ -174,7 +175,7 @@ class InstallHandler:
         download_url = self.downloader.get_download_url(version, platform)
 
         if self.verbose:
-            self._display_download_info(version, platform, cli_path, download_url)
+            self._display_download_info(version, platform, cli_path)
 
         # Check if we should use cached version
         if cli_path.exists() and use_cache:
@@ -193,16 +194,15 @@ class InstallHandler:
         # Perform installation
         self._perform_installation(download_url, cli_path, version, platform)
 
-    def _display_platform_info(self, platform: PlatformInfo) -> None:
+    def _display_platform_info(self, platform: Platform) -> None:
         """Display detected platform information."""
         print(f"\n🖥 Detected platform: {str(platform)}", Text.INFO)
 
     def _display_download_info(
         self,
         version: str,
-        platform: PlatformInfo,
+        platform: Platform,
         cli_path: Path,
-        download_url: str,
     ) -> None:
         """Display download information to the user."""
         print("\n" + "=" * 60)
@@ -247,7 +247,7 @@ class InstallHandler:
         download_url: str,
         cli_path: Path,
         version: str,
-        platform: PlatformInfo,
+        platform: Platform,
     ) -> None:
         """Download and install the Tailwind CLI."""
         self.downloader.download(download_url, cli_path)

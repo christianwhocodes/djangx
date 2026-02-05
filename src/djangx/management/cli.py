@@ -10,7 +10,7 @@ def main() -> Optional[NoReturn]:
     """Main entry point for the CLI."""
     match sys.argv[1]:
         case "-v" | "--version" | "version":
-            from christianwhocodes.utils import print_version
+            from christianwhocodes.core import print_version
 
             sys.exit(print_version(PKG_NAME))
 

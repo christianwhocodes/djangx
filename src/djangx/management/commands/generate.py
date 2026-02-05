@@ -3,7 +3,7 @@ import pathlib
 from enum import StrEnum
 from typing import Any, Optional, Type, cast
 
-from christianwhocodes.generators.file import (
+from christianwhocodes.generators import (
     FileGenerator,
     FileGeneratorOption,
     PgPassFileGenerator,

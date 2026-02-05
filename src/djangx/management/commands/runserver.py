@@ -275,7 +275,7 @@ class Command(RunserverCommand):
 
     def _print_version(self) -> None:
         """Print version."""
-        from christianwhocodes.utils import Version
+        from christianwhocodes.core import Version
 
         version = Version.get(PKG_NAME)[0]
         self.stdout.write(

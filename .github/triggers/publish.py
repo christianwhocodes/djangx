@@ -18,7 +18,8 @@ from tomllib import TOMLDecodeError
 from typing import NoReturn
 from urllib.parse import urlparse
 
-from christianwhocodes.utils import ExitCode, PyProject, Text, print
+from christianwhocodes.core import ExitCode, PyProject
+from christianwhocodes.io import Text, print
 
 
 class GitPublisher:
@@ -28,7 +29,7 @@ class GitPublisher:
         self.project = pyproject
 
     # ---------------------------------------------------------
-    #   REPO URL EXTRACTION (FIXED)
+    #   REPO URL EXTRACTION
     # ---------------------------------------------------------
     def _get_repo_url(self) -> str:
         """
