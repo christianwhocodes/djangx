@@ -110,7 +110,7 @@ A new project built with {PKG_DISPLAY_NAME}.
 ## Getting Started
 
 1. Install dependencies: `uv sync`
-2. Run development server: `djx runserver`
+2. Run development server: `uv run djx runserver`
 """.strip()
 
     @staticmethod
@@ -132,9 +132,7 @@ A new project built with {PKG_DISPLAY_NAME}.
         tool_config = ""
         match preset:
             case PresetType.VERCEL:
-                tool_config = (
-                    '\nstorage = { backend = "vercel", blob-token = "your-vercel-blob-token" }\n'
-                )
+                tool_config = '\nstorage = { backend = "vercel", blob-token = "keep-your-vercel-blob-token-secret-in-env" }\n'
             case _:
                 pass
 
@@ -766,9 +764,13 @@ class _ProjectInitializer:
             next_steps.append(
                 "3. Configure Vercel blob token in [bold]pyproject.toml[/bold] or [bold].env[/bold]"
             )
-            next_steps.append("4. Run development server: [bold cyan]djx runserver[/bold cyan]")
+            next_steps.append(
+                "4. Run development server: [bold cyan]uv run djx runserver[/bold cyan]"
+            )
         else:
-            next_steps.append("3. Run development server: [bold cyan]djx runserver[/bold cyan]")
+            next_steps.append(
+                "3. Run development server: [bold cyan]uv run djx runserver[/bold cyan]"
+            )
 
         panel = Panel(
             "\n".join(next_steps),
