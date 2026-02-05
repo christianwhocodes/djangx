@@ -3,7 +3,7 @@
 import sys
 from typing import NoReturn, Optional
 
-from .. import PKG_NAME, PROJECT_DIR
+from .. import PKG_DISPLAY_NAME, PKG_NAME, PROJECT_DIR
 
 
 def main() -> Optional[NoReturn]:
@@ -13,6 +13,21 @@ def main() -> Optional[NoReturn]:
             from christianwhocodes.core import print_version
 
             sys.exit(print_version(PKG_NAME))
+
+        case "startproject" | "init" | "new":
+            from argparse import ArgumentParser, Namespace
+
+            from .commands.startproject import initialize
+
+            parser = ArgumentParser(description=f"Initialize a new {PKG_DISPLAY_NAME} project")
+            parser.add_argument(
+                "--preset",
+                choices=["default", "vercel"],
+                help="Project preset to use (skips interactive prompt)",
+            )
+            args: Namespace = parser.parse_args(sys.argv[2:])
+
+            sys.exit(initialize(preset=args.preset))
 
         case _:
             from os import environ

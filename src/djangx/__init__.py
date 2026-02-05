@@ -39,6 +39,8 @@ PKG_API_NAME: str = "api"
 
 PKG_MANAGEMENT_NAME: str = "management"
 
+PROJECT_INIT_NAME: str = PROJECT_DIR.name
+
 PROJECT_MAIN_APP_NAME: str = "home"
 
 # Settings configuration classes
