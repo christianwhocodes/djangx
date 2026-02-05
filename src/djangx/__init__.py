@@ -43,6 +43,10 @@ PROJECT_INIT_NAME: str = PROJECT_DIR.name
 
 PROJECT_MAIN_APP_NAME: str = "home"
 
+# bools
+
+INCLUDE_PROJECT_MAIN_APP: bool = PROJECT_MAIN_APP_DIR.exists() and PROJECT_MAIN_APP_DIR.is_dir()
+
 # Settings configuration classes
 
 _ValueType: TypeAlias = Optional[str | bool | list[str] | pathlib.Path | int]
@@ -206,14 +210,18 @@ class Conf:
 
         except (FileNotFoundError, KeyError, ValueError) as e:
             cls._validated = False
+            print(f"Not in a valid {PKG_DISPLAY_NAME} project directory.", Text.ERROR)
             print(
-                f"Are you currently executing in a {PKG_DISPLAY_NAME} project base directory?\n"
-                f"If not, navigate to your project's root or create a new {PKG_DISPLAY_NAME} project to run the command.\n\n"
-                "A valid project requires:\n"
-                f"  - `pyproject.toml` file with a 'tool.{PKG_NAME}' section (even if empty)\n"
-                f"Validation failed: {e}",
-                Text.WARNING,
+                f"A valid project requires: pyproject.toml with a 'tool.{PKG_NAME}' section (even if empty)",
+                Text.INFO,
             )
+            print(
+                [
+                    ("Create a new project: ", None),
+                    (f"uvx {PKG_NAME} startproject (if uv is installed.)", Text.HIGHLIGHT),
+                ]
+            )
+            print(f"Validation error: {e}")
 
         except Exception as e:
             cls._validated = False
