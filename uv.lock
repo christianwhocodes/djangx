@@ -280,7 +280,7 @@ wheels = [
 
 [[package]]
 name = "djangx"
-version = "1.5.5"
+version = "1.5.6"
 source = { editable = "." }
 dependencies = [
     { name = "christianwhocodes" },
@@ -292,6 +292,7 @@ dependencies = [
     { name = "django-watchfiles" },
     { name = "pyperclip" },
     { name = "python-dotenv" },
+    { name = "rich" },
 ]
 
 [package.dev-dependencies]
@@ -314,6 +315,7 @@ requires-dist = [
     { name = "django-watchfiles", specifier = ">=1.4.0" },
     { name = "pyperclip", specifier = ">=1.11.0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
+    { name = "rich", specifier = ">=14.3.2" },
 ]
 
 [package.metadata.requires-dev]
