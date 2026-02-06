@@ -15,7 +15,3 @@ wheels/
 # Temporary files
 /.tmp/
 /src/tmp/
-
-# All files mock migration files
-/src/mock/home/migrations/*
-!/src/mock/home/migrations/__init__.py
