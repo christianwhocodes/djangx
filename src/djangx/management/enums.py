@@ -1,6 +1,7 @@
 from enum import StrEnum
 
 from christianwhocodes.generators import FileGeneratorOption
+from platform import system
 
 
 class FileOption(StrEnum):
@@ -17,6 +18,13 @@ class PresetType(StrEnum):
 
     DEFAULT = "default"
     VERCEL = "vercel"
+
+
+class PGServiceFilename(StrEnum):
+    """PostgreSQL service filenames."""
+
+    PG_PASS = "pgpass.conf" if system() == "Windows" else ".pgpass"
+    PG_SERVICE = ".pg_service.conf"
 
 
 class Apps(StrEnum):
@@ -60,4 +68,11 @@ class Middlewares(StrEnum):
     BROWSER_RELOAD = "django_browser_reload.middleware.BrowserReloadMiddleware"
 
 
-__all__: list[str] = ["FileOption", "PresetType", "Apps", "ContextProcessors", "Middlewares"]
+__all__: list[str] = [
+    "FileOption",
+    "PresetType",
+    "PGServiceFilename",
+    "Apps",
+    "ContextProcessors",
+    "Middlewares",
+]

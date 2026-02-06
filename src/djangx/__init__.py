@@ -43,9 +43,6 @@ PROJECT_INIT_NAME: str = PROJECT_DIR.name
 
 PROJECT_MAIN_APP_NAME: str = "home"
 
-# bools
-
-INCLUDE_PROJECT_MAIN_APP: bool = PROJECT_MAIN_APP_DIR.exists() and PROJECT_MAIN_APP_DIR.is_dir()
 
 # Settings configuration classes
 

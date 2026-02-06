@@ -1,5 +1,4 @@
 from ... import (
-    INCLUDE_PROJECT_MAIN_APP,
     PKG_API_NAME,
     PKG_MANAGEMENT_NAME,
     PKG_NAME,
@@ -46,7 +45,7 @@ def _get_installed_apps() -> list[str]:
     """
 
     base_apps: list[str] = [
-        *([PROJECT_MAIN_APP_NAME] if INCLUDE_PROJECT_MAIN_APP else []),
+        PROJECT_MAIN_APP_NAME,
         PKG_NAME,
         f"{PKG_NAME}.{PKG_API_NAME}",
         f"{PKG_NAME}.{PKG_UI_NAME}",

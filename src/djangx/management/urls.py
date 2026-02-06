@@ -11,9 +11,5 @@ urlpatterns: list[URLPattern | URLResolver] = [
     ),
     path("api/", include(f"{PKG_NAME}.api.urls")),
     path("ui/", include(f"{PKG_NAME}.ui.urls")),
-    *(
-        [path("", include(f"{PROJECT_MAIN_APP_NAME}.urls"))]
-        if PROJECT_MAIN_APP_NAME in INSTALLED_APPS
-        else []
-    ),
+    path("", include(f"{PROJECT_MAIN_APP_NAME}.urls")),
 ]

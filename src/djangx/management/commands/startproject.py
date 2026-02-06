@@ -7,8 +7,14 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Confirm, Prompt
 
-from ... import PKG_DISPLAY_NAME, PKG_NAME, PROJECT_DIR, PROJECT_INIT_NAME
-from ...enums import DatabaseBackend, PresetType
+from ... import (
+    PKG_DISPLAY_NAME,
+    PKG_NAME,
+    PROJECT_DIR,
+    PROJECT_INIT_NAME,
+    PROJECT_MAIN_APP_DIR,
+)
+from ...enums import DatabaseBackend, PGServiceFilename, PresetType
 
 __all__ = ["initialize"]
 
@@ -487,12 +493,11 @@ class _HomeAppCreator:
         self.writer = writer
         self.templates = templates
         self.console = console
-        self.home_dir = project_dir / "home"
 
     def create(self) -> None:
         """Create the home app with all necessary files and directories."""
         # Check if home app already exists
-        if self.home_dir.exists():
+        if PROJECT_MAIN_APP_DIR.exists() and PROJECT_MAIN_APP_DIR.is_dir():
             self.console.print(
                 "[yellow]Home app directory already exists, skipping app creation[/yellow]"
             )
@@ -514,13 +519,13 @@ class _HomeAppCreator:
         try:
             call_command("startapp", "home")
             # Track the created directory
-            self.writer.tracker.track(self.home_dir)
+            self.writer.tracker.track(PROJECT_MAIN_APP_DIR)
         except Exception as e:
             raise IOError(f"Failed to create home app: {e}") from e
 
     def _create_urls(self) -> None:
         """Create urls.py for the home app."""
-        urls_path = self.home_dir / "urls.py"
+        urls_path = PROJECT_MAIN_APP_DIR / "urls.py"
         if self.writer.write_to_path_if_not_exists(urls_path, self.templates.home_urls()):
             pass  # File was created
         else:
@@ -528,7 +533,7 @@ class _HomeAppCreator:
 
     def _create_views(self) -> None:
         """Create views.py for the home app."""
-        views_path = self.home_dir / "views.py"
+        views_path = PROJECT_MAIN_APP_DIR / "views.py"
         # Only overwrite if it's the default Django startapp content
         if views_path.exists():
             content = views_path.read_text(encoding="utf-8")
@@ -540,7 +545,7 @@ class _HomeAppCreator:
 
     def _create_templates(self) -> None:
         """Create template directory structure and files."""
-        templates_dir = self.home_dir / "templates" / "home"
+        templates_dir = PROJECT_MAIN_APP_DIR / "templates" / "home"
         self.writer.ensure_dir(templates_dir)
 
         index_path = templates_dir / "index.html"
@@ -548,7 +553,7 @@ class _HomeAppCreator:
 
     def _create_static_files(self) -> None:
         """Create static directory structure and CSS files."""
-        static_dir = self.home_dir / "static" / "home" / "css"
+        static_dir = PROJECT_MAIN_APP_DIR / "static" / "home" / "css"
         self.writer.ensure_dir(static_dir)
 
         css_path = static_dir / "tailwind.css"
@@ -661,13 +666,13 @@ class _ProjectInitializer:
         return PresetType(choice)
 
     def _get_postgres_config_choice(self, preset: PresetType) -> bool:
-        """Get whether to use environment variables for PostgreSQL.
+        f"""Get whether to use environment variables for PostgreSQL.
 
         Args:
             preset: The preset type (Vercel always uses env vars).
 
         Returns:
-            True if using environment variables, False for pg_service/pgpass files.
+            True if using environment variables, False for {PGServiceFilename.PG_SERVICE}/{PGServiceFilename.PG_PASS} files.
         """
         # Vercel requires environment variables (no filesystem access)
         if preset == PresetType.VERCEL:
@@ -677,7 +682,7 @@ class _ProjectInitializer:
         self.console.print("\n[bold]PostgreSQL Configuration Method:[/bold]")
         self.console.print("  • [cyan]Environment variables[/cyan]: Store credentials in .env file")
         self.console.print(
-            "  • [cyan]PostgreSQL service files[/cyan]: Use pg_service.conf and .pgpass"
+            f"  • [cyan]PostgreSQL service files[/cyan]: Use {PGServiceFilename.PG_SERVICE} and {PGServiceFilename.PG_PASS}"
         )
 
         use_env_vars = Confirm.ask(
@@ -871,6 +876,7 @@ class _ProjectInitializer:
         ]
 
         step_num = 3
+        show_pg_service_learn_more = False
 
         # Database-specific instructions
         if database == DatabaseBackend.POSTGRESQL:
@@ -880,8 +886,9 @@ class _ProjectInitializer:
                 )
             else:
                 next_steps.append(
-                    f"{step_num}. Configure PostgreSQL connection using [bold]pg_service.conf[/bold] and [bold].pgpass[/bold] files"
+                    f"{step_num}. Configure PostgreSQL connection using [bold]{PGServiceFilename.PG_SERVICE}[/bold] and [bold]{PGServiceFilename.PG_PASS}[/bold] files"
                 )
+                show_pg_service_learn_more = True
             step_num += 1
 
         # Preset-specific instructions
@@ -893,8 +900,19 @@ class _ProjectInitializer:
             f"{step_num}. Run development server: [bold cyan]uv run djx runserver[/bold cyan]"
         )
 
+        # Build panel content with optional learn more section
+        content = "\n".join(next_steps)
+
+        if show_pg_service_learn_more:
+            content += "\n\n"
+            content += "[dim italic]💡 Learn more about configuring PostgreSQL service files:[/dim italic]\n"
+            content += "[dim cyan]   https://www.postgresql.org/docs/current/libpq-pgservice.html[/dim cyan]\n"
+            content += (
+                "[dim cyan]   https://www.postgresql.org/docs/current/libpq-pgpass.html[/dim cyan]"
+            )
+
         panel = Panel(
-            "\n".join(next_steps),
+            content,
             title=f"[bold green]✓ {PKG_DISPLAY_NAME} project initialized successfully![/bold green]",
             border_style="green",
             padding=(1, 2),
@@ -939,14 +957,14 @@ class _ProjectInitializer:
                 self._create_core_files(chosen_preset, chosen_database, use_postgres_env_vars)
                 progress.update(task, completed=True)
 
-                # Configure preset-specific files
-                task = progress.add_task("Configuring preset files...", total=None)
-                self._configure_preset_files_and_env_example(chosen_preset)
-                progress.update(task, completed=True)
-
                 # Create default app
                 task = progress.add_task("Creating home app...", total=None)
                 self._create_home_app()
+                progress.update(task, completed=True)
+
+                # Configure preset-specific files
+                task = progress.add_task("Configuring preset files...", total=None)
+                self._configure_preset_files_and_env_example(chosen_preset)
                 progress.update(task, completed=True)
 
             self._show_next_steps(chosen_preset, chosen_database, use_postgres_env_vars)
