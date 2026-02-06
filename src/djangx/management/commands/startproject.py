@@ -32,6 +32,9 @@ SAFE_DIRECTORY_ITEMS: Final[set[str]] = {
     "LICENSE",
     "LICENSE.txt",
     "LICENSE.md",
+    "README",
+    "README.md",
+    "README.txt",
 }
 
 
@@ -85,6 +88,8 @@ wheels/
 
 # Virtual environments
 /.venv/
+venv/
+env/
 
 # Ruff cache
 /.ruff_cache/
@@ -96,10 +101,23 @@ wheels/
 /public/
 
 # Environment variables files
-/.env*
+/.env
+.env.local
 
 # {DatabaseBackend.SQLITE3.value.capitalize()} database file
 /db.{DatabaseBackend.SQLITE3.value}
+
+# PostgreSQL service files (if using local config)
+.pg_service.conf
+pgpass.conf
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
 """.strip()
 
     @staticmethod
@@ -113,7 +131,19 @@ A new project built with {PKG_DISPLAY_NAME}.
 ## Getting Started
 
 1. Install dependencies: `uv sync`
-2. Run development server: `uv run djx runserver`
+2. Copy `.env.example` to `.env` and configure your environment variables
+3. Run migrations: `uv run djx migrate`
+4. Run development server: `uv run djx runserver`
+
+## Development
+
+- Format code: `uv run ruff format .`
+- Lint code: `uv run ruff check .`
+- Check templates: `uv run djlint --check .`
+
+## Learn More
+
+Visit the {PKG_DISPLAY_NAME} documentation to learn more about building with this framework.
 """.strip()
 
     @staticmethod
@@ -144,7 +174,7 @@ A new project built with {PKG_DISPLAY_NAME}.
         # Database configuration
         if database == DatabaseBackend.POSTGRESQL:
             tool_config_parts.append(
-                f'db = {{ backend = "{DatabaseBackend.POSTGRESQL.value}", use-vars = {str(use_postgres_env_vars).lower()} }}'
+                f'db = {{ backend = "{DatabaseBackend.POSTGRESQL.value}", use-env-vars = {str(use_postgres_env_vars).lower()} }}'
             )
 
         # Storage configuration (Vercel-specific)
@@ -424,7 +454,7 @@ class _ProjectFileWriter:
         if file_path.exists():
             return False
 
-        file_path.write_text(content.strip(), encoding="utf-8")
+        file_path.write_text(content.strip() + "\n", encoding="utf-8")
         self.tracker.track(file_path)
         return True
 
@@ -445,7 +475,7 @@ class _ProjectFileWriter:
         if path.exists():
             return False
 
-        path.write_text(content.strip(), encoding="utf-8")
+        path.write_text(content.strip() + "\n", encoding="utf-8")
         self.tracker.track(path)
         return True
 
@@ -539,7 +569,7 @@ class _HomeAppCreator:
             content = views_path.read_text(encoding="utf-8")
             # Check if it's the default Django views.py (contains only imports or is minimal)
             if len(content.strip()) < 100:  # Default Django file is very short
-                views_path.write_text(self.templates.home_views().strip(), encoding="utf-8")
+                views_path.write_text(self.templates.home_views().strip() + "\n", encoding="utf-8")
         else:
             self.writer.write_to_path_if_not_exists(views_path, self.templates.home_views())
 
@@ -665,11 +695,14 @@ class _ProjectInitializer:
         )
         return PresetType(choice)
 
-    def _get_postgres_config_choice(self, preset: PresetType) -> bool:
+    def _get_postgres_config_choice(
+        self, preset: PresetType, pg_env_vars: bool | None = None
+    ) -> bool:
         f"""Get whether to use environment variables for PostgreSQL.
 
         Args:
             preset: The preset type (Vercel always uses env vars).
+            pg_env_vars: Optional flag to skip prompt.
 
         Returns:
             True if using environment variables, False for {PGServiceFilename.PG_SERVICE}/{PGServiceFilename.PG_PASS} files.
@@ -677,6 +710,10 @@ class _ProjectInitializer:
         # Vercel requires environment variables (no filesystem access)
         if preset == PresetType.VERCEL:
             return True
+
+        # If flag provided, use it
+        if pg_env_vars is not None:
+            return pg_env_vars
 
         # For default preset, let user choose
         self.console.print("\n[bold]PostgreSQL Configuration Method:[/bold]")
@@ -694,13 +731,14 @@ class _ProjectInitializer:
         return use_env_vars
 
     def _get_database_choice(
-        self, preset: PresetType, database: str | None = None
+        self, preset: PresetType, database: str | None = None, pg_env_vars: bool | None = None
     ) -> tuple[DatabaseBackend, bool]:
         """Get the user's database choice and PostgreSQL config method.
 
         Args:
             preset: The preset type (Vercel requires PostgreSQL).
             database: Optional database to use without prompting.
+            pg_env_vars: Optional flag to skip PostgreSQL config prompt.
 
         Returns:
             Tuple of (database backend, use_env_vars_for_postgres).
@@ -710,7 +748,7 @@ class _ProjectInitializer:
         """
         # Vercel preset requires PostgreSQL (no file system access on Vercel)
         if preset == PresetType.VERCEL:
-            if database and database != DatabaseBackend.POSTGRESQL:
+            if database and database != DatabaseBackend.POSTGRESQL.value:
                 raise ValueError(f"Vercel preset requires PostgreSQL database (got: {database})")
             return DatabaseBackend.POSTGRESQL, True  # Always use env vars with Vercel
 
@@ -726,7 +764,7 @@ class _ProjectInitializer:
 
             # Ask about PostgreSQL config method if applicable
             use_env_vars = (
-                self._get_postgres_config_choice(preset)
+                self._get_postgres_config_choice(preset, pg_env_vars)
                 if db_backend == DatabaseBackend.POSTGRESQL
                 else False
             )
@@ -743,7 +781,7 @@ class _ProjectInitializer:
 
         # Ask about PostgreSQL config method if applicable
         use_env_vars = (
-            self._get_postgres_config_choice(preset)
+            self._get_postgres_config_choice(preset, pg_env_vars)
             if db_backend == DatabaseBackend.POSTGRESQL
             else False
         )
@@ -896,8 +934,11 @@ class _ProjectInitializer:
             next_steps.append(f"{step_num}. Configure Vercel blob token in [bold].env[/bold]")
             step_num += 1
 
-        next_steps.append(
-            f"{step_num}. Run development server: [bold cyan]uv run djx runserver[/bold cyan]"
+        next_steps.extend(
+            [
+                f"{step_num}. Run migrations: [bold cyan]uv run djx migrate[/bold cyan]",
+                f"{step_num + 1}. Run development server: [bold cyan]uv run djx runserver[/bold cyan]",
+            ]
         )
 
         # Build panel content with optional learn more section
@@ -922,13 +963,18 @@ class _ProjectInitializer:
         self.console.print(panel)
 
     def create(
-        self, preset: str | None = None, database: str | None = None, force: bool = False
+        self,
+        preset: str | None = None,
+        database: str | None = None,
+        pg_env_vars: bool | None = None,
+        force: bool = False,
     ) -> ExitCode:
         """Execute the full project initialization workflow.
 
         Args:
             preset: Optional preset to use without prompting.
             database: Optional database backend to use without prompting.
+            pg_env_vars: Optional flag for PostgreSQL env vars (skips prompt).
             force: Skip directory validation.
 
         Returns:
@@ -943,7 +989,7 @@ class _ProjectInitializer:
 
             # Get and validate database choice
             chosen_database, use_postgres_env_vars = self._get_database_choice(
-                chosen_preset, database
+                chosen_preset, database, pg_env_vars
             )
 
             with Progress(
@@ -1011,7 +1057,10 @@ class _ProjectInitializer:
 
 
 def initialize(
-    preset: str | None = None, database: str | None = None, force: bool = False
+    preset: str | None = None,
+    database: str | None = None,
+    pg_env_vars: bool | None = None,
+    force: bool = False,
 ) -> ExitCode:
     f"""Main entry point for project initialization.
 
@@ -1023,6 +1072,7 @@ def initialize(
         database: Optional database backend to use without prompting.
             Available databases: '{DatabaseBackend.SQLITE3.value}', '{DatabaseBackend.POSTGRESQL.value}'.
             Note: Vercel preset requires PostgreSQL.
+        pg_env_vars: Use environment variables for PostgreSQL configuration (skips prompt).
         force: Skip directory validation and proceed even if directory is not empty.
 
     Returns:
@@ -1030,9 +1080,10 @@ def initialize(
         ExitCode.ERROR otherwise.
 
     Example:
-        >>> initialize(preset="vercel")  # Will auto-select {DatabaseBackend.POSTGRESQL.value} due to Vercel preset requirement
-        >>> initialize(database="{DatabaseBackend.POSTGRESQL.value}")  # Default preset with {DatabaseBackend.POSTGRESQL.value}
-        >>> initialize(preset="default", database="{DatabaseBackend.SQLITE3.value}")  # Default preset with {DatabaseBackend.SQLITE3.value}
-        >>> initialize(force=True)
+        >>> initialize(preset="vercel")
+        >>> initialize(database="{DatabaseBackend.POSTGRESQL.value}", pg_env_vars=True)
+        >>> initialize(preset="default", database="{DatabaseBackend.SQLITE3.value}")
     """
-    return _ProjectInitializer(PROJECT_DIR).create(preset=preset, database=database, force=force)
+    return _ProjectInitializer(PROJECT_DIR).create(
+        preset=preset, database=database, pg_env_vars=pg_env_vars, force=force
+    )

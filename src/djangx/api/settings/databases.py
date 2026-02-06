@@ -20,10 +20,10 @@ class DatabaseConf(Conf):
         default=DatabaseBackend.SQLITE3,
     )
     # postgresql specific
-    use_vars = ConfField(
+    use_env_vars = ConfField(
         type=bool,
-        env="DB_USE_VARS",
-        toml="db.use-vars",
+        env="DB_USE_ENV_VARS",
+        toml="db.use-env-vars",
         default=False,
     )
     service = ConfField(
@@ -94,7 +94,7 @@ def _get_databases_config() -> DatabasesDict:
             }
 
             # Add service or connection vars
-            if _DATABASE.use_vars:
+            if _DATABASE.use_env_vars:
                 config: DatabaseDict = {
                     "ENGINE": f"django.db.backends.{DatabaseBackend.POSTGRESQL.value}",
                     "NAME": _DATABASE.name,
