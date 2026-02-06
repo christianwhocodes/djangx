@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from enum import StrEnum
 from pathlib import Path
 from typing import Final
 
@@ -9,7 +8,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Confirm, Prompt
 
 from ... import PKG_DISPLAY_NAME, PKG_NAME, PROJECT_DIR, PROJECT_INIT_NAME
-from ...enums import DatabaseBackend
+from ...enums import DatabaseBackend, PresetType
 
 __all__ = ["initialize"]
 
@@ -28,13 +27,6 @@ SAFE_DIRECTORY_ITEMS: Final[set[str]] = {
     "LICENSE.txt",
     "LICENSE.md",
 }
-
-
-class PresetType(StrEnum):
-    """Available project presets."""
-
-    DEFAULT = "default"
-    VERCEL = "vercel"
 
 
 @dataclass(frozen=True)

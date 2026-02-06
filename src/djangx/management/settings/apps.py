@@ -1,7 +1,3 @@
-# TODO: Refactor so that the user can specify the order of apps, middleware, and context processors more flexibly.
-
-from enum import StrEnum
-
 from ... import (
     INCLUDE_PROJECT_MAIN_APP,
     PKG_API_NAME,
@@ -12,26 +8,14 @@ from ... import (
     Conf,
     ConfField,
 )
+from ..enums import Apps, ContextProcessors, Middlewares
 from ..types import TemplatesDict
+
+# TODO: Refactor so that the user can specify the order of apps, middleware, and context processors more flexibly.
 
 # ===============================================================
 # Apps
 # ===============================================================
-
-
-class _Apps(StrEnum):
-    """Django applications enumeration."""
-
-    ADMIN = "django.contrib.admin"
-    AUTH = "django.contrib.auth"
-    CONTENTTYPES = "django.contrib.contenttypes"
-    SESSIONS = "django.contrib.sessions"
-    MESSAGES = "django.contrib.messages"
-    STATICFILES = "django.contrib.staticfiles"
-    HTTP_COMPRESSION = "django_http_compression"
-    MINIFY_HTML = "django_minify_html"
-    BROWSER_RELOAD = "django_browser_reload"
-    WATCHFILES = "django_watchfiles"
 
 
 class AppsConf(Conf):
@@ -69,19 +53,19 @@ def _get_installed_apps() -> list[str]:
     ]
 
     third_party_apps: list[str] = [
-        _Apps.HTTP_COMPRESSION,
-        _Apps.MINIFY_HTML,
-        _Apps.BROWSER_RELOAD,
-        _Apps.WATCHFILES,
+        Apps.HTTP_COMPRESSION,
+        Apps.MINIFY_HTML,
+        Apps.BROWSER_RELOAD,
+        Apps.WATCHFILES,
     ]
 
     django_apps: list[str] = [
-        _Apps.ADMIN,
-        _Apps.AUTH,
-        _Apps.CONTENTTYPES,
-        _Apps.SESSIONS,
-        _Apps.MESSAGES,
-        _Apps.STATICFILES,
+        Apps.ADMIN,
+        Apps.AUTH,
+        Apps.CONTENTTYPES,
+        Apps.SESSIONS,
+        Apps.MESSAGES,
+        Apps.STATICFILES,
     ]
 
     # Collect apps that should be removed except for base apps
@@ -106,19 +90,9 @@ INSTALLED_APPS: list[str] = _get_installed_apps()
 # ===============================================================
 
 
-class _ContextProcessors(StrEnum):
-    """Django template context processors enumeration."""
-
-    DEBUG = "django.template.context_processors.debug"
-    REQUEST = "django.template.context_processors.request"
-    AUTH = "django.contrib.auth.context_processors.auth"
-    MESSAGES = "django.contrib.messages.context_processors.messages"
-    CSP = "django.template.context_processors.csp"
-
-
-_APP_CONTEXT_PROCESSOR_MAP: dict[_Apps, list[_ContextProcessors]] = {
-    _Apps.AUTH: [_ContextProcessors.AUTH],
-    _Apps.MESSAGES: [_ContextProcessors.MESSAGES],
+_APP_CONTEXT_PROCESSOR_MAP: dict[Apps, list[ContextProcessors]] = {
+    Apps.AUTH: [ContextProcessors.AUTH],
+    Apps.MESSAGES: [ContextProcessors.MESSAGES],
 }
 
 
@@ -150,11 +124,11 @@ def _get_context_processors(installed_apps: list[str]) -> list[str]:
     """
     # Django context processors in recommended order
     django_context_processors: list[str] = [
-        _ContextProcessors.DEBUG,  # Debug info (only in DEBUG mode)
-        _ContextProcessors.REQUEST,  # Adds request object to context
-        _ContextProcessors.AUTH,  # Adds user and perms to context
-        _ContextProcessors.MESSAGES,  # Adds messages to context
-        _ContextProcessors.CSP,  # Content Security Policy
+        ContextProcessors.DEBUG,  # Debug info (only in DEBUG mode)
+        ContextProcessors.REQUEST,  # Adds request object to context
+        ContextProcessors.AUTH,  # Adds user and perms to context
+        ContextProcessors.MESSAGES,  # Adds messages to context
+        ContextProcessors.CSP,  # Content Security Policy
     ]
 
     # Collect context processors that should be removed based on missing apps
@@ -192,29 +166,13 @@ TEMPLATES: TemplatesDict = [
 # ===============================================================
 
 
-class _Middlewares(StrEnum):
-    """Django middleware enumeration."""
-
-    SECURITY = "django.middleware.security.SecurityMiddleware"
-    SESSION = "django.contrib.sessions.middleware.SessionMiddleware"
-    COMMON = "django.middleware.common.CommonMiddleware"
-    CSRF = "django.middleware.csrf.CsrfViewMiddleware"
-    AUTH = "django.contrib.auth.middleware.AuthenticationMiddleware"
-    MESSAGES = "django.contrib.messages.middleware.MessageMiddleware"
-    CLICKJACKING = "django.middleware.clickjacking.XFrameOptionsMiddleware"
-    CSP = "django.middleware.csp.ContentSecurityPolicyMiddleware"
-    HTTP_COMPRESSION = "django_http_compression.middleware.HttpCompressionMiddleware"
-    MINIFY_HTML = "django_minify_html.middleware.MinifyHtmlMiddleware"
-    BROWSER_RELOAD = "django_browser_reload.middleware.BrowserReloadMiddleware"
-
-
-_APP_MIDDLEWARE_MAP: dict[_Apps, list[_Middlewares]] = {
-    _Apps.SESSIONS: [_Middlewares.SESSION],
-    _Apps.AUTH: [_Middlewares.AUTH],
-    _Apps.MESSAGES: [_Middlewares.MESSAGES],
-    _Apps.HTTP_COMPRESSION: [_Middlewares.HTTP_COMPRESSION],
-    _Apps.MINIFY_HTML: [_Middlewares.MINIFY_HTML],
-    _Apps.BROWSER_RELOAD: [_Middlewares.BROWSER_RELOAD],
+_APP_MIDDLEWARE_MAP: dict[Apps, list[Middlewares]] = {
+    Apps.SESSIONS: [Middlewares.SESSION],
+    Apps.AUTH: [Middlewares.AUTH],
+    Apps.MESSAGES: [Middlewares.MESSAGES],
+    Apps.HTTP_COMPRESSION: [Middlewares.HTTP_COMPRESSION],
+    Apps.MINIFY_HTML: [Middlewares.MINIFY_HTML],
+    Apps.BROWSER_RELOAD: [Middlewares.BROWSER_RELOAD],
 }
 
 
@@ -259,17 +217,17 @@ def _get_middleware(installed_apps: list[str]) -> list[str]:
     - ABOVE any middleware that modifies HTML (like BrowserReloadMiddleware)
     """
     django_middleware: list[str] = [
-        _Middlewares.SECURITY,  # FIRST - security headers, HTTPS redirect
-        _Middlewares.SESSION,  # Early - needed by auth & messages
-        _Middlewares.COMMON,  # Early - URL normalization
-        _Middlewares.CSRF,  # After session - needs session data
-        _Middlewares.AUTH,  # After session - stores user in session
-        _Middlewares.MESSAGES,  # After session & auth
-        _Middlewares.CLICKJACKING,  # Security headers (X-Frame-Options)
-        _Middlewares.CSP,  # Security headers (Content-Security-Policy)
-        _Middlewares.HTTP_COMPRESSION,  # Before minify - encodes responses (Zstandard, Brotli, Gzip)
-        _Middlewares.MINIFY_HTML,  # After compression, before HTML modifiers
-        _Middlewares.BROWSER_RELOAD,  # LAST - dev only, injects reload script into HTML
+        Middlewares.SECURITY,  # FIRST - security headers, HTTPS redirect
+        Middlewares.SESSION,  # Early - needed by auth & messages
+        Middlewares.COMMON,  # Early - URL normalization
+        Middlewares.CSRF,  # After session - needs session data
+        Middlewares.AUTH,  # After session - stores user in session
+        Middlewares.MESSAGES,  # After session & auth
+        Middlewares.CLICKJACKING,  # Security headers (X-Frame-Options)
+        Middlewares.CSP,  # Security headers (Content-Security-Policy)
+        Middlewares.HTTP_COMPRESSION,  # Before minify - encodes responses (Zstandard, Brotli, Gzip)
+        Middlewares.MINIFY_HTML,  # After compression, before HTML modifiers
+        Middlewares.BROWSER_RELOAD,  # LAST - dev only, injects reload script into HTML
     ]
 
     # Collect middleware that should be removed based on missing apps

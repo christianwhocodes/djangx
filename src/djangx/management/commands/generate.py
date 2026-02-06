@@ -1,11 +1,9 @@
 import builtins
 import pathlib
-from enum import StrEnum
 from typing import Any, Optional, cast
 
 from christianwhocodes.generators import (
     FileGenerator,
-    FileGeneratorOption,
     PgPassFileGenerator,
     PgServiceFileGenerator,
     SSHConfigFileGenerator,
@@ -13,6 +11,7 @@ from christianwhocodes.generators import (
 from django.core.management.base import BaseCommand, CommandParser
 
 from ... import PKG_DISPLAY_NAME, PKG_NAME, PROJECT_API_DIR, PROJECT_DIR, Conf
+from ..enums import FileOption
 
 
 class _ServerFileGenerator(FileGenerator):
@@ -220,15 +219,6 @@ class _EnvFileGenerator(FileGenerator):
                 return str(pathlib.PurePosixPath(value))
             case _:
                 return str(value)
-
-
-class FileOption(StrEnum):
-    PG_SERVICE = FileGeneratorOption.PG_SERVICE.value
-    PGPASS = FileGeneratorOption.PGPASS.value
-    SSH_CONFIG = FileGeneratorOption.SSH_CONFIG.value
-    ENV = "env"
-    SERVER = "server"
-    VERCEL = "vercel"
 
 
 class Command(BaseCommand):
