@@ -25,7 +25,7 @@ class BuildCommandGenerator(CommandGenerator):
         """Create the output handler for build commands."""
         from .helpers.art import ArtType
 
-        return Output(self.django_command, ArtType.BUILD)
+        return Output(self.dj_command, ArtType.BUILD)
 
     def get_mode(self) -> str:
         """Get the mode identifier for build commands."""

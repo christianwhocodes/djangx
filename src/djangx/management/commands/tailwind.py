@@ -469,7 +469,7 @@ class CleanHandler:
 
 
 class Command(BaseCommand):
-    """Django management command for Tailwind CLI operations."""
+    """Management command for Tailwind CLI operations."""
 
     help = "Tailwind CLI management: install, build, watch, and clean operations."
 

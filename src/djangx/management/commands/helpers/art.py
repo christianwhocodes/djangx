@@ -36,7 +36,7 @@ class ArtPrinter:
         """Initialize the ASCII art printer.
 
         Args:
-            command: The Django BaseCommand instance for stdout/styling.
+            command: The BaseCommand instance for stdout/styling.
         """
         self.command = command
         self.terminal_width = get_terminal_size(fallback=(80, 24)).columns

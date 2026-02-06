@@ -25,7 +25,7 @@ class InstallCommandGenerator(CommandGenerator):
         """Create the output handler for install commands."""
         from .helpers.art import ArtType
 
-        return Output(self.django_command, ArtType.INSTALL)
+        return Output(self.dj_command, ArtType.INSTALL)
 
     def get_mode(self) -> str:
         """Get the mode identifier for install commands."""

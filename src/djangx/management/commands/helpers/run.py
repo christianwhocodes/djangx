@@ -244,17 +244,17 @@ class CommandGenerator(ABC):
     a series of configured commands with consistent behavior.
     """
 
-    def __init__(self, django_command: BaseCommand) -> None:
+    def __init__(self, dj_command: BaseCommand) -> None:
         """Initialize the command generator.
 
         Args:
-            django_command: The Django BaseCommand instance.
+            dj_command: The BaseCommand instance.
         """
-        self.django_command = django_command
+        self.dj_command = dj_command
 
     @abstractmethod
     def get_runcommands(self) -> list[str]:
-        """Retrieve commands from Django settings.
+        """Retrieve commands from settings.
 
         Returns:
             List of command strings to execute.
@@ -294,8 +294,8 @@ class CommandGenerator(ABC):
 
         # Initialize components
         output = self.create_output_handler()
-        executor = CommandExecutor(self.django_command)
-        process = CommandProcess(self.django_command, output, executor, self.get_mode())
+        executor = CommandExecutor(self.dj_command)
+        process = CommandProcess(self.dj_command, output, executor, self.get_mode())
 
         # Run the process
         process.run(commands, dry_run=dry_run)

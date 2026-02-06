@@ -11,7 +11,7 @@ class _TemplateOptionsDict(TypedDict):
 
 
 class _TemplateDict(TypedDict):
-    """Django template configuration."""
+    """Template configuration."""
 
     BACKEND: str
     DIRS: list[Path]

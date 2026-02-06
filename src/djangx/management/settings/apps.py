@@ -38,10 +38,10 @@ _APPS_CONF = AppsConf()
 
 
 def _get_installed_apps() -> list[str]:
-    """Build the final list of installed Django applications.
+    """Build the final list of installed applications.
 
-    Order: Local apps → Third-party apps → Django apps
-    This ensures local apps can override templates/static files from third-party and Django apps.
+    Order: Local apps → Third-party apps → contrib apps
+    This ensures local apps can override templates/static files from third-party and contrib apps.
     """
 
     base_apps: list[str] = [
@@ -58,7 +58,7 @@ def _get_installed_apps() -> list[str]:
         Apps.WATCHFILES,
     ]
 
-    django_apps: list[str] = [
+    contrib_apps: list[str] = [
         Apps.ADMIN,
         Apps.AUTH,
         Apps.CONTENTTYPES,
@@ -71,11 +71,11 @@ def _get_installed_apps() -> list[str]:
     apps_to_remove: list[str] = [app for app in _APPS_CONF.remove if app not in base_apps]
 
     # Remove apps that are in the remove list
-    django_apps: list[str] = [app for app in django_apps if app not in apps_to_remove]
+    contrib_apps: list[str] = [app for app in contrib_apps if app not in apps_to_remove]
     third_party_apps: list[str] = [app for app in third_party_apps if app not in apps_to_remove]
 
-    # Combine: local apps + third-party apps + django apps + custom extensions
-    all_apps: list[str] = _APPS_CONF.extend + base_apps + third_party_apps + django_apps
+    # Combine
+    all_apps: list[str] = _APPS_CONF.extend + base_apps + third_party_apps + contrib_apps
 
     # Remove duplicates while preserving order
     return list(dict.fromkeys(all_apps))
@@ -121,8 +121,8 @@ def _get_context_processors(installed_apps: list[str]) -> list[str]:
     Order matters: Later processors can override variables from earlier ones.
     Standard order: debug → request → auth → messages → custom
     """
-    # Django context processors in recommended order
-    django_context_processors: list[str] = [
+    # contrib context processors in recommended order
+    contrib_context_processors: list[str] = [
         ContextProcessors.DEBUG,  # Debug info (only in DEBUG mode)
         ContextProcessors.REQUEST,  # Adds request object to context
         ContextProcessors.AUTH,  # Adds user and perms to context
@@ -137,12 +137,12 @@ def _get_context_processors(installed_apps: list[str]) -> list[str]:
             context_processors_to_remove.update(processor_list)
 
     # Filter out context processors whose apps are not installed or explicitly removed
-    django_context_processors: list[str] = [
-        cp for cp in django_context_processors if cp not in context_processors_to_remove
+    contrib_context_processors: list[str] = [
+        cp for cp in contrib_context_processors if cp not in context_processors_to_remove
     ]
 
     # Add custom context processors at the end
-    all_context_processors: list[str] = _CONTEXT_PROCESSORS_CONF.extend + django_context_processors
+    all_context_processors: list[str] = _CONTEXT_PROCESSORS_CONF.extend + contrib_context_processors
 
     # Remove duplicates while preserving order
     return list(dict.fromkeys(all_context_processors))
@@ -215,7 +215,7 @@ def _get_middleware(installed_apps: list[str]) -> list[str]:
     - BELOW any middleware that encodes responses (like HttpCompressionMiddleware)
     - ABOVE any middleware that modifies HTML (like BrowserReloadMiddleware)
     """
-    django_middleware: list[str] = [
+    base_middleware: list[str] = [
         Middlewares.SECURITY,  # FIRST - security headers, HTTPS redirect
         Middlewares.SESSION,  # Early - needed by auth & messages
         Middlewares.COMMON,  # Early - URL normalization
@@ -236,10 +236,10 @@ def _get_middleware(installed_apps: list[str]) -> list[str]:
             middleware_to_remove.update(middleware_list)
 
     # Filter out middleware whose apps are not installed or explicitly removed
-    django_middleware: list[str] = [m for m in django_middleware if m not in middleware_to_remove]
+    base_middleware: list[str] = [m for m in base_middleware if m not in middleware_to_remove]
 
     # Add custom middleware at the end (before browser reload if it exists)
-    all_middleware: list[str] = django_middleware + _MIDDLEWARE_CONF.extend
+    all_middleware: list[str] = base_middleware + _MIDDLEWARE_CONF.extend
 
     # Remove duplicates while preserving order
     return list(dict.fromkeys(all_middleware))
