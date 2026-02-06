@@ -5,6 +5,7 @@
 # https://www.postgresql.org/docs/current/libpq-pgpass.html
 # ==============================================================================
 from ... import PROJECT_DIR, Conf, ConfField
+from ..enums import DatabaseBackend
 from ..types import DatabaseDict, DatabaseOptionsDict, DatabasesDict
 
 
@@ -13,10 +14,10 @@ class DatabaseConf(Conf):
 
     backend = ConfField(
         type=str,
-        choices=["sqlite3", "postgresql"],
+        choices=[DatabaseBackend.SQLITE3, DatabaseBackend.POSTGRESQL],
         env="DB_BACKEND",
         toml="db.backend",
-        default="sqlite3",
+        default=DatabaseBackend.SQLITE3,
     )
     # postgresql specific
     use_vars = ConfField(
@@ -79,14 +80,14 @@ def _get_databases_config() -> DatabasesDict:
     backend: str = _DATABASE.backend.lower()
 
     match backend:
-        case "sqlite" | "sqlite3":
+        case DatabaseBackend.SQLITE3:
             return {
                 "default": {
-                    "ENGINE": "django.db.backends.sqlite3",
-                    "NAME": PROJECT_DIR / "db.sqlite3",
+                    "ENGINE": f"django.db.backends.{DatabaseBackend.SQLITE3.value}",
+                    "NAME": PROJECT_DIR / f"db.{DatabaseBackend.SQLITE3.value}",
                 }
             }
-        case "postgresql" | "postgres" | "psql" | "pgsql" | "pg" | "psycopg":
+        case DatabaseBackend.POSTGRESQL:
             options: DatabaseOptionsDict = {
                 "pool": _DATABASE.pool,
                 "sslmode": _DATABASE.ssl_mode,
@@ -95,7 +96,7 @@ def _get_databases_config() -> DatabasesDict:
             # Add service or connection vars
             if _DATABASE.use_vars:
                 config: DatabaseDict = {
-                    "ENGINE": "django.db.backends.postgresql",
+                    "ENGINE": f"django.db.backends.{DatabaseBackend.POSTGRESQL.value}",
                     "NAME": _DATABASE.name,
                     "USER": _DATABASE.user,
                     "PASSWORD": _DATABASE.password,
@@ -106,7 +107,7 @@ def _get_databases_config() -> DatabasesDict:
             else:
                 options["service"] = _DATABASE.service
                 config: DatabaseDict = {
-                    "ENGINE": "django.db.backends.postgresql",
+                    "ENGINE": f"django.db.backends.{DatabaseBackend.POSTGRESQL.value}",
                     "NAME": _DATABASE.name,
                     "OPTIONS": options,
                 }

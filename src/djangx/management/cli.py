@@ -17,6 +17,7 @@ def main() -> Optional[NoReturn]:
         case "startproject" | "init" | "new":
             from argparse import ArgumentParser, Namespace
 
+            from ..enums import DatabaseBackend
             from .commands.startproject import initialize
 
             parser = ArgumentParser(description=f"Initialize a new {PKG_DISPLAY_NAME} project")
@@ -25,9 +26,21 @@ def main() -> Optional[NoReturn]:
                 choices=["default", "vercel"],
                 help="Project preset to use (skips interactive prompt)",
             )
+            parser.add_argument(
+                "--database",
+                "--db",
+                choices=[DatabaseBackend.SQLITE3, DatabaseBackend.POSTGRESQL],
+                help=f"Database backend to use (skips interactive prompt). Note: Vercel preset requires {DatabaseBackend.POSTGRESQL.value}.",
+            )
+            parser.add_argument(
+                "--force",
+                "-f",
+                action="store_true",
+                help="Skip directory validation and initialize even if directory is not empty",
+            )
             args: Namespace = parser.parse_args(sys.argv[2:])
 
-            sys.exit(initialize(preset=args.preset))
+            sys.exit(initialize(preset=args.preset, database=args.database, force=args.force))
 
         case _:
             from os import environ

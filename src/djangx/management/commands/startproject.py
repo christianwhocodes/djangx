@@ -9,6 +9,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Confirm, Prompt
 
 from ... import PKG_DISPLAY_NAME, PKG_NAME, PROJECT_DIR, PROJECT_INIT_NAME
+from ...enums import DatabaseBackend
 
 __all__ = ["initialize"]
 
@@ -40,18 +41,17 @@ class PresetType(StrEnum):
 class _ProjectDependencies:
     """Manages project dependencies."""
 
-    base: tuple[str, ...] = (
-        "pillow>=12.1.0",
-        "psycopg[binary,pool]>=3.3.2",
-    )
+    base: tuple[str, ...] = ("pillow>=12.1.0",)
     dev: tuple[str, ...] = ("djlint>=1.36.4", "ruff>=0.15.0")
+    postgresql: tuple[str, ...] = ("psycopg[binary,pool]>=3.3.2",)
     vercel: tuple[str, ...] = ("vercel>=0.3.8",)
 
-    def get_for_preset(self, preset: PresetType) -> list[str]:
-        """Get dependencies for a specific preset.
+    def get_for_config(self, preset: PresetType, database: DatabaseBackend) -> list[str]:
+        """Get dependencies for a specific configuration.
 
         Args:
             preset: The preset type.
+            database: The database backend.
 
         Returns:
             List of dependency strings including base dependencies.
@@ -59,6 +59,11 @@ class _ProjectDependencies:
         deps = list(self.base)
         deps.append(f"{PKG_NAME}>={Version.get(PKG_NAME)[0]}")
 
+        # Add database-specific dependencies
+        if database == DatabaseBackend.POSTGRESQL:
+            deps.extend(self.postgresql)
+
+        # Add preset-specific dependencies
         if preset == PresetType.VERCEL:
             deps.extend(self.vercel)
 
@@ -71,7 +76,7 @@ class _TemplateManager:
     @staticmethod
     def gitignore() -> str:
         """Generate .gitignore content."""
-        return """
+        return f"""
 # Python-generated files
 __pycache__/
 *.py[oc]
@@ -95,8 +100,8 @@ wheels/
 # Environment variables files
 /.env*
 
-# SQLite database file
-/db.sqlite3
+# {DatabaseBackend.SQLITE3.value.capitalize()} database file
+/db.{DatabaseBackend.SQLITE3.value}
 """.strip()
 
     @staticmethod
@@ -114,12 +119,19 @@ A new project built with {PKG_DISPLAY_NAME}.
 """.strip()
 
     @staticmethod
-    def pyproject_toml(preset: PresetType, dependencies: list[str]) -> str:
+    def pyproject_toml(
+        preset: PresetType,
+        database: DatabaseBackend,
+        dependencies: list[str],
+        use_postgres_env_vars: bool = False,
+    ) -> str:
         """Generate pyproject.toml content.
 
         Args:
             preset: The preset type.
+            database: The database backend.
             dependencies: List of project dependencies.
+            use_postgres_env_vars: Whether to use env vars for PostgreSQL config.
 
         Returns:
             Formatted pyproject.toml content.
@@ -128,13 +140,25 @@ A new project built with {PKG_DISPLAY_NAME}.
         deps_formatted = ",\n    ".join(f'"{dep}"' for dep in dependencies)
         dev_deps_formatted = ",\n    ".join(f'"{dep}"' for dep in deps.dev)
 
-        # Preset-specific tool configuration
+        # Build tool configuration based on preset and database
+        tool_config_parts: list[str] = []
+
+        # Database configuration
+        if database == DatabaseBackend.POSTGRESQL:
+            tool_config_parts.append(
+                f'db = {{ backend = "{DatabaseBackend.POSTGRESQL.value}", use-vars = {str(use_postgres_env_vars).lower()} }}'
+            )
+
+        # Storage configuration (Vercel-specific)
+        if preset == PresetType.VERCEL:
+            tool_config_parts.append(
+                'storage = { backend = "vercel", blob-token = "keep-your-vercel-blob-token-secret-in-env" }'
+            )
+
+        # Format the tool config section
         tool_config = ""
-        match preset:
-            case PresetType.VERCEL:
-                tool_config = '\nstorage = { backend = "vercel", blob-token = "keep-your-vercel-blob-token-secret-in-env" }\n'
-            case _:
-                pass
+        if tool_config_parts:
+            tool_config = "\n" + "\n".join(tool_config_parts) + "\n"
 
         return f"""[project]
 name = "{PROJECT_INIT_NAME}"
@@ -644,20 +668,110 @@ class _ProjectInitializer:
         )
         return PresetType(choice)
 
-    def _create_core_files(self, preset: PresetType) -> None:
+    def _get_postgres_config_choice(self, preset: PresetType) -> bool:
+        """Get whether to use environment variables for PostgreSQL.
+
+        Args:
+            preset: The preset type (Vercel always uses env vars).
+
+        Returns:
+            True if using environment variables, False for pg_service/pgpass files.
+        """
+        # Vercel requires environment variables (no filesystem access)
+        if preset == PresetType.VERCEL:
+            return True
+
+        # For default preset, let user choose
+        self.console.print("\n[bold]PostgreSQL Configuration Method:[/bold]")
+        self.console.print("  • [cyan]Environment variables[/cyan]: Store credentials in .env file")
+        self.console.print(
+            "  • [cyan]PostgreSQL service files[/cyan]: Use pg_service.conf and .pgpass"
+        )
+
+        use_env_vars = Confirm.ask(
+            "Use environment variables for PostgreSQL configuration?",
+            default=True,
+            console=self.console,
+        )
+
+        return use_env_vars
+
+    def _get_database_choice(
+        self, preset: PresetType, database: str | None = None
+    ) -> tuple[DatabaseBackend, bool]:
+        """Get the user's database choice and PostgreSQL config method.
+
+        Args:
+            preset: The preset type (Vercel requires PostgreSQL).
+            database: Optional database to use without prompting.
+
+        Returns:
+            Tuple of (database backend, use_env_vars_for_postgres).
+
+        Raises:
+            ValueError: If database is invalid or incompatible with preset.
+        """
+        # Vercel preset requires PostgreSQL (no file system access on Vercel)
+        if preset == PresetType.VERCEL:
+            if database and database != DatabaseBackend.POSTGRESQL:
+                raise ValueError(f"Vercel preset requires PostgreSQL database (got: {database})")
+            return DatabaseBackend.POSTGRESQL, True  # Always use env vars with Vercel
+
+        # If database explicitly provided, validate it
+        if database:
+            try:
+                db_backend = DatabaseBackend(database)
+            except ValueError:
+                valid_databases = [db.value for db in DatabaseBackend]
+                raise ValueError(
+                    f"Invalid database '{database}'. Must be one of: {', '.join(valid_databases)}"
+                ) from None
+
+            # Ask about PostgreSQL config method if applicable
+            use_env_vars = (
+                self._get_postgres_config_choice(preset)
+                if db_backend == DatabaseBackend.POSTGRESQL
+                else False
+            )
+            return db_backend, use_env_vars
+
+        # Interactive prompt for default preset
+        choice = Prompt.ask(
+            "Choose a database",
+            choices=[db.value for db in DatabaseBackend],
+            default=DatabaseBackend.SQLITE3.value,
+            console=self.console,
+        )
+        db_backend = DatabaseBackend(choice)
+
+        # Ask about PostgreSQL config method if applicable
+        use_env_vars = (
+            self._get_postgres_config_choice(preset)
+            if db_backend == DatabaseBackend.POSTGRESQL
+            else False
+        )
+        return db_backend, use_env_vars
+
+    def _create_core_files(
+        self, preset: PresetType, database: DatabaseBackend, use_postgres_env_vars: bool
+    ) -> None:
         """Create core project configuration files.
 
         Args:
             preset: The preset type to use.
+            database: The database backend to use.
+            use_postgres_env_vars: Whether to use env vars for PostgreSQL config.
 
         Raises:
             IOError: If files cannot be created.
         """
-        dependencies = self.dependencies.get_for_preset(preset)
+        dependencies = self.dependencies.get_for_config(preset, database)
 
         # Create files only if they don't exist
         files_to_create = {
-            "pyproject.toml": self.templates.pyproject_toml(preset, dependencies),
+            "pyproject.toml": self.templates.pyproject_toml(
+                preset, database, dependencies, use_postgres_env_vars
+            ),
             ".gitignore": self.templates.gitignore(),
             "README.md": self.templates.readme(),
         }
@@ -747,11 +861,15 @@ class _ProjectInitializer:
         home_creator = _HomeAppCreator(self.project_dir, self.writer, self.templates, self.console)
         home_creator.create()
 
-    def _show_next_steps(self, preset: PresetType) -> None:
+    def _show_next_steps(
+        self, preset: PresetType, database: DatabaseBackend, use_postgres_env_vars: bool
+    ) -> None:
         """Display next steps for the user after successful initialization.
 
         Args:
             preset: The preset that was used.
+            database: The database backend that was chosen.
+            use_postgres_env_vars: Whether using env vars for PostgreSQL.
         """
         from rich.panel import Panel
 
@@ -760,17 +878,28 @@ class _ProjectInitializer:
             "2. Copy [bold].env.example[/bold] to [bold].env[/bold] and configure",
         ]
 
+        step_num = 3
+
+        # Database-specific instructions
+        if database == DatabaseBackend.POSTGRESQL:
+            if use_postgres_env_vars:
+                next_steps.append(
+                    f"{step_num}. Configure PostgreSQL connection in [bold].env[/bold]"
+                )
+            else:
+                next_steps.append(
+                    f"{step_num}. Configure PostgreSQL connection using [bold]pg_service.conf[/bold] and [bold].pgpass[/bold] files"
+                )
+            step_num += 1
+
+        # Preset-specific instructions
         if preset == PresetType.VERCEL:
-            next_steps.append(
-                "3. Configure Vercel blob token in [bold]pyproject.toml[/bold] or [bold].env[/bold]"
-            )
-            next_steps.append(
-                "4. Run development server: [bold cyan]uv run djx runserver[/bold cyan]"
-            )
-        else:
-            next_steps.append(
-                "3. Run development server: [bold cyan]uv run djx runserver[/bold cyan]"
-            )
+            next_steps.append(f"{step_num}. Configure Vercel blob token in [bold].env[/bold]")
+            step_num += 1
+
+        next_steps.append(
+            f"{step_num}. Run development server: [bold cyan]uv run djx runserver[/bold cyan]"
+        )
 
         panel = Panel(
             "\n".join(next_steps),
@@ -782,11 +911,14 @@ class _ProjectInitializer:
         self.console.print("\n")
         self.console.print(panel)
 
-    def create(self, preset: str | None = None, force: bool = False) -> ExitCode:
+    def create(
+        self, preset: str | None = None, database: str | None = None, force: bool = False
+    ) -> ExitCode:
         """Execute the full project initialization workflow.
 
         Args:
             preset: Optional preset to use without prompting.
+            database: Optional database backend to use without prompting.
             force: Skip directory validation.
 
         Returns:
@@ -799,6 +931,11 @@ class _ProjectInitializer:
             # Get and validate preset choice
             chosen_preset = self._get_preset_choice(preset)
 
+            # Get and validate database choice
+            chosen_database, use_postgres_env_vars = self._get_database_choice(
+                chosen_preset, database
+            )
+
             with Progress(
                 SpinnerColumn(),
                 TextColumn("[progress.description]{task.description}"),
@@ -807,7 +944,7 @@ class _ProjectInitializer:
             ) as progress:
                 # Create core configuration files
                 task = progress.add_task("Creating project files...", total=None)
-                self._create_core_files(chosen_preset)
+                self._create_core_files(chosen_preset, chosen_database, use_postgres_env_vars)
                 progress.update(task, completed=True)
 
                 # Configure preset-specific files
@@ -820,7 +957,7 @@ class _ProjectInitializer:
                 self._create_home_app()
                 progress.update(task, completed=True)
 
-            self._show_next_steps(chosen_preset)
+            self._show_next_steps(chosen_preset, chosen_database, use_postgres_env_vars)
             return ExitCode.SUCCESS
 
         except KeyboardInterrupt:
@@ -863,14 +1000,19 @@ class _ProjectInitializer:
 # ============================================================================
 
 
-def initialize(preset: str | None = None, force: bool = False) -> ExitCode:
-    """Main entry point for project initialization.
+def initialize(
+    preset: str | None = None, database: str | None = None, force: bool = False
+) -> ExitCode:
+    f"""Main entry point for project initialization.
 
-    Creates a new project with the specified preset configuration.
+    Creates a new project with the specified preset and database configuration.
 
     Args:
         preset: Optional preset to use without prompting.
             Available presets: 'default', 'vercel'.
+        database: Optional database backend to use without prompting.
+            Available databases: '{DatabaseBackend.SQLITE3.value}', '{DatabaseBackend.POSTGRESQL.value}'.
+            Note: Vercel preset requires PostgreSQL.
         force: Skip directory validation and proceed even if directory is not empty.
 
     Returns:
@@ -878,7 +1020,9 @@ def initialize(preset: str | None = None, force: bool = False) -> ExitCode:
         ExitCode.ERROR otherwise.
 
     Example:
-        >>> initialize(preset="vercel")
+        >>> initialize(preset="vercel")  # Will auto-select {DatabaseBackend.POSTGRESQL.value} due to Vercel preset requirement
+        >>> initialize(database="{DatabaseBackend.POSTGRESQL.value}")  # Default preset with {DatabaseBackend.POSTGRESQL.value}
+        >>> initialize(preset="default", database="{DatabaseBackend.SQLITE3.value}")  # Default preset with {DatabaseBackend.SQLITE3.value}
         >>> initialize(force=True)
     """
-    return _ProjectInitializer(PROJECT_DIR).create(preset=preset, force=force)
+    return _ProjectInitializer(PROJECT_DIR).create(preset=preset, database=database, force=force)
