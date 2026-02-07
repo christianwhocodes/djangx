@@ -12,7 +12,7 @@ from django.core.management.base import BaseCommand, CommandParser
 from .helpers.run import CommandGenerator, CommandOutput, Output
 
 
-class BuildCommandGenerator(CommandGenerator):
+class _BuildCommandGenerator(CommandGenerator):
     """Generator for build command execution."""
 
     def get_runcommands(self) -> list[str]:
@@ -62,5 +62,5 @@ class Command(BaseCommand):
                 - dry_run (bool): If True, show commands without executing.
         """
         dry_run: bool = options.get("dry_run", False)
-        generator = BuildCommandGenerator(self)
+        generator = _BuildCommandGenerator(self)
         generator.generate(dry_run=dry_run)

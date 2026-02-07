@@ -1,7 +1,9 @@
-from ... import Conf, ConfField
+from .config import ConfField, SettingConfig
+
+__all__: list[str] = ["RUNCOMMANDS"]
 
 
-class RunCommandsConf(Conf):
+class _RunCommandsConf(SettingConfig):
     """Install/Build Commands to be executed settings."""
 
     install = ConfField(
@@ -18,7 +20,4 @@ class RunCommandsConf(Conf):
     )
 
 
-RUNCOMMANDS = RunCommandsConf()
-
-
-__all__: list[str] = ["RUNCOMMANDS"]
+RUNCOMMANDS = _RunCommandsConf()

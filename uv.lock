@@ -141,15 +141,15 @@ wheels = [
 
 [[package]]
 name = "christianwhocodes"
-version = "1.3.2"
+version = "1.3.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pyperclip" },
     { name = "rich" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9f/43/b1ccbd6bbb83e66317d35ff94ccf449e00cb677ec9fafe550ddd3979ed1b/christianwhocodes-1.3.2.tar.gz", hash = "sha256:1055038dc74f8d27c83b2e6d0b14971b51b666d2b08e250c684d3cfcb4c1ff70", size = 15690, upload-time = "2026-02-05T15:29:23.552Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c4/f5/4c48fd53afe3fe29b26b906769d0bbfc9ba85c3c3323f0f491b231799fc0/christianwhocodes-1.3.4.tar.gz", hash = "sha256:1f932eaadcb479df44d0e2712d2fe3b51294b488c9c71bb4efbee857b9b2780e", size = 18907, upload-time = "2026-02-07T12:02:19.057Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ba/78/2beaf511ffd47320582a047bd266e9f55f170757f6a9af251388e30123da/christianwhocodes-1.3.2-py3-none-any.whl", hash = "sha256:fa4aa25085b14eb28f00ba087eaf1ecc0a0f219ae15fddd3fe0dc1c7afa75c05", size = 24474, upload-time = "2026-02-05T15:29:22.195Z" },
+    { url = "https://files.pythonhosted.org/packages/36/ca/9cc1ad93c1649d14cf933ec77507d11d54164b959456e0c6291eba3fd1ea/christianwhocodes-1.3.4-py3-none-any.whl", hash = "sha256:f488429060e92f0fba2dec19ce47f3d265a898ad02f128ac49048b61292b40db", size = 28365, upload-time = "2026-02-07T12:02:17.821Z" },
 ]
 
 [[package]]
@@ -280,7 +280,7 @@ wheels = [
 
 [[package]]
 name = "djangx"
-version = "1.5.8.dev3"
+version = "1.6.0"
 source = { editable = "." }
 dependencies = [
     { name = "christianwhocodes" },
@@ -306,7 +306,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "christianwhocodes", specifier = ">=1.3.2" },
+    { name = "christianwhocodes", specifier = ">=1.3.4" },
     { name = "django", specifier = ">=6.0.2" },
     { name = "django-browser-reload", specifier = ">=1.21.0" },
     { name = "django-http-compression", extras = ["brotli"], specifier = ">=1.2.0" },

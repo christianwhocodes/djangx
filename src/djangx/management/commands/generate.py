@@ -10,8 +10,8 @@ from christianwhocodes.generators import (
 )
 from django.core.management.base import BaseCommand, CommandParser
 
-from ... import PKG_DISPLAY_NAME, PKG_NAME, PROJECT_API_DIR, PROJECT_DIR, Conf
-from ..enums import FileOption
+from ... import PACKAGE, PROJECT
+from ..enums import FileGeneratorOptionEnum
 
 
 class _ServerFileGenerator(FileGenerator):
@@ -19,19 +19,22 @@ class _ServerFileGenerator(FileGenerator):
     Generator for ASGI / WSGI configuration in api/server.py file.
     
     Creates an server.py file in the /api directory.
-    Required for running {PKG_DISPLAY_NAME} apps with ASGI or WSGI servers.
+    Required for running {PACKAGE.display_name} apps with ASGI or WSGI servers.
     Note that the type of api gateway dependes on the SERVER_USE_ASGI setting.
     """
 
     @property
     def file_path(self) -> pathlib.Path:
         """Return the path for the api/server.py"""
-        return PROJECT_API_DIR / "server.py"
+        return PROJECT.api_dir / "server.py"
 
     @property
     def data(self) -> str:
         """Return template content for api/server.py."""
-        return f"from {PKG_NAME}.api.backends.server import application\n\napp = application\n"
+        return (
+            f"from {PACKAGE.name}.management.backends import SERVER_APPLICATION as application\n\n"
+            "app = application\n"
+        )
 
 
 class _VercelFileGenerator(FileGenerator):
@@ -44,7 +47,7 @@ class _VercelFileGenerator(FileGenerator):
 
     @property
     def file_path(self) -> pathlib.Path:
-        return PROJECT_DIR / "vercel.json"
+        return PROJECT.base_dir / "vercel.json"
 
     @property
     def data(self) -> str:
@@ -52,8 +55,8 @@ class _VercelFileGenerator(FileGenerator):
         lines = [
             "{",
             '  "$schema": "https://openapi.vercel.sh/vercel.json",',
-            f'  "installCommand": "uv run {PKG_NAME} runinstall",',
-            f'  "buildCommand": "uv run {PKG_NAME} runbuild",',
+            f'  "installCommand": "uv run {PACKAGE.name} runinstall",',
+            f'  "buildCommand": "uv run {PACKAGE.name} runbuild",',
             '  "rewrites": [',
             "    {",
             '      "source": "/(.*)",',
@@ -78,11 +81,13 @@ class _EnvFileGenerator(FileGenerator):
     @property
     def file_path(self) -> pathlib.Path:
         """Return the path for the .env.example file."""
-        return PROJECT_DIR / ".env.example"
+        return PROJECT.base_dir / ".env.example"
 
     @property
     def data(self) -> str:
         """Generate .env file content based on all ConfFields from Conf subclasses."""
+
+        from ..settings.config import SettingConfig
 
         lines: list[str] = []
 
@@ -90,7 +95,7 @@ class _EnvFileGenerator(FileGenerator):
         lines.extend(self._add_header())
 
         # Get all fields from Conf subclasses
-        env_fields = Conf.get_env_fields()
+        env_fields = SettingConfig.get_env_fields()
 
         # Group fields by class
         fields_by_class: dict[str, list[dict[str, Any]]] = {}
@@ -144,7 +149,7 @@ class _EnvFileGenerator(FileGenerator):
         """Add header to the .env.example file."""
         lines: list[str] = []
         lines.append("# " + "=" * 78)
-        lines.append(f"# {PKG_DISPLAY_NAME} Environment Configuration")
+        lines.append(f"# {PACKAGE.display_name} Environment Configuration")
         lines.append("# " + "=" * 78)
         lines.append("#")
         lines.append("# This file contains all available environment variables for configuration.")
@@ -229,10 +234,10 @@ class Command(BaseCommand):
             "-f",
             "--file",
             dest="file",
-            choices=[opt.value for opt in FileOption],
-            type=FileOption,
+            choices=[opt.value for opt in FileGeneratorOptionEnum],
+            type=FileGeneratorOptionEnum,
             required=True,
-            help=f"Specify which file to generate (options: {', '.join(o.value for o in FileOption)}).",
+            help=f"Specify which file to generate (options: {', '.join(o.value for o in FileGeneratorOptionEnum)}).",
         )
         parser.add_argument(
             "-y",
@@ -243,16 +248,16 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args: Any, **options: Any) -> None:
-        file_option: FileOption = FileOption(options["file"])
+        file_option: FileGeneratorOptionEnum = FileGeneratorOptionEnum(options["file"])
         force: bool = options["force"]
 
-        generators: dict[FileOption, type[FileGenerator]] = {
-            FileOption.VERCEL: _VercelFileGenerator,
-            FileOption.SERVER: _ServerFileGenerator,
-            FileOption.PG_SERVICE: PgServiceFileGenerator,
-            FileOption.PGPASS: PgPassFileGenerator,
-            FileOption.SSH_CONFIG: SSHConfigFileGenerator,
-            FileOption.ENV: _EnvFileGenerator,
+        generators: dict[FileGeneratorOptionEnum, type[FileGenerator]] = {
+            FileGeneratorOptionEnum.VERCEL: _VercelFileGenerator,
+            FileGeneratorOptionEnum.SERVER: _ServerFileGenerator,
+            FileGeneratorOptionEnum.PG_SERVICE: PgServiceFileGenerator,
+            FileGeneratorOptionEnum.PGPASS: PgPassFileGenerator,
+            FileGeneratorOptionEnum.SSH_CONFIG: SSHConfigFileGenerator,
+            FileGeneratorOptionEnum.ENV: _EnvFileGenerator,
         }
 
         generator_class: type[FileGenerator] = generators[file_option]

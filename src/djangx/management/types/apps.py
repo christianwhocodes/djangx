@@ -2,6 +2,9 @@ from pathlib import Path
 from typing import NotRequired, TypeAlias, TypedDict
 
 
+__all__: list[str] = ["TemplatesDict"]
+
+
 class _TemplateOptionsDict(TypedDict):
     """Template configuration options."""
 
@@ -20,6 +23,3 @@ class _TemplateDict(TypedDict):
 
 
 TemplatesDict: TypeAlias = list[_TemplateDict]
-
-
-__all__: list[str] = ["TemplatesDict"]

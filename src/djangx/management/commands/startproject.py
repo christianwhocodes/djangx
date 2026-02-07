@@ -42,7 +42,7 @@ When initialize() is called, the following sequence occurs:
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ 2. CONFIGURATION SELECTION                                   │
+│ 2. CONFIGURATION SELECTION                                  │
 │    - Get preset choice (CLI flag or interactive prompt)     │
 │    - Get database choice (CLI flag or interactive prompt)   │
 │    - Get PG config method if PostgreSQL selected            │
@@ -50,15 +50,15 @@ When initialize() is called, the following sequence occurs:
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ 3. CORE FILE CREATION                                        │
+│ 3. CORE FILE CREATION                                       │
 │    - Generate pyproject.toml with dependencies              │
 │    - Create .gitignore and README.md                        │
 │    - Track all created files for potential rollback         │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ 4. HOME APP CREATION                                         │
-│    - Run startapp command                          │
+│ 4. HOME APP CREATION                                        │
+│    - Run startapp command                                   │
 │    - Create urls.py and views.py                            │
 │    - Set up template and static file structure              │
 └─────────────────────────────────────────────────────────────┘
@@ -70,7 +70,7 @@ When initialize() is called, the following sequence occurs:
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ 6. SUCCESS DISPLAY                                           │
+│ 6. SUCCESS DISPLAY                                          │
 │    - Show next steps with context-specific instructions     │
 │    - Include relevant documentation links                   │
 └─────────────────────────────────────────────────────────────┘
@@ -98,26 +98,26 @@ Both levels use the same validation functions from maps.py, ensuring
 consistency between CLI and interactive modes.
 """
 
+from argparse import ArgumentParser, Namespace
 from dataclasses import dataclass
 from pathlib import Path
+from sys import argv
 from typing import Final
 
-from christianwhocodes.core import ExitCode, Version
+from christianwhocodes.core import ExitCode
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Confirm, Prompt
 
-from ... import (
-    PKG_DISPLAY_NAME,
-    PKG_NAME,
-    PROJECT_DIR,
-    PROJECT_INIT_NAME,
-    PROJECT_MAIN_APP_DIR,
+from ... import PACKAGE, PROJECT
+from ..enums import DatabaseEnum, PresetEnum
+from ..settings import DATABASE_PRESETS, PG_CONFIG_PRESETS, STARTPROJECT_PRESETS
+from ..utils import (
+    validate_pg_config_compatibility,
+    validate_preset_database_compatibility,
 )
-from ...enums import DatabaseBackend, PresetType
-from ..maps import DATABASE_CONFIGS, PG_CONFIG_METHODS, PRESET_CONFIGS
 
-__all__ = ["initialize"]
+__all__: list[str] = ["handle_startproject"]
 
 # ============================================================================
 # Configuration & Templates
@@ -158,16 +158,16 @@ class _ProjectDependencies:
     postgresql: tuple[str, ...] = ("psycopg[binary,pool]>=3.3.2",)
     vercel: tuple[str, ...] = ("vercel>=0.3.8",)
 
-    def get_for_config(self, preset: PresetType, database: DatabaseBackend) -> list[str]:
+    def get_for_config(self, preset: PresetEnum, database: DatabaseEnum) -> list[str]:
         """Get complete dependency list for a specific configuration.
 
         This method combines base dependencies with configuration-specific ones,
-        using the DATABASE_CONFIGS and PRESET_CONFIGS mappings to determine
+        using the DATABASE_PRESETS and STARTPROJECT_PRESETS mappings to determine
         what's needed.
 
         Args:
-            preset: The preset type (from PRESET_CONFIGS mapping)
-            database: The database backend (from DATABASE_CONFIGS mapping)
+            preset: The preset type (from STARTPROJECT_PRESETS mapping)
+            database: The database backend (from DATABASE_PRESETS mapping)
 
         Returns:
             Complete list of dependency strings including version constraints.
@@ -178,14 +178,14 @@ class _ProjectDependencies:
             ['pillow>=12.1.0', 'psycopg[binary,pool]>=3.3.2', 'vercel>=0.3.8']
         """
         deps = list(self.base)
-        deps.append(f"{PKG_NAME}>={Version.get(PKG_NAME)[0]}")
+        deps.append(f"{PACKAGE.name}>={PACKAGE.version}")
 
-        # Add database-specific dependencies using DATABASE_CONFIGS mapping
-        db_config = DATABASE_CONFIGS[database]
+        # Add database-specific dependencies using DATABASE_PRESETS mapping
+        db_config = DATABASE_PRESETS[database]
         deps.extend(db_config.dependencies)
 
-        # Add preset-specific dependencies using PRESET_CONFIGS mapping
-        preset_config = PRESET_CONFIGS[preset]
+        # Add preset-specific dependencies using STARTPROJECT_PRESETS mapping
+        preset_config = STARTPROJECT_PRESETS[preset]
         deps.extend(preset_config.dependencies)
 
         return deps
@@ -235,8 +235,8 @@ env/
 /.env
 .env.local
 
-# {DatabaseBackend.SQLITE3.value.capitalize()} database file
-/db.{DatabaseBackend.SQLITE3.value}
+# {DatabaseEnum.SQLITE3.value.capitalize()} database file
+/db.{DatabaseEnum.SQLITE3.value}
 
 # PostgreSQL service files (if using local config)
 .pg_service.conf
@@ -255,16 +255,16 @@ pgpass.conf
     def readme() -> str:
         """Generate README.md content with getting started instructions."""
         return f"""
-# {PROJECT_INIT_NAME}
+# {PROJECT.init_name}
 
-A new project built with {PKG_DISPLAY_NAME}.
+A new project built with {PACKAGE.display_name}.
 
 ## Getting Started
 
 1. Install dependencies: `uv sync`
 2. Copy `.env.example` to `.env` and configure your environment variables
-3. Run migrations: `uv run {PKG_NAME} migrate`
-4. Run development server: `uv run {PKG_NAME} runserver`
+3. Run migrations: `uv run {PACKAGE.name} migrate`
+4. Run development server: `uv run {PACKAGE.name} runserver`
 
 ## Development
 
@@ -274,13 +274,13 @@ A new project built with {PKG_DISPLAY_NAME}.
 
 ## Learn More
 
-Visit the {PKG_DISPLAY_NAME} documentation to learn more about building with this framework.
+Visit the {PACKAGE.display_name} documentation to learn more about building with this framework.
 """.strip()
 
     @staticmethod
     def pyproject_toml(
-        preset: PresetType,
-        database: DatabaseBackend,
+        preset: PresetEnum,
+        database: DatabaseEnum,
         dependencies: list[str],
         use_postgres_env_vars: bool = False,
     ) -> str:
@@ -305,15 +305,15 @@ Visit the {PKG_DISPLAY_NAME} documentation to learn more about building with thi
         # Build tool configuration based on mappings
         tool_config_parts: list[str] = []
 
-        # Database configuration (from DATABASE_CONFIGS)
-        if database == DatabaseBackend.POSTGRESQL:
+        # Database configuration (from DATABASE_PRESETS)
+        if database == DatabaseEnum.POSTGRESQL:
             tool_config_parts.append(
-                f'db = {{ backend = "{DatabaseBackend.POSTGRESQL.value}", '
+                f'db = {{ backend = "{DatabaseEnum.POSTGRESQL.value}", '
                 f"use-env-vars = {str(use_postgres_env_vars).lower()} }}"
             )
 
-        # Storage configuration (preset-specific from PRESET_CONFIGS)
-        if preset == PresetType.VERCEL:
+        # Storage configuration (preset-specific from STARTPROJECT_PRESETS)
+        if preset == PresetEnum.VERCEL:
             tool_config_parts.append(
                 'storage = { backend = "vercel", '
                 'blob-token = "keep-your-vercel-blob-token-secret-in-env" }'
@@ -325,7 +325,7 @@ Visit the {PKG_DISPLAY_NAME} documentation to learn more about building with thi
             tool_config = "\n" + "\n".join(tool_config_parts) + "\n"
 
         return f"""[project]
-name = "{PROJECT_INIT_NAME}"
+name = "{PROJECT.init_name}"
 version = "0.1.0"
 description = ""
 readme = "README.md"
@@ -343,7 +343,7 @@ dev = [
 blank_line_before_tag = "block"
 blank_line_after_tag = "load,extends,endblock"
 
-[tool.{PKG_NAME}]{tool_config}
+[tool.{PACKAGE.name}]{tool_config}
 """
 
     @staticmethod
@@ -404,7 +404,7 @@ class HomeView(TemplateView):
 /* =============================================================================
    SOURCE FILES
    ============================================================================= */
-@source "../../../../.venv/**/{PKG_NAME}/ui/templates/ui/**/*.html";
+@source "../../../../.venv/**/{PACKAGE.name}/ui/templates/ui/**/*.html";
 @source "../../../templates/home/**/*.html";
 
 /* =============================================================================
@@ -698,7 +698,7 @@ class _HomeAppCreator:
         5. Set up static file directory and CSS
         """
         # Check if home app already exists
-        if PROJECT_MAIN_APP_DIR.exists() and PROJECT_MAIN_APP_DIR.is_dir():
+        if PROJECT.home_app_exists:
             self.console.print(
                 "[yellow]Home app directory already exists, skipping app creation[/yellow]"
             )
@@ -720,13 +720,13 @@ class _HomeAppCreator:
         try:
             call_command("startapp", "home")
             # Track the created directory for rollback
-            self.writer.tracker.track(PROJECT_MAIN_APP_DIR)
+            self.writer.tracker.track(PROJECT.home_app_dir)
         except Exception as e:
             raise IOError(f"Failed to create home app: {e}") from e
 
     def _create_urls(self) -> None:
         """Create custom urls.py for the home app."""
-        urls_path = PROJECT_MAIN_APP_DIR / "urls.py"
+        urls_path = PROJECT.home_app_dir / "urls.py"
         if self.writer.write_to_path_if_not_exists(urls_path, self.templates.home_urls()):
             pass  # File was created
         else:
@@ -734,7 +734,7 @@ class _HomeAppCreator:
 
     def _create_views(self) -> None:
         """Create custom views.py for the home app."""
-        views_path = PROJECT_MAIN_APP_DIR / "views.py"
+        views_path = PROJECT.home_app_dir / "views.py"
         # Only overwrite if it's the default startapp content
         if views_path.exists():
             content = views_path.read_text(encoding="utf-8")
@@ -746,7 +746,7 @@ class _HomeAppCreator:
 
     def _create_templates(self) -> None:
         """Create template directory structure and HTML files."""
-        templates_dir = PROJECT_MAIN_APP_DIR / "templates" / "home"
+        templates_dir = PROJECT.home_app_dir / "templates" / "home"
         self.writer.ensure_dir(templates_dir)
 
         index_path = templates_dir / "index.html"
@@ -754,7 +754,7 @@ class _HomeAppCreator:
 
     def _create_static_files(self) -> None:
         """Create static file directory structure and CSS files."""
-        static_dir = PROJECT_MAIN_APP_DIR / "static" / "home" / "css"
+        static_dir = PROJECT.home_app_dir / "static" / "home" / "css"
         self.writer.ensure_dir(static_dir)
 
         css_path = static_dir / "tailwind.css"
@@ -843,7 +843,7 @@ class _ProjectInitializer:
         self.console.print(f"[yellow]Directory is not empty. Found:[/yellow]\n  - {items_list}\n")
 
         should_proceed = Confirm.ask(
-            f"Initialize {PKG_DISPLAY_NAME} project anyway? "
+            f"Initialize {PACKAGE.display_name} project anyway? "
             "This will skip existing files and create new ones",
             default=False,
             console=self.console,
@@ -852,10 +852,10 @@ class _ProjectInitializer:
         if not should_proceed:
             raise ProjectInitializationError("Initialization cancelled by user.")
 
-    def _get_preset_choice(self, preset: str | None = None) -> PresetType:
+    def _get_preset_choice(self, preset: str | None = None) -> PresetEnum:
         """Get and validate the preset choice.
 
-        Uses PRESET_CONFIGS mapping to validate and provide choices.
+        Uses STARTPROJECT_PRESETS mapping to validate and provide choices.
 
         Args:
             preset: CLI-provided preset (skips prompt if provided)
@@ -868,33 +868,33 @@ class _ProjectInitializer:
         """
         if preset:
             try:
-                return PresetType(preset)
+                return PresetEnum(preset)
             except ValueError:
-                valid_presets = [p.value for p in PresetType]
+                valid_presets = [p.value for p in PresetEnum]
                 raise ValueError(
                     f"Invalid preset '{preset}'. Must be one of: {', '.join(valid_presets)}"
                 ) from None
 
-        # Interactive prompt with descriptions from PRESET_CONFIGS
+        # Interactive prompt with descriptions from STARTPROJECT_PRESETS
         self.console.print("\n[bold]Choose a project preset:[/bold]")
-        for preset_type in PresetType:
-            config = PRESET_CONFIGS[preset_type]
+        for preset_type in PresetEnum:
+            config = STARTPROJECT_PRESETS[preset_type]
             self.console.print(f"  • [cyan]{preset_type.value}[/cyan]: {config.description}")
 
         choice = Prompt.ask(
             "\nYour choice",
-            choices=[p.value for p in PresetType],
-            default=PresetType.DEFAULT.value,
+            choices=[p.value for p in PresetEnum],
+            default=PresetEnum.DEFAULT.value,
             console=self.console,
         )
-        return PresetType(choice)
+        return PresetEnum(choice)
 
     def _get_postgres_config_choice(
-        self, preset: PresetType, pg_env_vars: bool | None = None
+        self, preset: PresetEnum, pg_env_vars: bool | None = None
     ) -> bool:
         """Get PostgreSQL configuration method choice.
 
-        Uses PG_CONFIG_METHODS mapping to provide options and validate choices.
+        Uses PG_CONFIG_PRESETS mapping to provide options and validate choices.
 
         Args:
             preset: Current preset (Vercel requires env vars)
@@ -904,7 +904,7 @@ class _ProjectInitializer:
             True for environment variables, False for service files
         """
         # Vercel requires environment variables (no filesystem access)
-        preset_config = PRESET_CONFIGS[preset]
+        preset_config = STARTPROJECT_PRESETS[preset]
         if preset_config.required_pg_config is not None:
             return preset_config.required_pg_config
 
@@ -912,9 +912,9 @@ class _ProjectInitializer:
         if pg_env_vars is not None:
             return pg_env_vars
 
-        # Interactive prompt with descriptions from PG_CONFIG_METHODS
+        # Interactive prompt with descriptions from PG_CONFIG_PRESETS
         self.console.print("\n[bold]PostgreSQL Configuration Method:[/bold]")
-        for use_env_vars, method in PG_CONFIG_METHODS.items():
+        for use_env_vars, method in PG_CONFIG_PRESETS.items():
             self.console.print(f"  • [cyan]{method.name}[/cyan]: {method.description}")
 
         use_env_vars = Confirm.ask(
@@ -926,11 +926,11 @@ class _ProjectInitializer:
         return use_env_vars
 
     def _get_database_choice(
-        self, preset: PresetType, database: str | None = None, pg_env_vars: bool | None = None
-    ) -> tuple[DatabaseBackend, bool]:
+        self, preset: PresetEnum, database: str | None = None, pg_env_vars: bool | None = None
+    ) -> tuple[DatabaseEnum, bool]:
         """Get and validate database choice with PostgreSQL configuration.
 
-        Uses DATABASE_CONFIGS mapping for validation and PRESET_CONFIGS for
+        Uses DATABASE_PRESETS mapping for validation and STARTPROJECT_PRESETS for
         compatibility checking.
 
         Args:
@@ -944,9 +944,7 @@ class _ProjectInitializer:
         Raises:
             ValueError: If database is invalid or incompatible with preset
         """
-        from ..maps import validate_preset_database_compatibility
-
-        preset_config = PRESET_CONFIGS[preset]
+        preset_config = STARTPROJECT_PRESETS[preset]
 
         # Check if preset requires a specific database
         if preset_config.required_database is not None:
@@ -962,9 +960,9 @@ class _ProjectInitializer:
         # If database explicitly provided, validate it
         if database:
             try:
-                db_backend = DatabaseBackend(database)
+                db_backend = DatabaseEnum(database)
             except ValueError:
-                valid_databases = [db.value for db in DatabaseBackend]
+                valid_databases = [db.value for db in DatabaseEnum]
                 raise ValueError(
                     f"Invalid database '{database}'. Must be one of: {', '.join(valid_databases)}"
                 ) from None
@@ -975,7 +973,7 @@ class _ProjectInitializer:
                 raise ValueError(error_msg)
 
             # Get PostgreSQL config method if applicable
-            db_config = DATABASE_CONFIGS[db_backend]
+            db_config = DATABASE_PRESETS[db_backend]
             use_env_vars = (
                 self._get_postgres_config_choice(preset, pg_env_vars)
                 if db_config.requires_pg_config
@@ -983,22 +981,22 @@ class _ProjectInitializer:
             )
             return db_backend, use_env_vars
 
-        # Interactive prompt with descriptions from DATABASE_CONFIGS
+        # Interactive prompt with descriptions from DATABASE_PRESETS
         self.console.print("\n[bold]Choose a database backend:[/bold]")
-        for db_backend in DatabaseBackend:
-            config = DATABASE_CONFIGS[db_backend]
+        for db_backend in DatabaseEnum:
+            config = DATABASE_PRESETS[db_backend]
             self.console.print(f"  • [cyan]{db_backend.value}[/cyan]: {config.description}")
 
         choice = Prompt.ask(
             "\nYour choice",
-            choices=[db.value for db in DatabaseBackend],
-            default=DatabaseBackend.SQLITE3.value,
+            choices=[db.value for db in DatabaseEnum],
+            default=DatabaseEnum.SQLITE3.value,
             console=self.console,
         )
-        db_backend = DatabaseBackend(choice)
+        db_backend = DatabaseEnum(choice)
 
         # Get PostgreSQL config method if applicable
-        db_config = DATABASE_CONFIGS[db_backend]
+        db_config = DATABASE_PRESETS[db_backend]
         use_env_vars = (
             self._get_postgres_config_choice(preset, pg_env_vars)
             if db_config.requires_pg_config
@@ -1007,7 +1005,7 @@ class _ProjectInitializer:
         return db_backend, use_env_vars
 
     def _create_core_files(
-        self, preset: PresetType, database: DatabaseBackend, use_postgres_env_vars: bool
+        self, preset: PresetEnum, database: DatabaseEnum, use_postgres_env_vars: bool
     ) -> None:
         """Create core project configuration files.
 
@@ -1038,10 +1036,10 @@ class _ProjectInitializer:
             else:
                 self.console.print(f"[dim]{filename} already exists, skipping[/dim]")
 
-    def _configure_preset_files_and_env_example(self, preset: PresetType) -> None:
+    def _configure_preset_files_and_env_example(self, preset: PresetEnum) -> None:
         """Generate preset-specific files using the framework's generate command.
 
-        Uses PRESET_CONFIGS mapping to determine what files need to be generated.
+        Uses STARTPROJECT_PRESETS mapping to determine what files need to be generated.
 
         Args:
             preset: Project preset type
@@ -1054,11 +1052,11 @@ class _ProjectInitializer:
         try:
             # Generate preset-specific files
             match preset:
-                case PresetType.VERCEL:
+                case PresetEnum.VERCEL:
                     # Generate vercel.json if it doesn't exist
                     if not (self.project_dir / "vercel.json").exists():
                         run(
-                            [PKG_NAME, "generate", "-f", "vercel", "-y"],
+                            [PACKAGE.name, "generate", "-f", "vercel", "-y"],
                             cwd=self.project_dir,
                             check=True,
                             capture_output=True,
@@ -1071,7 +1069,7 @@ class _ProjectInitializer:
                     server_path = self.project_dir / "api" / "server.py"
                     if not server_path.exists():
                         run(
-                            [PKG_NAME, "generate", "-f", "server", "-y"],
+                            [PACKAGE.name, "generate", "-f", "server", "-y"],
                             cwd=self.project_dir,
                             check=True,
                             capture_output=True,
@@ -1088,7 +1086,7 @@ class _ProjectInitializer:
             raise IOError(f"Failed to generate preset-specific files: {error_msg}") from e
         except FileNotFoundError as e:
             raise IOError(
-                f"Command '{PKG_NAME}' not found. Ensure {PKG_DISPLAY_NAME} is properly installed."
+                f"Command '{PACKAGE.name}' not found. Ensure {PACKAGE.display_name} is properly installed."
             ) from e
 
         # Generate .env.example file if it doesn't exist
@@ -1096,7 +1094,7 @@ class _ProjectInitializer:
         if not env_example_path.exists():
             try:
                 run(
-                    [PKG_NAME, "generate", "-f", "env", "-y"],
+                    [PACKAGE.name, "generate", "-f", "env", "-y"],
                     cwd=self.project_dir,
                     check=True,
                     capture_output=True,
@@ -1107,7 +1105,7 @@ class _ProjectInitializer:
                 raise IOError(f"Failed to generate .env file: {error_msg}") from e
             except FileNotFoundError as e:
                 raise IOError(
-                    f"Command '{PKG_NAME}' not found. Ensure {PKG_DISPLAY_NAME} is properly installed."
+                    f"Command '{PACKAGE.name}' not found. Ensure {PACKAGE.display_name} is properly installed."
                 ) from e
         else:
             self.console.print("[dim].env.example already exists, skipping[/dim]")
@@ -1118,7 +1116,7 @@ class _ProjectInitializer:
         home_creator.create()
 
     def _show_next_steps(
-        self, preset: PresetType, database: DatabaseBackend, use_postgres_env_vars: bool
+        self, preset: PresetEnum, database: DatabaseEnum, use_postgres_env_vars: bool
     ) -> None:
         """Display context-specific next steps after successful initialization.
 
@@ -1139,10 +1137,10 @@ class _ProjectInitializer:
 
         step_num = 3
 
-        # Database-specific instructions using DATABASE_CONFIGS
-        db_config = DATABASE_CONFIGS[database]
+        # Database-specific instructions using DATABASE_PRESETS
+        db_config = DATABASE_PRESETS[database]
         if db_config.requires_pg_config:
-            pg_method = PG_CONFIG_METHODS[use_postgres_env_vars]
+            pg_method = PG_CONFIG_PRESETS[use_postgres_env_vars]
             if use_postgres_env_vars:
                 next_steps.append(
                     f"{step_num}. Configure PostgreSQL connection in [bold].env[/bold]"
@@ -1154,16 +1152,16 @@ class _ProjectInitializer:
                 )
             step_num += 1
 
-        # Preset-specific instructions using PRESET_CONFIGS
-        preset_config = PRESET_CONFIGS[preset]
-        if preset == PresetType.VERCEL:
+        # Preset-specific instructions using STARTPROJECT_PRESETS
+        preset_config = STARTPROJECT_PRESETS[preset]
+        if preset == PresetEnum.VERCEL:
             next_steps.append(f"{step_num}. Configure Vercel blob token in [bold].env[/bold]")
             step_num += 1
 
         next_steps.extend(
             [
-                f"{step_num}. Run migrations: [bold cyan]uv run {PKG_NAME} migrate[/bold cyan]",
-                f"{step_num + 1}. Run development server: [bold cyan]uv run {PKG_NAME} runserver[/bold cyan]",
+                f"{step_num}. Run migrations: [bold cyan]uv run {PACKAGE.name} migrate[/bold cyan]",
+                f"{step_num + 1}. Run development server: [bold cyan]uv run {PACKAGE.name} runserver[/bold cyan]",
             ]
         )
 
@@ -1179,7 +1177,7 @@ class _ProjectInitializer:
 
         # PostgreSQL config documentation
         if db_config.requires_pg_config:
-            pg_method = PG_CONFIG_METHODS[use_postgres_env_vars]
+            pg_method = PG_CONFIG_PRESETS[use_postgres_env_vars]
             if pg_method.learn_more_url:
                 learn_more_links.append(f"   {pg_method.learn_more_url}")
 
@@ -1194,7 +1192,7 @@ class _ProjectInitializer:
 
         panel = Panel(
             content,
-            title=f"[bold green]✓ {PKG_DISPLAY_NAME} project initialized successfully![/bold green]",
+            title=f"[bold green]✓ {PACKAGE.display_name} project initialized successfully![/bold green]",
             border_style="green",
             padding=(1, 2),
         )
@@ -1300,57 +1298,211 @@ class _ProjectInitializer:
 # ============================================================================
 
 
-def initialize(
-    preset: str | None = None,
-    database: str | None = None,
-    pg_env_vars: bool | None = None,
-    force: bool = False,
-) -> ExitCode:
-    f"""Initialize a new {PKG_DISPLAY_NAME} project with the specified configuration.
+def handle_startproject() -> ExitCode:
+    f"""Handle the 'startproject' command with comprehensive argument parsing and validation.
 
-    This is the main public entry point for project initialization. It creates
-    a new project with the chosen preset and database configuration, validating
-    all combinations and providing clear error messages for invalid setups.
+    This function is the bridge between CLI arguments and the project initialization logic.
+    It performs several key responsibilities:
 
-    Configuration options are defined in the PRESET_CONFIGS, DATABASE_CONFIGS,
-    and PG_CONFIG_METHODS mappings in the maps module.
+    1. **Argument Parsing**: Defines and parses all CLI flags for project creation
+    2. **Validation**: Validates argument combinations at the CLI level
+    3. **Translation**: Converts CLI flags to function parameters
+    4. **Error Reporting**: Provides clear error messages for invalid combinations
 
-    Args:
-        preset: Project preset to use. If None, prompts user interactively.
-            Valid values defined in PresetType enum and PRESET_CONFIGS mapping.
-        database: Database backend to use. If None, prompts user interactively.
-            Valid values defined in DatabaseBackend enum and DATABASE_CONFIGS mapping.
-            Note: Some presets may require specific databases.
-        pg_env_vars: PostgreSQL configuration method. If None, prompts user interactively.
-            True = use environment variables (.env file)
-            False = use PostgreSQL service files (.pg_service.conf, .pgpass)
-            Only applicable when database is PostgreSQL.
-        force: Skip directory validation and proceed even if directory is not empty.
+    The validation happens in two stages:
+    - CLI-level validation (this function): Catches incompatible flag combinations
+    - Prompt-level validation (in startproject.py): Validates interactive choices
 
     Returns:
-        ExitCode.SUCCESS if initialization completed successfully,
-        ExitCode.ERROR if initialization failed.
-
-    Examples:
-        # Interactive mode (prompts for all choices)
-        >>> initialize()
-
-        # Vercel preset (requires PostgreSQL with env vars)
-        >>> initialize(preset="vercel")
-
-        # Custom configuration
-        >>> initialize(database="postgresql", pg_env_vars=True)
-
-        # Default preset with SQLite
-        >>> initialize(preset="default", database="sqlite3")
-
-        # Force initialization in non-empty directory
-        >>> initialize(force=True)
+        ExitCode from the initialize function (SUCCESS or ERROR).
 
     Raises:
-        No exceptions are raised - all errors are caught and returned as ExitCode.ERROR.
-        Error messages are displayed to the console.
+        SystemExit: Via parser.error() for invalid argument combinations.
+
+    Flow:
+        1. Create ArgumentParser with all available flags
+        2. Parse sys.argv[2:] (everything after the command name - startproject/init/new )
+        3. Validate preset-database compatibility
+        4. Validate preset-pg_config compatibility
+        5. Convert mutually-exclusive flags to single parameter
+        6. Call initialize() with validated parameters
+
+    Example CLI calls:
+        $ {PACKAGE.name} startproject --preset vercel  # Auto-selects PostgreSQL + env vars
+        $ {PACKAGE.name} startproject --database postgresql --pg-env-vars
+        $ {PACKAGE.name} startproject --preset default --database sqlite3
+        $ {PACKAGE.name} startproject --database sqlite3  # Auto-selects 'default' preset
+        $ {PACKAGE.name} startproject --force
     """
-    return _ProjectInitializer(PROJECT_DIR).create(
-        preset=preset, database=database, pg_env_vars=pg_env_vars, force=force
+
+    # ========================================================================
+    # Argument Parser Setup
+    # ========================================================================
+
+    parser = ArgumentParser(
+        prog=f"{PACKAGE.name} startproject",
+        description=f"Initialize a new {PACKAGE.display_name} project",
+    )
+
+    # ------------------------------------------------------------------------
+    # Preset Selection Flag
+    # ------------------------------------------------------------------------
+    # Determines the project template/configuration to use
+    # Maps to: PresetType enum and STARTPROJECT_PRESETS mapping
+
+    preset_help_lines = ["Project preset to use (skips interactive prompt). Options:"]
+    for preset_type in PresetEnum:
+        config = STARTPROJECT_PRESETS[preset_type]
+        preset_help_lines.append(f"  • {preset_type.value}: {config.description}")
+
+    parser.add_argument(
+        "--preset",
+        choices=[p.value for p in PresetEnum],
+        help=" ".join(preset_help_lines),
+        metavar="PRESET",
+    )
+
+    # ------------------------------------------------------------------------
+    # Database Backend Flag
+    # ------------------------------------------------------------------------
+    # Determines which database system to configure
+    # Maps to: DatabaseBackend enum and DATABASE_PRESETS mapping
+
+    db_help_lines = ["Database backend to use (skips interactive prompt). Options:"]
+    for db_backend in DatabaseEnum:
+        config = DATABASE_PRESETS[db_backend]
+        db_help_lines.append(f"  • {db_backend.value}: {config.description}")
+    db_help_lines.append(
+        f"\nNote: {STARTPROJECT_PRESETS[PresetEnum.VERCEL].name} preset requires "
+        f"{DatabaseEnum.POSTGRESQL.value}."
+    )
+
+    parser.add_argument(
+        "--database",
+        "--db",
+        choices=[db.value for db in DatabaseEnum],
+        help=" ".join(db_help_lines),
+        metavar="DATABASE",
+    )
+
+    # ------------------------------------------------------------------------
+    # PostgreSQL Configuration Method Flags (Mutually Exclusive)
+    # ------------------------------------------------------------------------
+    # Determines how PostgreSQL credentials are managed
+    # Maps to: PG_CONFIG_PRESETS mapping
+    # Only relevant when database=postgresql
+
+    pg_config_group = parser.add_mutually_exclusive_group()
+
+    env_vars_method = PG_CONFIG_PRESETS[True]
+    pg_config_group.add_argument(
+        env_vars_method.cli_flag,
+        action="store_true",
+        dest="pg_env_vars_flag",
+        help=f"{env_vars_method.description} (skips interactive prompt)",
+    )
+
+    service_files_method = PG_CONFIG_PRESETS[False]
+    pg_config_group.add_argument(
+        service_files_method.cli_flag,
+        action="store_true",
+        dest="pg_service_files_flag",
+        help=f"{service_files_method.description} (skips interactive prompt)",
+    )
+
+    # ------------------------------------------------------------------------
+    # Force Flag
+    # ------------------------------------------------------------------------
+    # Bypasses directory validation checks
+
+    parser.add_argument(
+        "--force",
+        "-f",
+        action="store_true",
+        help="Skip directory validation and initialize even if directory is not empty",
+    )
+
+    # ========================================================================
+    # Parse Arguments
+    # ========================================================================
+    # sys.argv structure: [script_name, command, *args]
+    # Example: ['script_name', 'startproject', '--preset', 'vercel']
+    # We parse from index 2 onwards to skip 'script_name' and 'startproject'
+
+    args: Namespace = parser.parse_args(argv[2:])
+
+    # ========================================================================
+    # CLI-Level Validation and Auto-Configuration
+    # ========================================================================
+    # We validate incompatible combinations BEFORE calling initialize()
+    # This provides immediate feedback at the CLI level
+
+    # Convert string values to enum types for validation
+    preset_enum = PresetEnum(args.preset) if args.preset else None
+    database_enum = DatabaseEnum(args.database) if args.database else None
+
+    # ------------------------------------------------------------------------
+    # Auto-configure based on preset/database requirements
+    # ------------------------------------------------------------------------
+    # If database is sqlite3 but no preset specified, auto-select 'default'
+    # since 'vercel' preset requires PostgreSQL. This skips the preset prompt.
+    if not preset_enum and database_enum == DatabaseEnum.SQLITE3:
+        preset_enum = PresetEnum.DEFAULT
+        args.preset = PresetEnum.DEFAULT.value
+
+    # If preset is vercel but no database specified, auto-select PostgreSQL
+    # and environment variables config since Vercel requires both.
+    if preset_enum == PresetEnum.VERCEL:
+        if not database_enum:
+            database_enum = DatabaseEnum.POSTGRESQL
+            args.database = DatabaseEnum.POSTGRESQL.value
+        # Auto-select env vars for PostgreSQL if no PG config method specified
+        if not args.pg_env_vars_flag and not args.pg_service_files_flag:
+            args.pg_env_vars_flag = True
+
+    # ------------------------------------------------------------------------
+    # Validate Preset-Database Compatibility
+    # ------------------------------------------------------------------------
+    if preset_enum and database_enum:
+        is_valid, error_msg = validate_preset_database_compatibility(preset_enum, database_enum)
+        if not is_valid:
+            parser.error(error_msg)
+
+    # ------------------------------------------------------------------------
+    # Validate Preset-PostgreSQL Config Compatibility
+    # ------------------------------------------------------------------------
+    if preset_enum:
+        # Check if user specified a PG config method
+        if args.pg_env_vars_flag:
+            is_valid, error_msg = validate_pg_config_compatibility(preset_enum, True)
+            if not is_valid:
+                parser.error(error_msg)
+        elif args.pg_service_files_flag:
+            is_valid, error_msg = validate_pg_config_compatibility(preset_enum, False)
+            if not is_valid:
+                parser.error(error_msg)
+
+    # ========================================================================
+    # Convert CLI Flags to Function Parameters
+    # ========================================================================
+    # The mutually-exclusive flags (--pg-env-vars, --pg-service-files) need
+    # to be converted into a single Optional[bool] parameter:
+    # - True: use environment variables
+    # - False: use service files
+    # - None: ask user interactively
+
+    pg_env_vars_value: bool | None = None
+    if args.pg_env_vars_flag:
+        pg_env_vars_value = True
+    elif args.pg_service_files_flag:
+        pg_env_vars_value = False
+
+    # ========================================================================
+    # Call Initializer
+    # ========================================================================
+    return _ProjectInitializer(PROJECT.base_dir).create(
+        preset=args.preset,  # str | None
+        database=args.database,  # str | None
+        pg_env_vars=pg_env_vars_value,  # bool | None
+        force=args.force,  # bool
     )

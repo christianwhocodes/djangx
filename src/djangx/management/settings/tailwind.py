@@ -1,9 +1,16 @@
 from pathlib import Path
 
-from ... import PKG_UI_DIR, PKG_UI_NAME, PROJECT_MAIN_APP_DIR, PROJECT_MAIN_APP_NAME, Conf, ConfField
+from ... import PACKAGE, PROJECT
+from .config import ConfField, SettingConfig
+
+__all__: list[str] = [
+    "TAILWIND",
+    "TAILWIND_SOURCE_STATIC_URL",
+    "TAILWIND_OUTPUT_STATIC_URL",
+]
 
 
-class TailwindConf(Conf):
+class _TailwindConf(SettingConfig):
     """Tailwind configuration settings."""
 
     _default_version = "v4.1.18"
@@ -22,15 +29,31 @@ class TailwindConf(Conf):
     )
     source = ConfField(
         type=Path,
-        default=PROJECT_MAIN_APP_DIR / "static" / PROJECT_MAIN_APP_NAME / "css" / "tailwind.css",
+        default=PROJECT.home_app_dir / "static" / PROJECT.home_app_name / "css" / "tailwind.css",
     )
     output = ConfField(
         type=Path,
-        default=PKG_UI_DIR / "static" / PKG_UI_NAME / "css" / "tailwind.min.css",
+        default=PACKAGE.main_app_dir / "static" / PACKAGE.main_app_name / "css" / "tailwind.min.css",
     )
 
 
-TAILWIND = TailwindConf()
+TAILWIND = _TailwindConf()
 
 
-__all__: list[str] = ["TAILWIND"]
+def _static_relative_path(file_path: Path) -> str:
+    """
+    Given an absolute path under a ``static/`` directory, return the
+    portion after ``static/`` as a forward-slash string suitable for
+    Django's ``static()`` helper.
+
+    Falls back to the bare filename when no ``static`` ancestor is found.
+    """
+    for parent in file_path.parents:
+        if parent.name == "static":
+            return file_path.relative_to(parent).as_posix()
+    return file_path.name
+
+
+TAILWIND_SOURCE_STATIC_URL: str = _static_relative_path(TAILWIND.source)
+
+TAILWIND_OUTPUT_STATIC_URL: str = _static_relative_path(TAILWIND.source)

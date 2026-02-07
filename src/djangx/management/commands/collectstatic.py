@@ -14,31 +14,11 @@ class Command(CollectstaticCommand):
         """
         Override to add the Tailwind CSS source file to the ignore patterns.
         """
-        from pathlib import Path
-
-        from ..settings import TAILWIND
+        from ..settings import TAILWIND_SOURCE_STATIC_URL
 
         super().set_options(**options)
 
-        # Get the source CSS path
-        source_css: Path = TAILWIND.source
-        source_css_dir: Path = source_css.parent
-
-        # Traverse up to find the 'static' directory
-        while source_css_dir.name != "static" and source_css_dir != source_css_dir.parent:
-            source_css_dir = source_css_dir.parent
-
-        # Build the relative path from the static directory
-        if source_css_dir.name == "static":
-            # Get the relative path from static directory to the source file
-            relative_path: Path = source_css.relative_to(source_css_dir)
-            ignore_pattern = str(relative_path)
-        else:
-            # Fallback: just ignore the filename
-            ignore_pattern = source_css.name
-
-        # Add to ignore patterns
         if self.ignore_patterns is None:
             self.ignore_patterns = []
 
-        self.ignore_patterns.append(ignore_pattern)
+        self.ignore_patterns.append(TAILWIND_SOURCE_STATIC_URL)

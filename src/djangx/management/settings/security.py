@@ -3,10 +3,20 @@
 # See https://docs.djangoproject.com/en/stable/howto/deployment/checklist/
 # ==============================================================================
 
-from ... import Conf, ConfField
+from .config import ConfField, SettingConfig
+
+__all__: list[str] = [
+    "SECRET_KEY",
+    "DEBUG",
+    "ALLOWED_HOSTS",
+    "SECURE_SSL_REDIRECT",
+    "SESSION_COOKIE_SECURE",
+    "CSRF_COOKIE_SECURE",
+    "SECURE_HSTS_SECONDS",
+]
 
 
-class SecurityConf(Conf):
+class _SecurityConf(SettingConfig):
     """Security-related configuration settings."""
 
     secret_key = ConfField(
@@ -53,7 +63,7 @@ class SecurityConf(Conf):
     )
 
 
-_SECURITY = SecurityConf()
+_SECURITY = _SecurityConf()
 
 SECRET_KEY: str = _SECURITY.secret_key
 DEBUG: bool = _SECURITY.debug
@@ -62,14 +72,3 @@ SECURE_SSL_REDIRECT: bool = _SECURITY.secure_ssl_redirect
 SESSION_COOKIE_SECURE: bool = _SECURITY.session_cookie_secure
 CSRF_COOKIE_SECURE: bool = _SECURITY.csrf_cookie_secure
 SECURE_HSTS_SECONDS: int = _SECURITY.secure_hsts_seconds
-
-
-__all__: list[str] = [
-    "SECRET_KEY",
-    "DEBUG",
-    "ALLOWED_HOSTS",
-    "SECURE_SSL_REDIRECT",
-    "SESSION_COOKIE_SECURE",
-    "CSRF_COOKIE_SECURE",
-    "SECURE_HSTS_SECONDS",
-]

@@ -7,7 +7,7 @@ from django.contrib.staticfiles.management.commands.runserver import (
 )
 from django.core.management.base import CommandParser
 
-from ... import PKG_DISPLAY_NAME, PKG_NAME
+from ... import PACKAGE
 from ..settings import TAILWIND
 from .tailwind import BuildHandler, CleanHandler, WatchHandler
 
@@ -99,7 +99,7 @@ class Command(RunserverCommand):
                 f"migrations for app(s): {', '.join(apps_waiting_migration)}."
             )
         )
-        self.stdout.write(self.style.NOTICE(f"Run {PKG_NAME} migrate to apply them."))
+        self.stdout.write(self.style.NOTICE(f"Run {PACKAGE.name} migrate to apply them."))
 
     def on_bind(self, server_port: int) -> None:
         """Display server startup information."""
@@ -275,11 +275,8 @@ class Command(RunserverCommand):
 
     def _print_version(self) -> None:
         """Print version."""
-        from christianwhocodes.core import Version
-
-        version = Version.get(PKG_NAME)[0]
         self.stdout.write(
-            f"  🔧 {PKG_DISPLAY_NAME} version: {self.style.HTTP_NOT_MODIFIED(version)}"
+            f"  🔧 {PACKAGE.display_name} version: {self.style.HTTP_NOT_MODIFIED(PACKAGE.version)}"
         )
 
     def _print_local_url(self, server_port: int) -> None:

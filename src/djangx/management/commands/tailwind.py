@@ -17,11 +17,13 @@ from christianwhocodes.core import Platform
 from christianwhocodes.io import Text, print
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
-from ... import PKG_NAME
+from ... import PACKAGE
 from ..settings import TAILWIND
 
+__all__: list[str] = ["BuildHandler", "WatchHandler", "CleanHandler"]
 
-class TailwindValidator:
+
+class _TailwindValidator:
     """Shared validator for Tailwind CLI operations."""
 
     def __init__(self, verbose: bool = True) -> None:
@@ -31,7 +33,7 @@ class TailwindValidator:
         """Validate that the Tailwind CLI exists."""
         if not cli_path.exists():
             raise CommandError(
-                f"Tailwind CLI not found at '{cli_path}'. Run '{PKG_NAME} tailwind install' first."
+                f"Tailwind CLI not found at '{cli_path}'. Run '{PACKAGE.name} tailwind install' first."
             )
 
     def validate_source_file(self, source_css: Path, required: bool = True) -> bool:
@@ -65,7 +67,7 @@ class TailwindValidator:
             )
 
 
-class TailwindDownloader:
+class _TailwindDownloader:
     """Handles downloading and installation of Tailwind CLI."""
 
     BASE_URL = "https://github.com/tailwindlabs/tailwindcss/releases"
@@ -154,13 +156,13 @@ class TailwindDownloader:
             file_path.chmod(current_permissions | S_IXUSR | S_IXGRP | S_IXOTH)
 
 
-class InstallHandler:
+class _InstallHandler:
     """Handles the installation of Tailwind CLI."""
 
     def __init__(self, verbose: bool = True) -> None:
         self.verbose = verbose
-        self.downloader = TailwindDownloader(verbose)
-        self.validator = TailwindValidator(verbose)
+        self.downloader = _TailwindDownloader(verbose)
+        self.validator = _TailwindValidator(verbose)
 
     def install(self, force: bool = False, use_cache: bool = False) -> None:
         """Install the Tailwind CLI binary."""
@@ -267,12 +269,12 @@ class InstallHandler:
             print("=" * 60 + "\n")
 
 
-class TailwindExecutor:
+class _TailwindExecutor:
     """Base class for executing Tailwind CLI commands."""
 
     def __init__(self, verbose: bool = True) -> None:
         self.verbose = verbose
-        self.validator = TailwindValidator(verbose)
+        self.validator = _TailwindValidator(verbose)
 
     def _build_base_command(
         self,
@@ -294,7 +296,7 @@ class TailwindExecutor:
         """Handle CLI execution errors."""
         if isinstance(error, FileNotFoundError):
             raise CommandError(
-                f"Tailwind CLI not found at '{cli_path}'. Run '{PKG_NAME} tailwind install' first."
+                f"Tailwind CLI not found at '{cli_path}'. Run '{PACKAGE.name} tailwind install' first."
             )
         elif isinstance(error, CalledProcessError):
             raise CommandError(f"Tailwind operation failed: {error}")
@@ -302,7 +304,7 @@ class TailwindExecutor:
             raise CommandError(f"Unexpected error: {error}")
 
 
-class BuildHandler(TailwindExecutor):
+class BuildHandler(_TailwindExecutor):
     """Handles building Tailwind output files."""
 
     def build(self, skip_if_no_source: bool = False) -> bool:
@@ -331,7 +333,7 @@ class BuildHandler(TailwindExecutor):
             return False
 
 
-class WatchHandler(TailwindExecutor):
+class WatchHandler(_TailwindExecutor):
     """Handles watching and rebuilding Tailwind output files on changes."""
 
     def __init__(self, verbose: bool = True) -> None:
@@ -570,7 +572,7 @@ class Command(BaseCommand):
     ) -> None:
         """Execute the specified command."""
         handlers: dict[str, Callable[[], Any]] = {
-            "install": lambda: InstallHandler(verbose).install(
+            "install": lambda: _InstallHandler(verbose).install(
                 force=options.get("force", False),
                 use_cache=options.get("use_cache", False),
             ),
