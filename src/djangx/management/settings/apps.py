@@ -7,8 +7,6 @@ from .config import ConfField, SettingConfig
 
 # TODO: Refactor so that the user can specify the order of apps, middleware, and context processors more flexibly.
 
-# TODO: Rearrange the code in this file to group common ones together.
-
 __all__: list[str] = [
     "INSTALLED_APPS",
     "ROOT_URLCONF",
@@ -16,9 +14,13 @@ __all__: list[str] = [
     "TEMPLATES",
 ]
 
+# ============================================================================
+# Configuration Classes
+# ============================================================================
+
 
 class _AppsConf(SettingConfig):
-    """Apps configuration settings."""
+    """Installed applications configuration settings."""
 
     extend = ConfField(
         type=list,
@@ -34,7 +36,65 @@ class _AppsConf(SettingConfig):
     )
 
 
+class _MiddlewareConf(SettingConfig):
+    """Middleware configuration settings."""
+
+    extend = ConfField(
+        type=list,
+        env="MIDDLEWARE_EXTEND",
+        toml="middleware.extend",
+        default=[],
+    )
+    remove = ConfField(
+        type=list,
+        env="MIDDLEWARE_REMOVE",
+        toml="middleware.remove",
+        default=[],
+    )
+
+
+class _ContextProcessorsConf(SettingConfig):
+    """Template context processors configuration settings."""
+
+    extend = ConfField(
+        type=list,
+        env="CONTEXT_PROCESSORS_EXTEND",
+        toml="context-processors.extend",
+        default=[],
+    )
+    remove = ConfField(
+        type=list,
+        env="CONTEXT_PROCESSORS_REMOVE",
+        toml="context-processors.remove",
+        default=[],
+    )
+
+
 _APPS_CONF = _AppsConf()
+_MIDDLEWARE_CONF = _MiddlewareConf()
+_CONTEXT_PROCESSORS_CONF = _ContextProcessorsConf()
+
+# ============================================================================
+# App-to-Middleware/ContextProcessor Dependency Maps
+# ============================================================================
+
+_APP_CONTEXT_PROCESSOR_MAP: Final[dict[AppEnum, list[ContextProcessorEnum]]] = {
+    AppEnum.AUTH: [ContextProcessorEnum.AUTH],
+    AppEnum.MESSAGES: [ContextProcessorEnum.MESSAGES],
+}
+
+_APP_MIDDLEWARE_MAP: Final[dict[AppEnum, list[MiddlewareEnum]]] = {
+    AppEnum.SESSIONS: [MiddlewareEnum.SESSION],
+    AppEnum.AUTH: [MiddlewareEnum.AUTH],
+    AppEnum.MESSAGES: [MiddlewareEnum.MESSAGES],
+    AppEnum.HTTP_COMPRESSION: [MiddlewareEnum.HTTP_COMPRESSION],
+    AppEnum.MINIFY_HTML: [MiddlewareEnum.MINIFY_HTML],
+    AppEnum.BROWSER_RELOAD: [MiddlewareEnum.BROWSER_RELOAD],
+}
+
+# ============================================================================
+# Builder Functions
+# ============================================================================
 
 
 def _get_installed_apps() -> list[str]:
@@ -78,45 +138,6 @@ def _get_installed_apps() -> list[str]:
 
     # Remove duplicates while preserving order
     return list(dict.fromkeys(all_apps))
-
-
-INSTALLED_APPS: list[str] = _get_installed_apps()
-
-
-_APP_CONTEXT_PROCESSOR_MAP: Final[dict[AppEnum, list[ContextProcessorEnum]]] = {
-    AppEnum.AUTH: [ContextProcessorEnum.AUTH],
-    AppEnum.MESSAGES: [ContextProcessorEnum.MESSAGES],
-}
-
-
-_APP_MIDDLEWARE_MAP: Final[dict[AppEnum, list[MiddlewareEnum]]] = {
-    AppEnum.SESSIONS: [MiddlewareEnum.SESSION],
-    AppEnum.AUTH: [MiddlewareEnum.AUTH],
-    AppEnum.MESSAGES: [MiddlewareEnum.MESSAGES],
-    AppEnum.HTTP_COMPRESSION: [MiddlewareEnum.HTTP_COMPRESSION],
-    AppEnum.MINIFY_HTML: [MiddlewareEnum.MINIFY_HTML],
-    AppEnum.BROWSER_RELOAD: [MiddlewareEnum.BROWSER_RELOAD],
-}
-
-
-class _MiddlewareConf(SettingConfig):
-    """Middleware configuration settings."""
-
-    extend = ConfField(
-        type=list,
-        env="MIDDLEWARE_EXTEND",
-        toml="middleware.extend",
-        default=[],
-    )
-    remove = ConfField(
-        type=list,
-        env="MIDDLEWARE_REMOVE",
-        toml="middleware.remove",
-        default=[],
-    )
-
-
-_MIDDLEWARE_CONF = _MiddlewareConf()
 
 
 def _get_middleware(installed_apps: list[str]) -> list[str]:
@@ -169,26 +190,6 @@ def _get_middleware(installed_apps: list[str]) -> list[str]:
     return list(dict.fromkeys(all_middleware))
 
 
-class _ContextProcessorsConf(SettingConfig):
-    """Context processors configuration settings."""
-
-    extend = ConfField(
-        type=list,
-        env="CONTEXT_PROCESSORS_EXTEND",
-        toml="context-processors.extend",
-        default=[],
-    )
-    remove = ConfField(
-        type=list,
-        env="CONTEXT_PROCESSORS_REMOVE",
-        toml="context-processors.remove",
-        default=[],
-    )
-
-
-_CONTEXT_PROCESSORS_CONF = _ContextProcessorsConf()
-
-
 def _get_context_processors(installed_apps: list[str]) -> list[str]:
     """Build the final list of context processors based on installed apps.
 
@@ -222,6 +223,16 @@ def _get_context_processors(installed_apps: list[str]) -> list[str]:
     return list(dict.fromkeys(all_context_processors))
 
 
+# ============================================================================
+# Django Settings
+# ============================================================================
+
+INSTALLED_APPS: list[str] = _get_installed_apps()
+
+MIDDLEWARE: list[str] = _get_middleware(INSTALLED_APPS)
+
+ROOT_URLCONF: str = f"{PACKAGE.name}.app.urls"
+
 TEMPLATES: TemplatesDict = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -232,9 +243,3 @@ TEMPLATES: TemplatesDict = [
         },
     },
 ]
-
-
-MIDDLEWARE: list[str] = _get_middleware(INSTALLED_APPS)
-
-
-ROOT_URLCONF: str = f"{PACKAGE.name}.app.urls"

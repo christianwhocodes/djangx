@@ -137,11 +137,11 @@ class SettingConfig:
     # Configuration Loading
     # ============================================================================
     _toml_section: dict[str, Any] | None = None
-    _validated: bool = False
+    _is_validated: bool = False
 
     def __init__(self):
         """Initialize and validate project on first instantiation."""
-        if not self._validated:
+        if not self._is_validated:
             self._load_project()
 
     @classmethod
@@ -170,14 +170,18 @@ class SettingConfig:
 
     @classmethod
     def _load_project(cls) -> NoReturn | None:
-        """Load and validate project configuration."""
+        """Load and validate project configuration.
+
+        Attempts to read and validate the pyproject.toml file. On success, stores
+        the TOML configuration section. On failure, prints diagnostic messages
+        and exits with an error code.
+        """
 
         try:
-            # ?: Should other project indicators be added?
             toml_section = cls._check_pyproject_toml()
 
         except (FileNotFoundError, KeyError, ValueError) as e:
-            cls._validated = False
+            cls._is_validated = False
             print(f"Not in a valid {PACKAGE.display_name} project directory.", Text.ERROR)
             print(
                 f"A valid project requires: pyproject.toml with a 'tool.{PACKAGE.name}' section (even if empty)",
@@ -192,7 +196,7 @@ class SettingConfig:
             print(f"Validation error: {e}")
 
         except Exception as e:
-            cls._validated = False
+            cls._is_validated = False
             print(
                 f"Unexpected error during project validation:\n{e}",
                 Text.WARNING,
@@ -200,17 +204,17 @@ class SettingConfig:
 
         else:
             # Success - store configuration
-            cls._validated = True
+            cls._is_validated = True
             cls._toml_section = toml_section
 
         finally:
-            if not cls._validated:
+            if not cls._is_validated:
                 sys.exit(ExitCode.ERROR)
 
     @property
     def _env(self) -> dict[str, Any]:
         """Get combined .env and environment variables as a dictionary."""
-        if not self._validated:
+        if not self._is_validated:
             self._load_project()
         return {
             **dotenv_values(PROJECT.base_dir / ".env"),
@@ -220,7 +224,7 @@ class SettingConfig:
     @property
     def _toml(self) -> dict[str, Any]:
         """Get TOML configuration section."""
-        if not self._validated:
+        if not self._is_validated:
             self._load_project()
         assert self._toml_section is not None
         return self._toml_section

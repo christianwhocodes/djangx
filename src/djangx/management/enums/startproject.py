@@ -7,6 +7,14 @@ __all__: list[str] = [
 
 
 class PresetEnum(StrEnum):
+    """Available project preset configurations.
+
+    These values are used in:
+    - CLI flags (--preset)
+    - Interactive prompts
+    - STARTPROJECT_PRESETS mapping
+    """
+
     DEFAULT = "default"
     VERCEL = "vercel"
 

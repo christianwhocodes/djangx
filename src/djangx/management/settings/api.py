@@ -8,8 +8,8 @@ __all__: list[str] = [
 ]
 
 
-class _ServerApplicationConf(SettingConfig):
-    """api configuration settings."""
+class _ServerConf(SettingConfig):
+    """Server application configuration settings (ASGI/WSGI)."""
 
     use_asgi = ConfField(
         type=bool,
@@ -19,7 +19,7 @@ class _ServerApplicationConf(SettingConfig):
     )
 
 
-_SERVER = _ServerApplicationConf()
+_SERVER = _ServerConf()
 
 SERVER_USE_ASGI: bool = _SERVER.use_asgi
 

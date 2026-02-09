@@ -56,4 +56,4 @@ def _static_relative_path(file_path: Path) -> str:
 
 TAILWIND_SOURCE_STATIC_URL: str = _static_relative_path(TAILWIND.source)
 
-TAILWIND_OUTPUT_STATIC_URL: str = _static_relative_path(TAILWIND.source)
+TAILWIND_OUTPUT_STATIC_URL: str = _static_relative_path(TAILWIND.output)

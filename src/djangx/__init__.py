@@ -71,7 +71,7 @@ class _PackageInfo:
 
 
 PACKAGE = _PackageInfo.create()
-f"""Default package configuration instance for {PACKAGE.display_name}."""
+"""Default package configuration instance for DjangX."""
 
 
 @dataclass(frozen=True)
@@ -105,7 +105,7 @@ class _ProjectInfo:
     """
 
     base_dir: Final[Path]
-    f"""The root directory of the {PACKAGE.display_name} project."""
+    """The root directory of the project."""
 
     home_app_dir: Final[Path]
     """Path to the `home` application directory."""

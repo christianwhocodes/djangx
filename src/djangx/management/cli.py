@@ -12,12 +12,11 @@ easy to add new top-level commands in the future.
 """
 
 import sys
-from typing import NoReturn
 
 from .. import PACKAGE, PROJECT
 
 
-def main() -> NoReturn | None:
+def main() -> None:
     """Main entry point for the CLI.
 
     Routes commands to appropriate handlers using pattern matching.
@@ -27,9 +26,6 @@ def main() -> NoReturn | None:
     - version/-v/--version: Display package version
     - startproject/init/new: Initialize new project
     - *: Delegate to Management utility commands (runserver, migrate, etc.)
-
-    The routing is designed to be easily extensible - just add new cases
-    to the match statement for additional top-level commands.
     """
     match sys.argv[1]:
         # ====================================================================
