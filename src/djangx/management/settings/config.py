@@ -18,6 +18,17 @@ __all__: list[str] = [
 
 _ConfDefaultValueType: TypeAlias = str | bool | list[str] | pathlib.Path | int | None
 
+_SKIP_ARGS: frozenset[str] = frozenset(
+    {
+        "startproject",
+        "init",
+        "new",
+        "-v",
+        "--version",
+        "version",
+    }
+)
+
 
 class ConfField:
     """Configuration field descriptor.
@@ -140,9 +151,14 @@ class SettingConfig:
     _toml_section: dict[str, Any] | None = None
     _is_validated: bool = False
 
+    @classmethod
+    def _should_skip_validation(cls) -> bool:
+        """Check if the current command should skip project validation."""
+        return len(sys.argv) > 1 and sys.argv[1] in _SKIP_ARGS
+
     def __init__(self):
         """Initialize and validate project on first instantiation."""
-        if not self._is_validated:
+        if not self._is_validated and not self._should_skip_validation():
             self._load_project()
 
     @classmethod
@@ -215,6 +231,8 @@ class SettingConfig:
     def _env(self) -> dict[str, Any]:
         """Get combined .env and environment variables as a dictionary."""
         if not self._is_validated:
+            if self._should_skip_validation():
+                return dict(environ)
             self._load_project()
         return {
             **dotenv_values(PROJECT.base_dir / ".env"),
@@ -225,6 +243,8 @@ class SettingConfig:
     def _toml(self) -> dict[str, Any]:
         """Get TOML configuration section."""
         if not self._is_validated:
+            if self._should_skip_validation():
+                return {}
             self._load_project()
         assert self._toml_section is not None
         return self._toml_section

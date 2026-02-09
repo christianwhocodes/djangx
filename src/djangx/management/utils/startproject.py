@@ -19,7 +19,7 @@ def validate_preset_database_compatibility(
         database: The chosen database backend
 
     Returns:
-        Tuple of (is_valid, error_message). error_message is None if valid.
+        Tuple of (is_valid, error_message). error_message is empty if valid.
 
     Example:
         >>> is_valid, error = validate_preset_database_compatibility(
@@ -52,7 +52,7 @@ def validate_pg_config_compatibility(preset: PresetEnum, pg_env_vars: bool) -> t
         pg_env_vars: Whether using environment variables for PostgreSQL
 
     Returns:
-        Tuple of (is_valid, error_message). error_message is None if valid.
+        Tuple of (is_valid, error_message). error_message is empty if valid.
 
     Example:
         >>> is_valid, error = validate_pg_config_compatibility(

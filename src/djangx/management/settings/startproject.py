@@ -1,11 +1,4 @@
-"""Startproject settings configuration."""
-
-# ==============================================================================
-# Database Configuration
-# https://docs.djangoproject.com/en/stable/ref/databases/#postgresql-notes
-# https://www.postgresql.org/docs/current/libpq-pgservice.html
-# https://www.postgresql.org/docs/current/libpq-pgpass.html
-# ==============================================================================
+"""Startproject preset constants and database runtime configuration."""
 
 from typing import Final
 
@@ -23,7 +16,12 @@ from ..types import (
 )
 from .config import ConfField, SettingConfig
 
-__all__: list[str] = ["DATABASES", "DATABASE_PRESETS", "PG_CONFIG_PRESETS", "STARTPROJECT_PRESETS"]
+__all__: list[str] = [
+    "DATABASE_PRESETS",
+    "DATABASES",
+    "PG_CONFIG_PRESETS",
+    "STARTPROJECT_PRESETS",
+]
 
 
 STARTPROJECT_PRESETS: Final[dict[PresetEnum, PresetDataclass]] = {
@@ -55,6 +53,54 @@ STARTPROJECT_PRESETS: Final[dict[PresetEnum, PresetDataclass]] = {
         learn_more_url="https://to-be-added.example/docs",
     ),
 }
+
+
+DATABASE_PRESETS: Final[dict[DatabaseEnum, DatabaseDataclass]] = {
+    DatabaseEnum.SQLITE3: DatabaseDataclass(
+        backend=DatabaseEnum.SQLITE3,
+        name="SQLite",
+        description="Lightweight file-based database, perfect for development and small projects",
+        dependencies=(),  # Built into Python
+        requires_pg_config=False,
+        learn_more_url="https://docs.djangoproject.com/en/stable/ref/databases/#sqlite-notes",
+    ),
+    DatabaseEnum.POSTGRESQL: DatabaseDataclass(
+        backend=DatabaseEnum.POSTGRESQL,
+        name="PostgreSQL",
+        description="Production-grade relational database with advanced features",
+        dependencies=("psycopg[binary,pool]>=3.3.2",),
+        requires_pg_config=True,
+        learn_more_url="https://docs.djangoproject.com/en/stable/ref/databases/#postgresql-notes",
+    ),
+}
+
+
+PG_CONFIG_PRESETS: Final[dict[bool, PGConfigMethodDataclass]] = {
+    True: PGConfigMethodDataclass(
+        value=True,
+        name="Environment Variables",
+        description="Store PostgreSQL credentials in .env file",
+        cli_flag="--pg-env-vars",
+        files_required=(),
+        learn_more_url=None,
+    ),
+    False: PGConfigMethodDataclass(
+        value=False,
+        name="PostgreSQL Service Files",
+        description=f"Use {PgConfigFilesEnum.PG_SERVICE} and {PgConfigFilesEnum.PGPASS} files",
+        cli_flag="--pg-service-files",
+        files_required=(PgConfigFilesEnum.PG_SERVICE, PgConfigFilesEnum.PGPASS),
+        learn_more_url="https://www.postgresql.org/docs/current/libpq-pgservice.html\nhttps://www.postgresql.org/docs/current/libpq-pgpass.html",
+    ),
+}
+
+
+# ==============================================================================
+# Database Configuration
+# https://docs.djangoproject.com/en/stable/ref/databases/#postgresql-notes
+# https://www.postgresql.org/docs/current/libpq-pgservice.html
+# https://www.postgresql.org/docs/current/libpq-pgpass.html
+# ==============================================================================
 
 
 class _DatabaseConf(SettingConfig):
@@ -153,7 +199,7 @@ def _get_databases_config() -> DatabasesDict:
                 }
             else:
                 options["service"] = _DATABASE.service
-                config: DatabaseDict = {
+                config = {
                     "ENGINE": f"django.db.backends.{DatabaseEnum.POSTGRESQL.value}",
                     "NAME": _DATABASE.name,
                     "OPTIONS": options,
@@ -165,43 +211,3 @@ def _get_databases_config() -> DatabasesDict:
 
 
 DATABASES: DatabasesDict = _get_databases_config()
-
-
-DATABASE_PRESETS: Final[dict[DatabaseEnum, DatabaseDataclass]] = {
-    DatabaseEnum.SQLITE3: DatabaseDataclass(
-        backend=DatabaseEnum.SQLITE3,
-        name="SQLite",
-        description="Lightweight file-based database, perfect for development and small projects",
-        dependencies=(),  # Built into Python
-        requires_pg_config=False,
-        learn_more_url="https://docs.djangoproject.com/en/stable/ref/databases/#sqlite-notes",
-    ),
-    DatabaseEnum.POSTGRESQL: DatabaseDataclass(
-        backend=DatabaseEnum.POSTGRESQL,
-        name="PostgreSQL",
-        description="Production-grade relational database with advanced features",
-        dependencies=("psycopg[binary,pool]>=3.3.2",),
-        requires_pg_config=True,
-        learn_more_url="https://docs.djangoproject.com/en/stable/ref/databases/#postgresql-notes",
-    ),
-}
-
-
-PG_CONFIG_PRESETS: Final[dict[bool, PGConfigMethodDataclass]] = {
-    True: PGConfigMethodDataclass(
-        value=True,
-        name="Environment Variables",
-        description="Store PostgreSQL credentials in .env file",
-        cli_flag="--pg-env-vars",
-        files_required=(),
-        learn_more_url=None,
-    ),
-    False: PGConfigMethodDataclass(
-        value=False,
-        name="PostgreSQL Service Files",
-        description=f"Use {PgConfigFilesEnum.PG_SERVICE} and {PgConfigFilesEnum.PGPASS} files",
-        cli_flag="--pg-service-files",
-        files_required=(PgConfigFilesEnum.PG_SERVICE, PgConfigFilesEnum.PGPASS),
-        learn_more_url="https://www.postgresql.org/docs/current/libpq-pgservice.html\nhttps://www.postgresql.org/docs/current/libpq-pgpass.html",
-    ),
-}
