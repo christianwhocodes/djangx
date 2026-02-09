@@ -4,7 +4,11 @@ __all__: list[str] = ["RUNCOMMANDS"]
 
 
 class _RunCommandsConf(SettingConfig):
-    """Install/Build Commands to be executed settings."""
+    """Configuration for install and build management commands.
+
+    Defines the lists of management commands to execute during
+    the install and build phases of the project lifecycle.
+    """
 
     install = ConfField(
         type=list,

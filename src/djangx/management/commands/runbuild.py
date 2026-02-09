@@ -9,7 +9,7 @@ from typing import Any
 
 from django.core.management.base import BaseCommand, CommandParser
 
-from .helpers.run import CommandGenerator, CommandOutput, Output
+from .helpers.run import CommandGenerator, CommandOutput, FormattedCommandOutput
 
 
 class _BuildCommandGenerator(CommandGenerator):
@@ -25,7 +25,7 @@ class _BuildCommandGenerator(CommandGenerator):
         """Create the output handler for build commands."""
         from .helpers.art import ArtType
 
-        return Output(self.dj_command, ArtType.BUILD)
+        return FormattedCommandOutput(self.dj_command, ArtType.BUILD)
 
     def get_mode(self) -> str:
         """Get the mode identifier for build commands."""

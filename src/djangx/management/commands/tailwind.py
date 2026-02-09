@@ -20,7 +20,7 @@ from django.core.management.base import BaseCommand, CommandError, CommandParser
 from ... import PACKAGE
 from ..settings import TAILWIND
 
-__all__: list[str] = ["BuildHandler", "WatchHandler", "CleanHandler"]
+__all__: list[str] = ["InstallHandler", "BuildHandler", "WatchHandler", "CleanHandler"]
 
 
 class _TailwindValidator:
@@ -156,7 +156,7 @@ class _TailwindDownloader:
             file_path.chmod(current_permissions | S_IXUSR | S_IXGRP | S_IXOTH)
 
 
-class _InstallHandler:
+class InstallHandler:
     """Handles the installation of Tailwind CLI."""
 
     def __init__(self, verbose: bool = True) -> None:
@@ -572,7 +572,7 @@ class Command(BaseCommand):
     ) -> None:
         """Execute the specified command."""
         handlers: dict[str, Callable[[], Any]] = {
-            "install": lambda: _InstallHandler(verbose).install(
+            "install": lambda: InstallHandler(verbose).install(
                 force=options.get("force", False),
                 use_cache=options.get("use_cache", False),
             ),

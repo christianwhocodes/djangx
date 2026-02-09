@@ -301,8 +301,8 @@ class CommandGenerator(ABC):
         process.run(commands, dry_run=dry_run)
 
 
-class Output(CommandOutput):
-    """Command process output with ASCII art and emojis.
+class FormattedCommandOutput(CommandOutput):
+    """Formatted command output with ASCII art and progress indicators.
 
     Provides colorful, visually appealing output with progress bars,
     ASCII art, and strategic use of emojis and colors.

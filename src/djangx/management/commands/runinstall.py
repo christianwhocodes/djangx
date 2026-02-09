@@ -9,7 +9,7 @@ from typing import Any
 
 from django.core.management.base import BaseCommand, CommandParser
 
-from .helpers.run import CommandGenerator, CommandOutput, Output
+from .helpers.run import CommandGenerator, CommandOutput, FormattedCommandOutput
 
 
 class _InstallCommandGenerator(CommandGenerator):
@@ -25,7 +25,7 @@ class _InstallCommandGenerator(CommandGenerator):
         """Create the output handler for install commands."""
         from .helpers.art import ArtType
 
-        return Output(self.dj_command, ArtType.INSTALL)
+        return FormattedCommandOutput(self.dj_command, ArtType.INSTALL)
 
     def get_mode(self) -> str:
         """Get the mode identifier for install commands."""

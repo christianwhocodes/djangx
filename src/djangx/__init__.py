@@ -52,7 +52,8 @@ class _PackageInfo:
 
     @classmethod
     def create(cls) -> "_PackageInfo":
-        """Create _PackageInfo with default package values.
+        """
+        Create _PackageInfo with default package values.
 
         Returns:
             _PackageInfo instance configured for the current package.
@@ -60,18 +61,20 @@ class _PackageInfo:
         from christianwhocodes import Version
 
         base_dir = Path(__file__).parent.resolve()
+        name = base_dir.name
+        main_app_dir = base_dir / "app"
         return cls(
-            version=Version.get(base_dir.name)[0],
+            version=Version.get(name)[0],
             base_dir=base_dir,
-            main_app_dir=base_dir / "app",
-            name=base_dir.name,  # djangx
-            display_name="DjangX",  # TODO: Use string slicing to create this
-            main_app_name="app",
+            main_app_dir=main_app_dir,
+            name=name,  # djangx
+            display_name=name[0].upper() + name[1:-1] + name[-1].upper(),  # DjangX
+            main_app_name=main_app_dir.name,  # app
         )
 
 
 PACKAGE = _PackageInfo.create()
-f"""Default package configuration instance for {PACKAGE.display_name}."""
+"""Default package configuration instance."""
 
 
 @dataclass(frozen=True)
@@ -105,7 +108,7 @@ class _ProjectInfo:
     """
 
     base_dir: Final[Path]
-    f"""The root directory of the {PACKAGE.display_name} project."""
+    """The root directory of the project."""
 
     home_app_dir: Final[Path]
     """Path to the `home` application directory."""
