@@ -53,17 +53,19 @@ class _PackageInfo:
     @classmethod
     def create(cls) -> "_PackageInfo":
         """Create _PackageInfo with default package values.
+
         Returns:
             _PackageInfo instance configured for the current package.
         """
         from christianwhocodes import Version
+
         base_dir = Path(__file__).parent.resolve()
         return cls(
-            version=Version.get(name)[0],
+            version=Version.get(base_dir.name)[0],
             base_dir=base_dir,
             main_app_dir=base_dir / "app",
-            name="djangx",
-            display_name="DjangX"
+            name=base_dir.name,  # djangx
+            display_name="DjangX",  # TODO: Use string slicing to create this
             main_app_name="app",
         )
 
