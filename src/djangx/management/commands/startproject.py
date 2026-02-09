@@ -1,102 +1,4 @@
-"""Project initialization module for creating new projects.
-
-This module handles the complete workflow of creating a new project with:
-- Multiple preset configurations (default, Vercel, etc.)
-- Multiple database backends (SQLite, PostgreSQL)
-- Flexible PostgreSQL configuration methods
-- Comprehensive validation and error handling
-- File rollback on errors
-
-==============================================================================
-ARCHITECTURE OVERVIEW
-==============================================================================
-
-The module is organized into several key classes:
-
-1. **Configuration & Templates** (_ProjectDependencies, _TemplateManager)
-   - Manages dependency lists for different configurations
-   - Generates file content from templates
-
-2. **File Management** (_FileTracker, _ProjectFileWriter)
-   - Tracks created files for rollback on errors
-   - Handles file creation with existence checks
-
-3. **App Creation** (_HomeAppCreator)
-   - Creates the default 'home' application
-   - Sets up templates and static files
-
-4. **Main Orchestrator** (_ProjectInitializer)
-   - Coordinates the entire initialization workflow
-   - Validates configurations and handles errors
-
-==============================================================================
-INITIALIZATION FLOW
-==============================================================================
-
-When initialize() is called, the following sequence occurs:
-
-┌─────────────────────────────────────────────────────────────┐
-│ 1. DIRECTORY VALIDATION (unless --force)                    │
-│    - Check if directory is empty or contains only safe items│
-│    - Prompt user for confirmation if non-safe items exist   │
-└─────────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────────┐
-│ 2. CONFIGURATION SELECTION                                  │
-│    - Get preset choice (CLI flag or interactive prompt)     │
-│    - Get database choice (CLI flag or interactive prompt)   │
-│    - Get PG config method if PostgreSQL selected            │
-│    - Validate all combinations using maps.py validators     │
-└─────────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────────┐
-│ 3. CORE FILE CREATION                                       │
-│    - Generate pyproject.toml with dependencies              │
-│    - Create .gitignore and README.md                        │
-│    - Track all created files for potential rollback         │
-└─────────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────────┐
-│ 4. HOME APP CREATION                                        │
-│    - Run startapp command                                   │
-│    - Create urls.py and views.py                            │
-│    - Set up template and static file structure              │
-└─────────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────────┐
-│ 5. PRESET-SPECIFIC CONFIGURATION                            │
-│    - Generate preset-specific files (e.g., vercel.json)     │
-│    - Create .env.example with appropriate variables         │
-└─────────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────────┐
-│ 6. SUCCESS DISPLAY                                          │
-│    - Show next steps with context-specific instructions     │
-│    - Include relevant documentation links                   │
-└─────────────────────────────────────────────────────────────┘
-
-If ANY step fails, all created files are automatically cleaned up via
-the _FileTracker rollback mechanism.
-
-==============================================================================
-VALIDATION STRATEGY
-==============================================================================
-
-Validation occurs at TWO levels:
-
-1. **CLI-Level Validation** (in cli.py)
-   - Validates flag combinations before initialization begins
-   - Example: --preset vercel with --database sqlite3
-   - Provides immediate feedback without file creation
-
-2. **Prompt-Level Validation** (in this module)
-   - Validates interactive user choices
-   - Ensures configuration compatibility using maps.py
-   - Occurs during the initialization workflow
-
-Both levels use the same validation functions from maps.py, ensuring
-consistency between CLI and interactive modes.
-"""
+"""Project initialization module for creating new projects."""
 
 from argparse import ArgumentParser, Namespace
 from dataclasses import dataclass
@@ -106,6 +8,7 @@ from typing import Final
 
 from christianwhocodes.core import ExitCode
 from rich.console import Console
+from rich.markup import escape
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Confirm, Prompt
 
@@ -124,7 +27,7 @@ __all__: list[str] = ["handle_startproject"]
 # ============================================================================
 
 # VCS and common items that shouldn't prevent initialization
-SAFE_DIRECTORY_ITEMS: Final[set[str]] = {
+_SAFE_DIRECTORY_ITEMS: Final[set[str]] = {
     ".git",
     ".gitignore",
     ".gitattributes",
@@ -204,12 +107,24 @@ class _TemplateManager:
     """
 
     @staticmethod
-    def gitignore() -> str:
+    def gitignore(database: DatabaseEnum) -> str:
         """Generate .gitignore content.
 
         Returns standard .gitignore patterns for Python/Django projects,
-        including database files, virtual environments, and IDE files.
+        with database-specific entries based on the chosen backend.
+
+        Args:
+            database: The chosen database backend.
+
         """
+        # Database-specific entries
+        db_lines = ""
+        if database == DatabaseEnum.SQLITE3:
+            db_lines = f"""
+# {DatabaseEnum.SQLITE3.value.capitalize()} database file
+/db.{DatabaseEnum.SQLITE3.value}
+"""
+
         return f"""
 # Python-generated files
 __pycache__/
@@ -236,14 +151,7 @@ env/
 # Environment variables files
 /.env
 .env.local
-
-# {DatabaseEnum.SQLITE3.value.capitalize()} database file
-/db.{DatabaseEnum.SQLITE3.value}
-
-# PostgreSQL service files (if using local config)
-.pg_service.conf
-pgpass.conf
-
+{db_lines}
 # IDE files
 .vscode/
 .idea/
@@ -350,56 +258,6 @@ blank_line_after_tag = "load,extends,endblock"
 """
 
     @staticmethod
-    def home_urls() -> str:
-        """Generate home app urls.py content."""
-        return """from django.contrib import admin
-from django.urls import URLPattern, URLResolver, path
-
-from . import views
-
-urlpatterns: list[URLPattern | URLResolver] = [
-    path("admin/", admin.site.urls),
-    path("", views.HomeView.as_view(), name="home"),
-]
-"""
-
-    @staticmethod
-    def home_views() -> str:
-        """Generate home app views.py content."""
-        return """from django.views.generic.base import TemplateView
-
-
-class HomeView(TemplateView):
-    template_name = "home/index.html"
-"""
-
-    @staticmethod
-    def home_index_html() -> str:
-        """Generate home app index.html template content."""
-        return """{% extends "ui/index.html" %}
-
-{% load org %}
-
-{% block title %}
-  <title>Welcome - {% org "name" %} App</title>
-{% endblock title %}
-
-{% block fonts %}
-  <link href="https://fonts.googleapis.com" rel="preconnect" />
-  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Mulish:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
-        rel="stylesheet" />
-{% endblock fonts %}
-
-{% block main %}
-  <main>
-    <section class="container-full py-8">
-    </section>
-  </main>
-{% endblock main %}
-"""
-
-    @staticmethod
     def tailwind_css() -> str:
         """Generate Tailwind CSS configuration and base styles."""
         return f"""@import "tailwindcss";
@@ -407,7 +265,7 @@ class HomeView(TemplateView):
 /* =============================================================================
    SOURCE FILES
    ============================================================================= */
-@source "../../../../.venv/**/{PACKAGE.name}/ui/templates/ui/**/*.html";
+@source "../../../../.venv/**/{PACKAGE.name}/{PACKAGE.main_app_name}/templates/ui/**/*.html";
 @source "../../../templates/home/**/*.html";
 
 /* =============================================================================
@@ -663,49 +521,50 @@ class _ProjectFileWriter:
 # ============================================================================
 
 
+# Path to the bundled home app assets directory
+_HOME_APP_ASSETS_DIR: Final[Path] = (
+    Path(__file__).resolve().parent.parent / "assets" / "startproject" / "home"
+)
+
+
 class _HomeAppCreator:
-    """Creates the default 'home' application with all necessary files.
+    """Creates the default 'home' application by copying bundled assets.
 
     This class handles the creation of the starter application that comes with
-    every new project. It sets up:
-    - app structure (via startapp command)
-    - URL routing configuration
-    - View classes
-    - Template directory structure
-    - Static file structure with Tailwind CSS
+    every new project by copying the pre-built home app from the package's
+    assets directory (management/assets/startproject/home).
     """
 
     def __init__(
         self,
         project_dir: Path,
-        writer: _ProjectFileWriter,
-        templates: _TemplateManager,
+        tracker: _FileTracker,
         console: Console,
     ):
         """Initialize the home app creator.
 
         Args:
             project_dir: Root project directory
-            writer: File writer instance for creating files
-            templates: Template manager for generating content
+            tracker: File tracker for rollback support
             console: Rich console for user feedback
 
         """
         self.project_dir = project_dir
-        self.writer = writer
-        self.templates = templates
+        self.tracker = tracker
         self.console = console
 
     def create(self) -> None:
-        """Execute the complete home app creation workflow.
+        """Copy the bundled home app assets to the project directory.
 
-        Flow:
-        1. Check if app already exists (idempotent operation)
-        2. Create app structure via startapp
-        3. Create custom URLs and views
-        4. Set up template directory and files
-        5. Set up static file directory and CSS
+        Copies the entire home app directory from the package's assets.
+        Skips if the home app directory already exists.
+
+        Raises:
+            IOError: If the assets directory is missing or the copy fails.
+
         """
+        from shutil import copytree
+
         # Check if home app already exists
         if PROJECT.home_app_exists:
             self.console.print(
@@ -713,61 +572,14 @@ class _HomeAppCreator:
             )
             return
 
-        # Create the app structure
-        self._create_app_structure()
-
-        # Create app files
-        self._create_urls()
-        self._create_views()
-        self._create_templates()
-        self._create_static_files()
-
-    def _create_app_structure(self) -> None:
-        """Create the basic app structure using the startapp command."""
-        from django.core.management import call_command
+        if not _HOME_APP_ASSETS_DIR.exists():
+            raise IOError(f"Home app assets directory not found: {_HOME_APP_ASSETS_DIR}")
 
         try:
-            call_command("startapp", "home")
-            # Track the created directory for rollback
-            self.writer.tracker.track(PROJECT.home_app_dir)
+            copytree(_HOME_APP_ASSETS_DIR, PROJECT.home_app_dir)
+            self.tracker.track(PROJECT.home_app_dir)
         except Exception as e:
-            raise IOError(f"Failed to create home app: {e}") from e
-
-    def _create_urls(self) -> None:
-        """Create custom urls.py for the home app."""
-        urls_path = PROJECT.home_app_dir / "urls.py"
-        if self.writer.write_to_path_if_not_exists(urls_path, self.templates.home_urls()):
-            pass  # File was created
-        else:
-            self.console.print("[dim]urls.py already exists, skipping[/dim]")
-
-    def _create_views(self) -> None:
-        """Create custom views.py for the home app."""
-        views_path = PROJECT.home_app_dir / "views.py"
-        # Only overwrite if it's the default startapp content
-        if views_path.exists():
-            content = views_path.read_text(encoding="utf-8")
-            # Check if it's the default views.py (very minimal content)
-            if len(content.strip()) < 100:
-                views_path.write_text(self.templates.home_views().strip() + "\n", encoding="utf-8")
-        else:
-            self.writer.write_to_path_if_not_exists(views_path, self.templates.home_views())
-
-    def _create_templates(self) -> None:
-        """Create template directory structure and HTML files."""
-        templates_dir = PROJECT.home_app_dir / "templates" / "home"
-        self.writer.ensure_dir(templates_dir)
-
-        index_path = templates_dir / "index.html"
-        self.writer.write_to_path_if_not_exists(index_path, self.templates.home_index_html())
-
-    def _create_static_files(self) -> None:
-        """Create static file directory structure and CSS files."""
-        static_dir = PROJECT.home_app_dir / "static" / "home" / "css"
-        self.writer.ensure_dir(static_dir)
-
-        css_path = static_dir / "tailwind.css"
-        self.writer.write_to_path_if_not_exists(css_path, self.templates.tailwind_css())
+            raise IOError(f"Failed to copy home app assets: {e}") from e
 
 
 # ============================================================================
@@ -841,7 +653,7 @@ class _ProjectInitializer:
 
         # Filter out safe items (VCS, LICENSE, README, etc.)
         problematic_items = [
-            item for item in existing_items if item.name not in SAFE_DIRECTORY_ITEMS
+            item for item in existing_items if item.name not in _SAFE_DIRECTORY_ITEMS
         ]
 
         if not problematic_items:
@@ -1041,7 +853,7 @@ class _ProjectInitializer:
             "pyproject.toml": self.templates.pyproject_toml(
                 preset, database, dependencies, use_postgres_env_vars
             ),
-            ".gitignore": self.templates.gitignore(),
+            ".gitignore": self.templates.gitignore(database),
             "README.md": self.templates.readme(),
         }
 
@@ -1063,7 +875,11 @@ class _ProjectInitializer:
             IOError: If file generation fails
 
         """
+        from os import environ
         from subprocess import CalledProcessError, run
+
+        # Ensure subprocess uses UTF-8 to avoid encoding errors on Windows
+        sub_env = {**environ, "PYTHONUTF8": "1"}
 
         try:
             # Generate preset-specific files
@@ -1076,6 +892,7 @@ class _ProjectInitializer:
                             cwd=self.project_dir,
                             check=True,
                             capture_output=True,
+                            env=sub_env,
                         )
                         self.tracker.track(self.project_dir / "vercel.json")
                     else:
@@ -1089,6 +906,7 @@ class _ProjectInitializer:
                             cwd=self.project_dir,
                             check=True,
                             capture_output=True,
+                            env=sub_env,
                         )
                         self.tracker.track(self.project_dir / "api")
                     else:
@@ -1114,6 +932,7 @@ class _ProjectInitializer:
                     cwd=self.project_dir,
                     check=True,
                     capture_output=True,
+                    env=sub_env,
                 )
                 self.tracker.track(env_example_path)
             except CalledProcessError as e:
@@ -1128,7 +947,7 @@ class _ProjectInitializer:
 
     def _create_home_app(self) -> None:
         """Create the default 'home' application."""
-        home_creator = _HomeAppCreator(self.project_dir, self.writer, self.templates, self.console)
+        home_creator = _HomeAppCreator(self.project_dir, self.tracker, self.console)
         home_creator.create()
 
     def _show_next_steps(
@@ -1285,27 +1104,27 @@ class _ProjectInitializer:
 
         except ProjectInitializationError as e:
             # User declined - no cleanup needed since nothing was created
-            self.console.print(f"[yellow]{e}[/yellow]")
+            self.console.print(f"[yellow]{escape(str(e))}[/yellow]")
             return ExitCode.ERROR
 
         except ValueError as e:
             self.tracker.cleanup_all()
             self.console.print(
-                f"[red]Configuration error:[/red] {e}\n[yellow]Cleaned up partial files.[/yellow]"
+                f"[red]Configuration error:[/red] {escape(str(e))}\n[yellow]Cleaned up partial files.[/yellow]"
             )
             return ExitCode.ERROR
 
         except (IOError, PermissionError) as e:
             self.tracker.cleanup_all()
             self.console.print(
-                f"[red]File system error:[/red] {e}\n[yellow]Cleaned up partial files.[/yellow]"
+                f"[red]File system error:[/red] {escape(str(e))}\n[yellow]Cleaned up partial files.[/yellow]"
             )
             return ExitCode.ERROR
 
         except Exception as e:
             self.tracker.cleanup_all()
             self.console.print(
-                f"[red]Unexpected error during initialization:[/red] {e}\n"
+                f"[red]Unexpected error during initialization:[/red] {escape(str(e))}\n"
                 f"[yellow]Cleaned up partial files.[/yellow]"
             )
             return ExitCode.ERROR

@@ -2,17 +2,12 @@
 
 import builtins
 import pathlib
-import sys
-from os import environ
-from typing import Any, NoReturn, TypeAlias, cast
+from typing import Any, TypeAlias, cast
 
-from christianwhocodes import ExitCode, PyProject, Text, TypeConverter, print
-from dotenv import dotenv_values
-
-from ... import PACKAGE, PROJECT
+from ... import PROJECT
 
 __all__: list[str] = [
-    "SettingConfig",
+    "SettingConf",
     "ConfField",
 ]
 
@@ -87,6 +82,8 @@ class ConfField:
             ValueError: If conversion fails
 
         """
+        from christianwhocodes import TypeConverter
+
         if value is None:
             match target_type:
                 case builtins.str:
@@ -128,113 +125,18 @@ class ConfField:
         raise AttributeError(f"{self.__class__.__name__} should have been converted to a property")
 
 
-class SettingConfig:
+class SettingConf:
     """Base configuration class that handles loading from environment variables and TOML files."""
 
     # Track all Conf subclasses
-    _subclasses: list[type["SettingConfig"]] = []
-
-    # ============================================================================
-    # Configuration Loading
-    # ============================================================================
-    _toml_section: dict[str, Any] | None = None
-    _is_validated: bool = False
-
-    def __init__(self):
-        """Initialize and validate project on first instantiation."""
-        if not self._is_validated:
-            self._load_project()
-
-    @classmethod
-    def _check_pyproject_toml(cls) -> dict[str, Any]:
-        f"""
-        Validate and extract 'tool.{PACKAGE.name}' configuration from 'pyproject.toml'.
-
-        Returns:
-            The 'tool.{PACKAGE.name}' configuration section from 'pyproject.toml'
-
-        Raises:
-            FileNotFoundError: If 'pyproject.toml' doesn't exist
-            KeyError: If 'tool.{PACKAGE.name}' section is missing
-        """
-        pyproject_path = PROJECT.base_dir / "pyproject.toml"
-
-        if not pyproject_path.exists():
-            raise FileNotFoundError(f"pyproject.toml not found at {pyproject_path}")
-
-        tool_section = PyProject(pyproject_path).data.get("tool", {})
-
-        if PACKAGE.name in tool_section:
-            return tool_section[PACKAGE.name]
-        else:
-            raise KeyError(f"Missing 'tool.{PACKAGE.name}' section in pyproject.toml")
-
-    @classmethod
-    def _load_project(cls) -> NoReturn | None:
-        """Load and validate project configuration.
-
-        Attempts to read and validate the pyproject.toml file. On success, stores
-        the TOML configuration section. On failure, prints diagnostic messages
-        and exits with an error code.
-        """
-        try:
-            toml_section = cls._check_pyproject_toml()
-
-        except (FileNotFoundError, KeyError, ValueError) as e:
-            cls._is_validated = False
-            print(f"Not in a valid {PACKAGE.display_name} project directory.", Text.ERROR)
-            print(
-                f"A valid project requires: pyproject.toml with a 'tool.{PACKAGE.name}' section (even if empty)",
-                Text.INFO,
-            )
-            print(
-                [
-                    ("Create a new project: ", None),
-                    (f"uvx {PACKAGE.name} startproject (if uv is installed.)", Text.HIGHLIGHT),
-                ]
-            )
-            print(f"Validation error: {e}")
-
-        except Exception as e:
-            cls._is_validated = False
-            print(
-                f"Unexpected error during project validation:\n{e}",
-                Text.WARNING,
-            )
-
-        else:
-            # Success - store configuration
-            cls._is_validated = True
-            cls._toml_section = toml_section
-
-        finally:
-            if not cls._is_validated:
-                sys.exit(ExitCode.ERROR)
-
-    @property
-    def _env(self) -> dict[str, Any]:
-        """Get combined .env and environment variables as a dictionary."""
-        if not self._is_validated:
-            self._load_project()
-        return {
-            **dotenv_values(PROJECT.base_dir / ".env"),
-            **environ,  # override loaded values with environment variables
-        }
-
-    @property
-    def _toml(self) -> dict[str, Any]:
-        """Get TOML configuration section."""
-        if not self._is_validated:
-            self._load_project()
-        assert self._toml_section is not None
-        return self._toml_section
+    _subclasses: list[type["SettingConf"]] = []
 
     def _get_from_toml(self, key: str | None) -> Any:
         """Get value from TOML configuration."""
         if key is None:
             return None
 
-        current: Any = self._toml
+        current: Any = PROJECT.toml
         for k in key.split("."):
             if isinstance(current, dict) and k in current:
                 current = cast(Any, current[k])
@@ -251,8 +153,8 @@ class SettingConfig:
     ) -> Any:
         """Fetch configuration value with fallback priority: ENV -> TOML -> default."""
         # Try environment variable first
-        if env_key is not None and env_key in self._env:
-            return self._env[env_key]
+        if env_key is not None and env_key in PROJECT.env:
+            return PROJECT.env[env_key]
 
         # Fall back to TOML config
         toml_value = self._get_from_toml(toml_key)
@@ -274,7 +176,7 @@ class SettingConfig:
         super().__init_subclass__()
 
         # Register this subclass
-        SettingConfig._subclasses.append(cls)
+        SettingConf._subclasses.append(cls)
 
         # Initialize _env_fields for this subclass
         if not hasattr(cls, "_env_fields"):
@@ -308,7 +210,7 @@ class SettingConfig:
 
             # Create property getter with captured config
             def make_getter(field_name: str, field_config: dict[str, Any]):
-                def getter(self: "SettingConfig") -> Any:
+                def getter(self: "SettingConf") -> Any:
                     raw_value = self._fetch_value(
                         field_config["env"], field_config["toml"], field_config["default"]
                     )

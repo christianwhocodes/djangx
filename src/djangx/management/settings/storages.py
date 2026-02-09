@@ -12,7 +12,7 @@ from pathlib import Path
 
 from ... import PACKAGE, PROJECT
 from ..types import StoragesDict
-from .config import ConfField, SettingConfig
+from .config import ConfField, SettingConf
 
 __all__: list[str] = [
     "STORAGES",
@@ -24,7 +24,7 @@ __all__: list[str] = [
 ]
 
 
-class _StorageConf(SettingConfig):
+class _StorageConf(SettingConf):
     """Storage configuration settings."""
 
     backend = ConfField(

@@ -8,8 +8,8 @@ repository = "https://github.com/christianwhocodes/djangx"
 issues = "https://github.com/christianwhocodes/djangx/issues"
 
 [project.scripts]
-djangx = "djangx.management.cli:main"
-djx = "djangx.management.cli:main"
+djangx = "djangx:main"
+djx = "djangx:main"
 
 [project]
 name = "djangx"

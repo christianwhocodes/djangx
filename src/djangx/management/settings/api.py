@@ -1,7 +1,7 @@
 """API server settings configuration."""
 
 from ... import PACKAGE
-from .config import ConfField, SettingConfig
+from .config import ConfField, SettingConf
 
 __all__: list[str] = [
     "SERVER_USE_ASGI",
@@ -10,7 +10,7 @@ __all__: list[str] = [
 ]
 
 
-class _ServerConf(SettingConfig):
+class _ServerConf(SettingConf):
     """Server application configuration settings (ASGI/WSGI)."""
 
     use_asgi = ConfField(

@@ -1,11 +1,11 @@
 """Run commands settings configuration."""
 
-from .config import ConfField, SettingConfig
+from .config import ConfField, SettingConf
 
 __all__: list[str] = ["RUNCOMMANDS"]
 
 
-class _RunCommandsConf(SettingConfig):
+class _RunCommandsConf(SettingConf):
     """Configuration for install and build management commands.
 
     Defines the lists of management commands to execute during

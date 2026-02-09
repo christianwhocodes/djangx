@@ -6,7 +6,7 @@ from django.utils.csp import CSP  # pyright: ignore[reportMissingTypeStubs]
 
 from ... import PROJECT
 from .api import *  # noqa: F403
-from .apps import *  # noqa: F403
+from .appdef import *  # noqa: F403
 from .auth import *  # noqa: F403
 from .runcommands import *  # noqa: F403
 from .security import *  # noqa: F403

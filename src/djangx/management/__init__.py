@@ -1,1 +1,1 @@
-"""Management utilities, settings, enumerations, types, backends and commands."""
+"""Management utilities, settings, enumerations, types, backends and commands and assets."""
