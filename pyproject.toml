@@ -55,6 +55,10 @@ blank_line_after_tag = "load,extends,endblock"
 [tool.ruff]
 line-length = 101
 
+[tool.ruff.lint]
+select = ["D"]
+ignore = ["D203", "D213"] # Resolve the conflicts
+
 [[tool.uv.index]]
 name = "testpypi"
 url = "https://test.pypi.org/simple/"

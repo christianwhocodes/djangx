@@ -1,3 +1,5 @@
+"""Run commands settings configuration."""
+
 from .config import ConfField, SettingConfig
 
 __all__: list[str] = ["RUNCOMMANDS"]

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass  # noqa: D104
 from pathlib import Path
 from typing import Final
 
@@ -52,11 +52,11 @@ class _PackageInfo:
 
     @classmethod
     def create(cls) -> "_PackageInfo":
-        """
-        Create _PackageInfo with default package values.
+        """Create _PackageInfo with default package values.
 
         Returns:
             _PackageInfo instance configured for the current package.
+
         """
         from christianwhocodes import Version
 
@@ -134,6 +134,7 @@ class _ProjectInfo:
 
         Returns:
             _ProjectInfo instance configured for the current project.
+
         """
         base_dir = Path.cwd()
         return cls(

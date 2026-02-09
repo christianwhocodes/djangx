@@ -1,3 +1,5 @@
+"""Enumeration types for Django apps and middleware."""
+
 from enum import StrEnum
 
 __all__: list[str] = [

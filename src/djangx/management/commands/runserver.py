@@ -1,3 +1,5 @@
+"""Custom runserver command with Tailwind CSS watch integration."""
+
 import signal
 from threading import Event, Thread
 from typing import Any, Optional
@@ -13,6 +15,8 @@ from .tailwind import BuildHandler, CleanHandler, WatchHandler
 
 
 class Command(RunserverCommand):
+    """Development server with Tailwind CSS watch support."""
+
     help = "Development server"
 
     # Declare parent class attributes for type checking
@@ -28,6 +32,7 @@ class Command(RunserverCommand):
     _stop_watcher_event: Optional[Event]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialize the runserver command."""
         super().__init__(*args, **kwargs)
         self._watcher_thread = None
         self._stop_watcher_event = None

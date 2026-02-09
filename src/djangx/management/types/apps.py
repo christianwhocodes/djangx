@@ -1,6 +1,7 @@
+"""Type definitions for Django apps configuration."""
+
 from pathlib import Path
 from typing import NotRequired, TypeAlias, TypedDict
-
 
 __all__: list[str] = ["TemplatesDict"]
 

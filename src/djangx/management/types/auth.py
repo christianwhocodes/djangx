@@ -1,3 +1,5 @@
+"""Type definitions for authentication configuration."""
+
 from typing import TypedDict
 
 __all__: list[str] = ["PasswordValidatorDict"]

@@ -1,3 +1,5 @@
+"""Configuration management utilities."""
+
 import builtins
 import pathlib
 import sys
@@ -18,8 +20,7 @@ _ConfDefaultValueType: TypeAlias = str | bool | list[str] | pathlib.Path | int |
 
 
 class ConfField:
-    """
-    Configuration field descriptor.
+    """Configuration field descriptor.
 
     This class defines a configuration field that can be populated from either
     environment variables or TOML configuration files.
@@ -31,6 +32,7 @@ class ConfField:
         type: Type to convert the value to. Supports:
             - str, bool, pathlib.Path
             - list[str] for list of strings
+
     """
 
     def __init__(
@@ -41,6 +43,7 @@ class ConfField:
         toml: str | None = None,
         default: _ConfDefaultValueType = None,
     ):
+        """Initialize a configuration field descriptor."""
         self.type = type
         self.choices = choices
         self.env = env
@@ -49,11 +52,11 @@ class ConfField:
 
     @property
     def as_dict(self) -> dict[str, Any]:
-        """
-        Convert the ConfField to a dictionary representation.
+        """Convert the ConfField to a dictionary representation.
 
         Returns:
             Dictionary containing all field configuration
+
         """
         return {
             "env": self.env,
@@ -70,8 +73,7 @@ class ConfField:
     def convert_value(
         value: Any, target_type: Any, field_name: str | None = None
     ) -> _ConfDefaultValueType:
-        """
-        Convert the raw value to the appropriate type.
+        """Convert the raw value to the appropriate type.
 
         Args:
             value: Raw value from env or TOML
@@ -83,6 +85,7 @@ class ConfField:
 
         Raises:
             ValueError: If conversion fails
+
         """
         if value is None:
             match target_type:
@@ -119,9 +122,7 @@ class ConfField:
     # ============================================================================
 
     def __get__(self, instance: Any, owner: type) -> Any:
-        """
-        This shouldn't be called since BaseConfig converts these to properties.
-        """
+        """Get descriptor value (should be converted to property)."""
         if instance is None:
             return self
         raise AttributeError(f"{self.__class__.__name__} should have been converted to a property")
@@ -176,7 +177,6 @@ class SettingConfig:
         the TOML configuration section. On failure, prints diagnostic messages
         and exits with an error code.
         """
-
         try:
             toml_section = cls._check_pyproject_toml()
 
@@ -249,9 +249,7 @@ class SettingConfig:
         toml_key: str | None = None,
         default: _ConfDefaultValueType = None,
     ) -> Any:
-        """
-        Fetch configuration value with fallback priority: ENV -> TOML -> default.
-        """
+        """Fetch configuration value with fallback priority: ENV -> TOML -> default."""
         # Try environment variable first
         if env_key is not None and env_key in self._env:
             return self._env[env_key]
@@ -269,9 +267,9 @@ class SettingConfig:
     # ============================================================================
 
     def __init_subclass__(cls) -> None:
-        """
-        Automatically convert ConfField descriptors to properties
-        when a subclass is created.
+        """Convert ConfField descriptors to properties when a subclass is created.
+
+        This is called automatically when a subclass is created.
         """
         super().__init_subclass__()
 
@@ -330,12 +328,11 @@ class SettingConfig:
 
     @classmethod
     def get_env_fields(cls) -> list[dict[str, Any]]:
-        """
-        Collect all ConfField definitions that use environment variables
-        from all Conf subclasses.
+        """Collect all ConfField definitions that use environment variables.
 
         Returns:
-            List of dicts containing class, env key, toml key, choices key, default key and type key for each field
+            List of dicts containing class, env key, toml key, choices key, default key and type key for each field.
+
         """
         env_fields: list[dict[str, Any]] = []
 

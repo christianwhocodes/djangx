@@ -1,4 +1,4 @@
-"""Management command utilities: run
+"""Management command utilities for run operations.
 
 Shared classes and utilities for executing install or build commands.
 Supports dry-run mode for previewing commands before execution
@@ -22,6 +22,7 @@ class CommandResult:
         command: The command that was executed.
         success: Whether the command executed successfully.
         error: Error message if the command failed, None otherwise.
+
     """
 
     command: str
@@ -41,6 +42,7 @@ class CommandOutput(ABC):
 
         Args:
             command: The parent Command instance for stdout/styling.
+
         """
         self.command = command
 
@@ -52,6 +54,7 @@ class CommandOutput(ABC):
             command_count: Number of commands to execute.
             dry_run: Whether running in dry-run mode.
             mode: The mode of operation (e.g., 'BUILD', 'INSTALL').
+
         """
         pass
 
@@ -61,6 +64,7 @@ class CommandOutput(ABC):
 
         Args:
             mode: The mode of operation (e.g., 'build', 'install').
+
         """
         pass
 
@@ -70,6 +74,7 @@ class CommandOutput(ABC):
 
         Args:
             commands: List of commands to preview.
+
         """
         pass
 
@@ -86,6 +91,7 @@ class CommandOutput(ABC):
             cmd: The command that completed successfully.
             index: The current command index (1-based).
             total: The total number of commands.
+
         """
         pass
 
@@ -98,6 +104,7 @@ class CommandOutput(ABC):
             error: The error message.
             index: The current command index (1-based).
             total: The total number of commands.
+
         """
         pass
 
@@ -109,6 +116,7 @@ class CommandOutput(ABC):
             total: The total number of commands.
             completed: Number of successfully completed commands.
             failed: Number of failed commands.
+
         """
         pass
 
@@ -125,6 +133,7 @@ class CommandExecutor:
 
         Args:
             command: The parent Command instance.
+
         """
         self.command = command
 
@@ -139,6 +148,7 @@ class CommandExecutor:
 
         Returns:
             CommandResult containing execution status and any error details.
+
         """
         try:
             # Validate and parse command
@@ -174,6 +184,7 @@ class CommandProcess:
         output: The output handler for displaying information.
         executor: The command executor for running commands.
         mode: The mode of operation (e.g., 'BUILD', 'INSTALL').
+
     """
 
     def __init__(
@@ -190,6 +201,7 @@ class CommandProcess:
             output: The output handler for displaying information.
             executor: The command executor for running commands.
             mode: The mode of operation (e.g., 'BUILD', 'INSTALL').
+
         """
         self.command = command
         self.output = output
@@ -202,6 +214,7 @@ class CommandProcess:
         Args:
             commands: List of commands to execute.
             dry_run: If True, show commands without executing them.
+
         """
         self.output.print_header(len(commands), dry_run, self.mode)
 
@@ -216,6 +229,7 @@ class CommandProcess:
 
         Args:
             commands: List of commands to execute.
+
         """
         total = len(commands)
         completed = 0
@@ -249,6 +263,7 @@ class CommandGenerator(ABC):
 
         Args:
             dj_command: The BaseCommand instance.
+
         """
         self.dj_command = dj_command
 
@@ -258,6 +273,7 @@ class CommandGenerator(ABC):
 
         Returns:
             List of command strings to execute.
+
         """
         pass
 
@@ -267,6 +283,7 @@ class CommandGenerator(ABC):
 
         Returns:
             An instance of CommandOutput for handling display.
+
         """
         pass
 
@@ -276,6 +293,7 @@ class CommandGenerator(ABC):
 
         Returns:
             A string identifier like 'BUILD' or 'INSTALL'.
+
         """
         pass
 
@@ -284,6 +302,7 @@ class CommandGenerator(ABC):
 
         Args:
             dry_run: If True, show commands without executing them.
+
         """
         commands = self.get_runcommands()
 
@@ -314,6 +333,7 @@ class FormattedCommandOutput(CommandOutput):
         Args:
             command: The parent Command instance for stdout/styling.
             art_type: The type of ASCII art for this command.
+
         """
         super().__init__(command)
         self.art_type = art_type
@@ -326,6 +346,7 @@ class FormattedCommandOutput(CommandOutput):
             command_count: Number of commands to execute.
             dry_run: Whether running in dry-run mode.
             mode: The mode of operation (e.g., 'BUILD', 'INSTALL').
+
         """
         display_mode = "DRY RUN" if dry_run else mode
 
@@ -340,6 +361,7 @@ class FormattedCommandOutput(CommandOutput):
 
         Args:
             mode: The mode of operation (e.g., 'build', 'install').
+
         """
         self.command.stdout.write(self.command.style.ERROR(f"\n❌ No {mode} commands configured!"))
         self.command.stdout.write("")
@@ -349,6 +371,7 @@ class FormattedCommandOutput(CommandOutput):
 
         Args:
             commands: List of commands to preview.
+
         """
         self.command.stdout.write(self.command.style.NOTICE("Commands to be executed:\n"))
 
@@ -376,6 +399,7 @@ class FormattedCommandOutput(CommandOutput):
             cmd: The command that completed successfully.
             index: The current command index (1-based).
             total: The total number of commands.
+
         """
         progress_bar = self._create_progress_bar(index, total)
         self.command.stdout.write(f"\n{progress_bar}")
@@ -390,6 +414,7 @@ class FormattedCommandOutput(CommandOutput):
             error: The error message.
             index: The current command index (1-based).
             total: The total number of commands.
+
         """
         progress_bar = self._create_progress_bar(index, total)
         self.command.stdout.write(f"\n{progress_bar}")
@@ -404,6 +429,7 @@ class FormattedCommandOutput(CommandOutput):
             total: The total number of commands.
             completed: Number of successfully completed commands.
             failed: Number of failed commands.
+
         """
         self.command.stdout.write(self.command.style.HTTP_NOT_MODIFIED("=" * 60 + "\n"))
         if failed == 0:
@@ -429,6 +455,7 @@ class FormattedCommandOutput(CommandOutput):
 
         Returns:
             A formatted progress bar string.
+
         """
         bar_length = 40
         filled = int(bar_length * current / total)

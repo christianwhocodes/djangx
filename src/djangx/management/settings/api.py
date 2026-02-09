@@ -1,3 +1,5 @@
+"""API server settings configuration."""
+
 from ... import PACKAGE
 from .config import ConfField, SettingConfig
 

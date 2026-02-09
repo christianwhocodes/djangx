@@ -1,5 +1,4 @@
-"""
-ASGI config
+"""ASGI config.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 

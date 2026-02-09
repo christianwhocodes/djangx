@@ -1,3 +1,5 @@
+"""API backend configuration (ASGI/WSGI)."""
+
 from os import environ
 
 from .... import PACKAGE

@@ -1,3 +1,5 @@
+"""Template tags for contact information components."""
+
 # from typing import Literal
 
 # from django import template

@@ -1,3 +1,5 @@
+"""Type definitions for startproject command."""
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import NotRequired, TypedDict
@@ -27,6 +29,7 @@ class PresetDataclass:
         dependencies: Additional Python packages for this preset
         generated_files: Files that will be generated for this preset
         learn_more_url: Documentation URL for this preset
+
     """
 
     preset: PresetEnum
@@ -76,6 +79,7 @@ class DatabaseDataclass:
         dependencies: Python packages required for this database
         requires_pg_config: Whether PostgreSQL config method is needed
         learn_more_url: Documentation URL for this database
+
     """
 
     backend: DatabaseEnum
@@ -97,6 +101,7 @@ class PGConfigMethodDataclass:
         cli_flag: CLI flag name for this method
         files_required: List of config files needed (empty for env vars)
         learn_more_url: Documentation URL
+
     """
 
     value: bool

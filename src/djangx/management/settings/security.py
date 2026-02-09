@@ -1,3 +1,5 @@
+"""Security and deployment settings."""
+
 # ==============================================================================
 # Security & deployment checklist
 # See https://docs.djangoproject.com/en/stable/howto/deployment/checklist/

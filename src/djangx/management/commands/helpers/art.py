@@ -1,3 +1,5 @@
+"""ASCII art and formatting utilities for management commands."""
+
 from enum import IntEnum, StrEnum
 from shutil import get_terminal_size
 
@@ -20,6 +22,7 @@ class TerminalSize(IntEnum):
 
     Attributes:
         THRESHOLD: Minimum terminal width (in columns) required for full ASCII art.
+
     """
 
     THRESHOLD = 60
@@ -37,6 +40,7 @@ class ArtPrinter:
 
         Args:
             command: The BaseCommand instance for stdout/styling.
+
         """
         self.command = command
         self.terminal_width = get_terminal_size(fallback=(80, 24)).columns
@@ -46,6 +50,7 @@ class ArtPrinter:
 
         Returns:
             List of strings representing the ASCII art lines.
+
         """
         if self.terminal_width >= TerminalSize.THRESHOLD:
             return [
@@ -71,6 +76,7 @@ class ArtPrinter:
 
         Returns:
             List of strings representing the ASCII art lines.
+
         """
         run_art = self._get_run_art()
 
@@ -98,6 +104,7 @@ class ArtPrinter:
 
         Returns:
             List of strings representing the ASCII art lines.
+
         """
         run_art = self._get_run_art()
 
@@ -125,6 +132,7 @@ class ArtPrinter:
 
         Returns:
             List of strings representing the ASCII art lines.
+
         """
         run_art = self._get_run_art()
 
@@ -158,6 +166,7 @@ class ArtPrinter:
 
         Raises:
             ValueError: If an unknown art type is provided.
+
         """
         art_getters = {
             ArtType.RUN: self._get_run_art,
@@ -186,6 +195,7 @@ class ArtPrinter:
             title: Main title text (e.g., "🔥  Development Server  🔥").
             subtitle: Optional subtitle text (e.g., warning messages).
             notice: Optional notice text (e.g., "Press Ctrl-C to quit").
+
         """
         art_lines = self._get_art(art_type)
 
@@ -232,6 +242,7 @@ class ArtPrinter:
             art_type: The type of ASCII art to display.
             display_mode: The display mode text (e.g., "BUILD", "DRY RUN").
             command_count: Number of commands to execute.
+
         """
         if self.terminal_width >= TerminalSize.THRESHOLD:
             self._print_banner(

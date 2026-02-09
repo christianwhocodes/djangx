@@ -1,3 +1,5 @@
+"""Template tags for social media components."""
+
 # from typing import Any
 
 # from django.template import Library

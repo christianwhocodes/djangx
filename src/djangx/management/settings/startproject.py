@@ -1,3 +1,5 @@
+"""Startproject settings configuration."""
+
 # ==============================================================================
 # Database Configuration
 # https://docs.djangoproject.com/en/stable/ref/databases/#postgresql-notes
@@ -122,7 +124,6 @@ _DATABASE = _DatabaseConf()
 
 def _get_databases_config() -> DatabasesDict:
     """Generate databases configuration based on backend type."""
-
     backend: str = _DATABASE.backend.lower()
 
     match backend:

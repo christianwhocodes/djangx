@@ -1,3 +1,5 @@
+"""Static files and storage settings configuration."""
+
 # ==============================================================================
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/stable/howto/static-files/
@@ -46,7 +48,6 @@ _STORAGE = _StorageConf()
 
 def _get_storages_config() -> StoragesDict:
     """Generate storage configuration based on backend type."""
-
     backend: str = _STORAGE.backend
     storage_backend: str
 

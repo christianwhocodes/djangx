@@ -1,3 +1,5 @@
+"""Utility functions for startproject command."""
+
 from ..enums import DatabaseEnum, PresetEnum
 from ..settings import PG_CONFIG_PRESETS, STARTPROJECT_PRESETS
 
@@ -25,6 +27,7 @@ def validate_preset_database_compatibility(
         ... )
         >>> print(is_valid)  # False
         >>> print(error)  # "Vercel preset requires PostgreSQL database..."
+
     """
     preset_config = STARTPROJECT_PRESETS[preset]
 
@@ -57,6 +60,7 @@ def validate_pg_config_compatibility(preset: PresetEnum, pg_env_vars: bool) -> t
         ... )
         >>> print(is_valid)  # False
         >>> print(error)  # "Vercel preset requires environment variables..."
+
     """
     preset_config = STARTPROJECT_PRESETS[preset]
 

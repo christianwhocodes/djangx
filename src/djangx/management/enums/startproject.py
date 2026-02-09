@@ -1,3 +1,5 @@
+"""Enumeration types for startproject command."""
+
 from enum import StrEnum
 
 __all__: list[str] = [

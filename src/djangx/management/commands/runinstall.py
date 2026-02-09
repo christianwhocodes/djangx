@@ -1,4 +1,4 @@
-"""Management command: runinstall
+"""Management command for executing install operations.
 
 Executes install commands.
 Supports dry-run mode for previewing commands before execution
@@ -33,6 +33,8 @@ class _InstallCommandGenerator(CommandGenerator):
 
 
 class Command(BaseCommand):
+    """Execute install commands."""
+
     help = "Execute install commands"
 
     def add_arguments(self, parser: CommandParser) -> None:
@@ -40,6 +42,7 @@ class Command(BaseCommand):
 
         Args:
             parser: The argument parser to add arguments to.
+
         """
         parser.add_argument(
             "--dry",
@@ -60,6 +63,7 @@ class Command(BaseCommand):
             *args: Unused positional arguments.
             **options: Command options including:
                 - dry_run (bool): If True, show commands without executing.
+
         """
         dry_run: bool = options.get("dry_run", False)
         generator = _InstallCommandGenerator(self)

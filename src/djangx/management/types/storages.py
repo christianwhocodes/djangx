@@ -1,3 +1,5 @@
+"""Type definitions for storage backends."""
+
 from typing import TypedDict
 
 __all__: list[str] = ["StorageBackendDict", "StoragesDict"]

@@ -1,3 +1,5 @@
+"""Settings configuration."""
+
 from pathlib import Path
 
 from django.utils.csp import CSP  # pyright: ignore[reportMissingTypeStubs]

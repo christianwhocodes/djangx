@@ -1,5 +1,4 @@
-"""
-Management command for Tailwind CLI installation and build management.
+"""Management command for Tailwind CLI installation and build management.
 
 This module provides a clean, OOP-based interface for:
 - Installing the Tailwind CLI binary
@@ -41,6 +40,7 @@ class _TailwindValidator:
 
         Returns:
             True if file exists and is valid, False otherwise.
+
         """
         if source_css.exists() and source_css.is_file():
             return True
@@ -160,6 +160,7 @@ class InstallHandler:
     """Handles the installation of Tailwind CLI."""
 
     def __init__(self, verbose: bool = True) -> None:
+        """Initialize the install handler."""
         self.verbose = verbose
         self.downloader = _TailwindDownloader(verbose)
         self.validator = _TailwindValidator(verbose)
@@ -337,6 +338,7 @@ class WatchHandler(_TailwindExecutor):
     """Handles watching and rebuilding Tailwind output files on changes."""
 
     def __init__(self, verbose: bool = True) -> None:
+        """Initialize the watch handler."""
         super().__init__(verbose)
         self._process: Popen[bytes] | None = None
 
@@ -446,6 +448,7 @@ class CleanHandler:
     """Handles cleaning of Tailwind output CSS file."""
 
     def __init__(self, verbose: bool = True) -> None:
+        """Initialize the clean handler."""
         self.verbose = verbose
 
     def clean(self) -> None:
@@ -531,7 +534,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args: Any, **options: Any) -> None:
-        """Main command handler."""
+        """Execute the tailwind command."""
         command_type = self._determine_command(options)
         self._validate_options(command_type, options)
         verbose = not options.get("no_verbose", False)

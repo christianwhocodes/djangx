@@ -151,6 +151,7 @@ class _ProjectDependencies:
         dev: Development dependencies (linters, formatters, etc.)
         postgresql: PostgreSQL-specific database drivers
         vercel: Vercel deployment dependencies
+
     """
 
     base: tuple[str, ...] = ("pillow>=12.1.0",)
@@ -176,6 +177,7 @@ class _ProjectDependencies:
             >>> deps = _ProjectDependencies()
             >>> deps.get_for_config(PresetType.VERCEL, DatabaseBackend.POSTGRESQL)
             ['pillow>=12.1.0', 'psycopg[binary,pool]>=3.3.2', 'vercel>=0.3.8']
+
         """
         deps = list(self.base)
         deps.append(f"{PACKAGE.name}>={PACKAGE.version}")
@@ -297,6 +299,7 @@ Visit the {PACKAGE.display_name} documentation to learn more about building with
 
         Returns:
             Complete pyproject.toml file content.
+
         """
         deps = _ProjectDependencies()
         deps_formatted = ",\n    ".join(f'"{dep}"' for dep in dependencies)
@@ -541,6 +544,7 @@ class _FileTracker:
 
         Args:
             path: The filesystem path that was created.
+
         """
         if path not in self._created_paths:
             self._created_paths.append(path)
@@ -584,6 +588,7 @@ class _ProjectFileWriter:
             project_dir: Root directory for the project
             console: Rich console for user feedback
             tracker: File tracker for rollback support
+
         """
         self.project_dir = project_dir
         self.console = console
@@ -602,6 +607,7 @@ class _ProjectFileWriter:
         Raises:
             IOError: If file cannot be written.
             PermissionError: If lacking write permissions.
+
         """
         file_path = self.project_dir / filename
 
@@ -625,6 +631,7 @@ class _ProjectFileWriter:
         Raises:
             IOError: If file cannot be written.
             PermissionError: If lacking write permissions.
+
         """
         if path.exists():
             return False
@@ -641,6 +648,7 @@ class _ProjectFileWriter:
 
         Returns:
             True if directory was created, False if it already existed.
+
         """
         if path.exists():
             return False
@@ -681,6 +689,7 @@ class _HomeAppCreator:
             writer: File writer instance for creating files
             templates: Template manager for generating content
             console: Rich console for user feedback
+
         """
         self.project_dir = project_dir
         self.writer = writer
@@ -801,6 +810,7 @@ class _ProjectInitializer:
             dependencies: Dependency manager (uses default if None)
             templates: Template manager (uses default if None)
             console: Rich console for output (creates new if None)
+
         """
         self.project_dir = Path(project_dir)
         self.dependencies = dependencies or _ProjectDependencies()
@@ -820,6 +830,7 @@ class _ProjectInitializer:
 
         Raises:
             ProjectInitializationError: If directory is unsuitable and user declines
+
         """
         if force:
             return
@@ -865,6 +876,7 @@ class _ProjectInitializer:
 
         Raises:
             ValueError: If provided preset is invalid
+
         """
         if preset:
             try:
@@ -902,6 +914,7 @@ class _ProjectInitializer:
 
         Returns:
             True for environment variables, False for service files
+
         """
         # Vercel requires environment variables (no filesystem access)
         preset_config = STARTPROJECT_PRESETS[preset]
@@ -943,6 +956,7 @@ class _ProjectInitializer:
 
         Raises:
             ValueError: If database is invalid or incompatible with preset
+
         """
         preset_config = STARTPROJECT_PRESETS[preset]
 
@@ -1019,6 +1033,7 @@ class _ProjectInitializer:
 
         Raises:
             IOError: If files cannot be created
+
         """
         dependencies = self.dependencies.get_for_config(preset, database)
 
@@ -1046,6 +1061,7 @@ class _ProjectInitializer:
 
         Raises:
             IOError: If file generation fails
+
         """
         from subprocess import CalledProcessError, run
 
@@ -1127,6 +1143,7 @@ class _ProjectInitializer:
             preset: Project preset that was used
             database: Database backend that was chosen
             use_postgres_env_vars: PostgreSQL configuration method
+
         """
         from rich.panel import Panel
 
@@ -1221,6 +1238,7 @@ class _ProjectInitializer:
         Returns:
             ExitCode.SUCCESS if initialization completed successfully,
             ExitCode.ERROR otherwise.
+
         """
         try:
             # Step 1: Validate directory
@@ -1299,7 +1317,7 @@ class _ProjectInitializer:
 
 
 def handle_startproject() -> ExitCode:
-    f"""Handle the 'startproject' command with comprehensive argument parsing and validation.
+    """Handle the startproject command with comprehensive argument parsing and validation.
 
     This function is the bridge between CLI arguments and the project initialization logic.
     It performs several key responsibilities:
@@ -1333,8 +1351,8 @@ def handle_startproject() -> ExitCode:
         $ {PACKAGE.name} startproject --preset default --database sqlite3
         $ {PACKAGE.name} startproject --database sqlite3  # Auto-selects 'default' preset
         $ {PACKAGE.name} startproject --force
-    """
 
+    """
     # ========================================================================
     # Argument Parser Setup
     # ========================================================================

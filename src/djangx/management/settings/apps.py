@@ -1,3 +1,5 @@
+"""Django apps and middleware settings configuration."""
+
 from typing import Final
 
 from ... import PACKAGE, PROJECT
@@ -103,7 +105,6 @@ def _get_installed_apps() -> list[str]:
     Order: Local apps → Third-party apps → contrib apps
     This ensures local apps can override templates/static files from third-party and contrib apps.
     """
-
     base_apps: list[str] = [
         PROJECT.home_app_name,
         PACKAGE.name,

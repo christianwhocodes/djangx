@@ -1,0 +1,1 @@
+"""Vendor integration template tags."""

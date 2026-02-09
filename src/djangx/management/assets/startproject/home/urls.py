@@ -1,3 +1,5 @@
+"""URL configuration for home app."""
+
 from django.contrib import admin
 from django.urls import URLPattern, URLResolver, path
 

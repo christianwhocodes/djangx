@@ -1,3 +1,5 @@
+"""Django management command for generating configuration files."""
+
 import builtins
 import pathlib
 from typing import Any, Optional, cast
@@ -25,7 +27,7 @@ class _ServerFileGenerator(FileGenerator):
 
     @property
     def file_path(self) -> pathlib.Path:
-        """Return the path for the api/server.py"""
+        """Return the path for the api/server.py."""
         return PROJECT.api_dir / "server.py"
 
     @property
@@ -38,8 +40,7 @@ class _ServerFileGenerator(FileGenerator):
 
 
 class _VercelFileGenerator(FileGenerator):
-    """
-    Generator for Vercel configuration file (vercel.json).
+    """Generator for Vercel configuration file (vercel.json).
 
     Creates a vercel.json file in the base directory.
     Useful for deploying to Vercel with custom install/build commands.
@@ -70,8 +71,7 @@ class _VercelFileGenerator(FileGenerator):
 
 
 class _EnvFileGenerator(FileGenerator):
-    """
-    Generator for environment configuration file (.env.example).
+    """Generator for environment configuration file (.env.example).
 
     Creates a .env.example file in the base directory with all
     possible environment variables from configuration classes.
@@ -86,7 +86,6 @@ class _EnvFileGenerator(FileGenerator):
     @property
     def data(self) -> str:
         """Generate .env file content based on all ConfFields from Conf subclasses."""
-
         from ..settings.config import SettingConfig
 
         lines: list[str] = []
@@ -227,9 +226,12 @@ class _EnvFileGenerator(FileGenerator):
 
 
 class Command(BaseCommand):
+    """Generate configuration files."""
+
     help: str = "Generate configuration files (e.g., .env.example, vercel.json, asgi.py, wsgi.py, .pg_service.conf, pgpass.conf / .pgpass, ssh config)."
 
     def add_arguments(self, parser: CommandParser) -> None:
+        """Add command arguments."""
         parser.add_argument(
             "-f",
             "--file",
@@ -248,6 +250,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args: Any, **options: Any) -> None:
+        """Execute the generate command."""
         file_option: FileGeneratorOptionEnum = FileGeneratorOptionEnum(options["file"])
         force: bool = options["force"]
 

@@ -23,17 +23,17 @@ from christianwhocodes.io import Text, print
 
 
 class GitPublisher:
-    """Encapsulate git tagging and pushing"""
+    """Encapsulate git tagging and pushing."""
 
     def __init__(self, pyproject: PyProject) -> None:
+        """Initialize GitPublisher with project metadata."""
         self.project = pyproject
 
     # ---------------------------------------------------------
     #   REPO URL EXTRACTION
     # ---------------------------------------------------------
     def _get_repo_url(self) -> str:
-        """
-        Return repository URL from pyproject.toml (raises KeyError if missing).
+        """Return repository URL from pyproject.toml (raises KeyError if missing).
 
         Supports:
         - https://github.com/user/repo
@@ -49,16 +49,13 @@ class GitPublisher:
         return url
 
     def _normalize_repo_url(self, raw: str) -> str:
-        """
-        Normalize Git remote URL into a uniform `https://github.com/user/repo`
-        format so we can build an Actions URL.
+        """Normalize Git remote URL into a uniform `https://github.com/user/repo` format.
 
         Handles:
         - git@github.com:user/repo.git
         - https://github.com/user/repo
         - https://github.com/user/repo.git
         """
-
         raw = raw.strip()
 
         # SSH-style: git@github.com:user/repo.git
@@ -77,10 +74,9 @@ class GitPublisher:
         raise ValueError("Repository URL is not a GitHub URL")
 
     def build_actions_url(self) -> str:
-        """
-        Build the GitHub Actions URL:
+        """Build the GitHub Actions URL.
 
-          https://github.com/user/repo/actions
+        https://github.com/user/repo/actions
         """
         repo_url = self._get_repo_url()
         norm = self._normalize_repo_url(repo_url)
@@ -114,6 +110,7 @@ class GitPublisher:
 #   MAIN FLOW
 # =========================================================
 def tag_and_push(dry_run: bool = False) -> ExitCode:
+    """Create git tag and push to trigger publishing workflow."""
     if dry_run:
         print("DRY RUN MODE - no changes will be made\n", Text.INFO)
 
@@ -167,6 +164,7 @@ def tag_and_push(dry_run: bool = False) -> ExitCode:
 
 
 def main() -> NoReturn:
+    """Parse command-line arguments and execute tag and push operation."""
     parser = ArgumentParser(
         description="Create and push git tag to trigger publishing workflow",
         formatter_class=RawDescriptionHelpFormatter,

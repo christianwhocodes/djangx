@@ -1,3 +1,5 @@
+"""Custom storage backends for Django."""
+
 from django.core.files.base import ContentFile, File
 from django.core.files.storage import Storage
 from django.utils.deconstruct import deconstructible
@@ -13,10 +15,11 @@ class VercelBlobStorageBackend(Storage):
     """Custom storage backend for Vercel Blob."""
 
     def __init__(self) -> None:
+        """Initialize Vercel Blob storage client."""
         self.client: BlobClient = BlobClient(BLOB_READ_WRITE_TOKEN)
 
     def _save(self, name: str, content: File) -> str:
-        """Upload file to Vercel Blob"""
+        """Upload file to Vercel Blob."""
         file_content: bytes = content.read()
 
         result = self.client.put(
@@ -30,7 +33,7 @@ class VercelBlobStorageBackend(Storage):
         return result.pathname
 
     def _open(self, name: str, mode: str = "rb") -> ContentFile:
-        """Download file from Vercel Blob"""
+        """Download file from Vercel Blob."""
         # List to find the blob
         listing = self.client.list_objects(prefix=name, limit=1)
 
@@ -43,19 +46,19 @@ class VercelBlobStorageBackend(Storage):
         return ContentFile(content, name=name)
 
     def delete(self, name: str) -> None:
-        """Delete file from Vercel Blob"""
+        """Delete file from Vercel Blob."""
         listing = self.client.list_objects(prefix=name, limit=1)
 
         if listing.blobs:
             self.client.delete([listing.blobs[0].url])
 
     def exists(self, name: str) -> bool:
-        """Check if file exists in Vercel Blob"""
+        """Check if file exists in Vercel Blob."""
         listing = self.client.list_objects(prefix=name, limit=1)
         return len(listing.blobs) > 0
 
     def url(self, name: str) -> str:
-        """Return public URL for the file"""
+        """Return public URL for the file."""
         listing = self.client.list_objects(prefix=name, limit=1)
 
         if not listing.blobs:
@@ -65,7 +68,7 @@ class VercelBlobStorageBackend(Storage):
         return listing.blobs[0].url
 
     def size(self, name: str) -> int:
-        """Return file size"""
+        """Return file size."""
         listing = self.client.list_objects(prefix=name, limit=1)
 
         if not listing.blobs:
@@ -74,10 +77,10 @@ class VercelBlobStorageBackend(Storage):
         return listing.blobs[0].size
 
     def get_valid_name(self, name: str) -> str:
-        """Return a filename suitable for use with the storage system"""
+        """Return a filename suitable for use with the storage system."""
         return name
 
     def get_available_name(self, name: str, max_length: int | None = None) -> str:
-        """Return a filename that's free on the storage system"""
+        """Return a filename that's free on the storage system."""
         # Vercel Blob handles uniqueness with add_random_suffix
         return name

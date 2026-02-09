@@ -1,3 +1,5 @@
+"""Enumeration types for file generation."""
+
 from enum import StrEnum
 
 from christianwhocodes import FileGeneratorOption as BaseFileGeneratorOption

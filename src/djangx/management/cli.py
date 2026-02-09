@@ -17,7 +17,7 @@ from .. import PACKAGE, PROJECT
 
 
 def main() -> None:
-    """Main entry point for the CLI.
+    """Execute the CLI.
 
     Routes commands to appropriate handlers using pattern matching.
     Falls back to Management utility for standard commands.

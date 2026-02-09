@@ -1,3 +1,5 @@
+"""Tailwind CSS template tag."""
+
 from django.template import Library
 from django.utils.safestring import SafeString
 
@@ -6,8 +8,8 @@ register = Library()
 
 @register.simple_tag
 def tailwind_css() -> SafeString:
-    """
-    Inbuilt template tag to include Tailwind CSS in templates.
+    """Include Tailwind CSS in templates.
+
     Checks if the Tailwind CSS file exists before rendering the link tag.
 
     Return the Tailwind CSS link tag.
