@@ -2,7 +2,7 @@
 
 import builtins
 import pathlib
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 from christianwhocodes.generators import (
     FileGenerator,
@@ -196,7 +196,7 @@ class _EnvFileGenerator(FileGenerator):
                 return '"value"'
 
     def _format_variable_hint(
-        self, env_var: str, choices_key: Optional[list[str]], field_type: type
+        self, env_var: str, choices_key: list[str] | None, field_type: type
     ) -> str:
         """Format variable hint showing proper syntax based on type."""
         if choices_key:

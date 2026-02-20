@@ -15,7 +15,7 @@ __all__: list[str] = [
 class _TailwindConf(SettingConf):
     """Tailwind configuration settings."""
 
-    _default_version = "v4.1.18"
+    _default_version = "v4.2.0"
 
     version = ConfField(
         type=str,
@@ -27,7 +27,7 @@ class _TailwindConf(SettingConf):
         type=Path,
         env="TAILWIND_CLI",
         toml="tailwind.cli",
-        default=Path(f"~/.local/bin/tailwind-{_default_version}.exe").expanduser(),
+        default=Path(f"~/.local/bin/tailwindcss-{_default_version}.exe").expanduser(),
     )
     source = ConfField(
         type=Path,

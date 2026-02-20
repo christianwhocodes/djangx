@@ -2,7 +2,7 @@
 
 import signal
 from threading import Event, Thread
-from typing import Any, Optional
+from typing import Any
 
 from django.contrib.staticfiles.management.commands.runserver import (
     Command as RunserverCommand,
@@ -28,8 +28,8 @@ class Command(RunserverCommand):
     no_clipboard: bool
     no_tailwind_watch: bool
     verbose: bool
-    _watcher_thread: Optional[Thread]
-    _stop_watcher_event: Optional[Event]
+    _watcher_thread: Thread | None
+    _stop_watcher_event: Event | None
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize the runserver command."""
@@ -59,7 +59,7 @@ class Command(RunserverCommand):
             help="Show detailed Tailwind operations and status messages",
         )
 
-    def handle(self, *args: object, **options: Any) -> Optional[str]:
+    def handle(self, *args: object, **options: Any) -> str | None:
         """Handle the dev command execution."""
         self.no_clipboard = options.get("no_clipboard", False)
         self.no_tailwind_watch = options.get("no_tailwind_watch", False)

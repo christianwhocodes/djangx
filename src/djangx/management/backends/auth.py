@@ -1,6 +1,6 @@
 """Custom authentication backends for Django."""
 
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
@@ -19,11 +19,11 @@ class UsernameOrEmailBackend(ModelBackend):
 
     def authenticate(
         self,
-        request: Optional[HttpRequest],
-        username: Optional[str] = None,
-        password: Optional[str] = None,
+        request: HttpRequest | None,
+        username: str | None = None,
+        password: str | None = None,
         **kwargs: Any,
-    ) -> "Optional[AbstractBaseUser]":
+    ) -> "AbstractBaseUser | None":
         """Authenticate user with username or email."""
         if username is None or password is None:
             return None
