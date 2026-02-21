@@ -1,3 +1,3 @@
-"""Admin configuration for organization models."""
+"""Organization admin."""
 
 __all__: list[str] = []

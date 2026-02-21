@@ -1,4 +1,4 @@
-"""Enumeration types for Django apps and middleware."""
+"""App, context processor, and middleware enums."""
 
 from enum import StrEnum
 
@@ -10,14 +10,7 @@ __all__: list[str] = [
 
 
 class AppEnum(StrEnum):
-    """Applications enumeration.
-
-    Standard contrib apps plus framework-specific apps.
-
-    Used in:
-    - INSTALLED_APPS settings
-    - App configuration
-    """
+    """Installed applications."""
 
     ADMIN = "django.contrib.admin"
     AUTH = "django.contrib.auth"
@@ -32,12 +25,7 @@ class AppEnum(StrEnum):
 
 
 class ContextProcessorEnum(StrEnum):
-    """Template context processors enumeration.
-
-    Used in:
-    - TEMPLATES settings
-    - Template configuration
-    """
+    """Template context processors."""
 
     DEBUG = "django.template.context_processors.debug"
     REQUEST = "django.template.context_processors.request"
@@ -47,15 +35,7 @@ class ContextProcessorEnum(StrEnum):
 
 
 class MiddlewareEnum(StrEnum):
-    """Middleware enumeration.
-
-    Order matters! This enum lists middleware in the recommended order
-    for applications.
-
-    Used in:
-    - MIDDLEWARE settings
-    - Middleware configuration
-    """
+    """Middleware classes in recommended order."""
 
     SECURITY = "django.middleware.security.SecurityMiddleware"
     SESSION = "django.contrib.sessions.middleware.SessionMiddleware"

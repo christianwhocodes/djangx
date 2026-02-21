@@ -1,13 +1,5 @@
-"""Static files and storage settings configuration."""
+"""Static files and storage settings."""
 
-# ==============================================================================
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/stable/howto/static-files/
-
-# Storage & Media files (User-uploaded content)
-# https://docs.djangoproject.com/en/stable/ref/settings/#storages
-# https://docs.djangoproject.com/en/stable/ref/settings/#media-files
-# ==============================================================================
 from pathlib import Path
 
 from ... import PACKAGE, PROJECT
@@ -25,7 +17,7 @@ __all__: list[str] = [
 
 
 class _StorageConf(SettingConf):
-    """Storage configuration settings."""
+    """Storage backend settings."""
 
     backend = ConfField(
         type=str,
@@ -47,7 +39,7 @@ _STORAGE = _StorageConf()
 
 
 def _get_storages_config() -> StoragesDict:
-    """Generate storage configuration based on backend type."""
+    """Build the STORAGES setting based on configured backend."""
     backend: str = _STORAGE.backend
     storage_backend: str
 

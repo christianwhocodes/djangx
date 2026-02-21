@@ -1,4 +1,4 @@
-"""Type definitions for startproject command."""
+"""Startproject type definitions."""
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -18,19 +18,7 @@ __all__: list[str] = [
 
 @dataclass(frozen=True)
 class PresetDataclass:
-    """Project preset configuration definition.
-
-    Attributes:
-        preset: The preset type enum value
-        name: Human-readable display name
-        description: Brief description of this preset
-        required_database: Required database backend (None = any)
-        required_pg_config: Required PG config method (None = any)
-        dependencies: Additional Python packages for this preset
-        generated_files: Files that will be generated for this preset
-        learn_more_url: Documentation URL for this preset
-
-    """
+    """Project preset configuration."""
 
     preset: PresetEnum
     name: str
@@ -43,7 +31,7 @@ class PresetDataclass:
 
 
 class DatabaseOptionsDict(TypedDict, total=False):
-    """Type definition for database OPTIONS dictionary."""
+    """Database OPTIONS dict."""
 
     service: str
     pool: bool
@@ -51,7 +39,7 @@ class DatabaseOptionsDict(TypedDict, total=False):
 
 
 class DatabaseDict(TypedDict):
-    """Type definition for default database configuration."""
+    """Single database configuration entry."""
 
     ENGINE: str
     NAME: str | Path
@@ -63,24 +51,14 @@ class DatabaseDict(TypedDict):
 
 
 class DatabasesDict(TypedDict):
-    """Type definition for DATABASES setting."""
+    """DATABASES setting dict."""
 
     default: DatabaseDict
 
 
 @dataclass(frozen=True)
 class DatabaseDataclass:
-    """Database backend configuration definition.
-
-    Attributes:
-        backend: The database backend enum value
-        name: Human-readable display name
-        description: Brief description of when to use this database
-        dependencies: Python packages required for this database
-        requires_pg_config: Whether PostgreSQL config method is needed
-        learn_more_url: Documentation URL for this database
-
-    """
+    """Database backend configuration."""
 
     backend: DatabaseEnum
     name: str
@@ -92,17 +70,7 @@ class DatabaseDataclass:
 
 @dataclass(frozen=True)
 class PGConfigMethodDataclass:
-    """PostgreSQL configuration method definition.
-
-    Attributes:
-        value: The boolean value (True = env vars, False = service files)
-        name: Human-readable name
-        description: Detailed description
-        cli_flag: CLI flag name for this method
-        files_required: List of config files needed (empty for env vars)
-        learn_more_url: Documentation URL
-
-    """
+    """PostgreSQL configuration method."""
 
     value: bool
     name: str

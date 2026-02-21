@@ -1,4 +1,4 @@
-"""Django apps and middleware settings configuration."""
+"""Installed apps, middleware, and template settings."""
 
 from typing import Final
 
@@ -22,7 +22,7 @@ __all__: list[str] = [
 
 
 class _AppsConf(SettingConf):
-    """Installed applications configuration settings."""
+    """Installed applications settings."""
 
     extend = ConfField(
         type=list,
@@ -39,7 +39,7 @@ class _AppsConf(SettingConf):
 
 
 class _MiddlewareConf(SettingConf):
-    """Middleware configuration settings."""
+    """Middleware settings."""
 
     extend = ConfField(
         type=list,
@@ -56,7 +56,7 @@ class _MiddlewareConf(SettingConf):
 
 
 class _ContextProcessorsConf(SettingConf):
-    """Template context processors configuration settings."""
+    """Context processors settings."""
 
     extend = ConfField(
         type=list,
@@ -100,11 +100,7 @@ _APP_MIDDLEWARE_MAP: Final[dict[AppEnum, list[MiddlewareEnum]]] = {
 
 
 def _get_installed_apps() -> list[str]:
-    """Build the final list of installed applications.
-
-    Order: Local apps → Third-party apps → contrib apps
-    This ensures local apps can override templates/static files from third-party and contrib apps.
-    """
+    """Build the final INSTALLED_APPS list. Order: local -> third-party -> contrib."""
     base_apps: list[str] = [
         PROJECT.home_app_name,
         PACKAGE.name,
@@ -142,25 +138,7 @@ def _get_installed_apps() -> list[str]:
 
 
 def _get_middleware(installed_apps: list[str]) -> list[str]:
-    """Build the final list of middleware based on installed apps.
-
-    Critical ordering (request flows top→bottom, response flows bottom→top):
-    1. SecurityMiddleware - MUST be first for HTTPS redirects and security headers
-    2. SessionMiddleware - Early, needed by auth and messages
-    3. CommonMiddleware - URL normalization
-    4. CsrfViewMiddleware - After session (needs session data)
-    5. AuthenticationMiddleware - After session (stores user in session)
-    6. MessageMiddleware - After session and auth
-    7. ClickjackingMiddleware - Security headers
-    8. CSP Middleware - Content Security Policy headers
-    9. HttpCompressionMiddleware - BEFORE MinifyHtml (encodes responses with gzip/brotli/zstandard)
-    10. MinifyHtmlMiddleware - AFTER compression, BEFORE browser reload (modifies HTML content)
-    11. BrowserReloadMiddleware - LAST (dev only, modifies HTML to inject reload script)
-
-    Note: MinifyHtmlMiddleware must be:
-    - BELOW any middleware that encodes responses (like HttpCompressionMiddleware)
-    - ABOVE any middleware that modifies HTML (like BrowserReloadMiddleware)
-    """
+    """Build the final MIDDLEWARE list based on installed apps."""
     base_middleware: list[str] = [
         MiddlewareEnum.SECURITY,  # FIRST - security headers, HTTPS redirect
         MiddlewareEnum.SESSION,  # Early - needed by auth & messages
@@ -192,11 +170,7 @@ def _get_middleware(installed_apps: list[str]) -> list[str]:
 
 
 def _get_context_processors(installed_apps: list[str]) -> list[str]:
-    """Build the final list of context processors based on installed apps.
-
-    Order matters: Later processors can override variables from earlier ones.
-    Standard order: debug → request → auth → messages → custom
-    """
+    """Build the final context processors list based on installed apps."""
     # contrib context processors in recommended order
     contrib_context_processors: list[str] = [
         ContextProcessorEnum.DEBUG,  # Debug info (only in DEBUG mode)

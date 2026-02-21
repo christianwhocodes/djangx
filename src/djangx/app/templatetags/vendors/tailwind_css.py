@@ -8,12 +8,7 @@ register = Library()
 
 @register.simple_tag
 def tailwind_css() -> SafeString:
-    """Include Tailwind CSS in templates.
-
-    Checks if the Tailwind CSS file exists before rendering the link tag.
-
-    Return the Tailwind CSS link tag.
-    """
+    """Render the Tailwind CSS link tag if the output file exists."""
     from pathlib import Path
 
     from django.conf import settings

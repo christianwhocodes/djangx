@@ -1,4 +1,4 @@
-"""Run commands settings configuration."""
+"""Run commands settings."""
 
 from .config import ConfField, SettingConf
 
@@ -6,11 +6,7 @@ __all__: list[str] = ["RUNCOMMANDS"]
 
 
 class _RunCommandsConf(SettingConf):
-    """Configuration for install and build management commands.
-
-    Defines the lists of management commands to execute during
-    the install and build phases of the project lifecycle.
-    """
+    """Install and build command lists."""
 
     install = ConfField(
         type=list,

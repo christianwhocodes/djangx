@@ -1,4 +1,4 @@
-"""Template tags for contact information components."""
+"""Contact info component template tags."""
 
 # from typing import Literal
 

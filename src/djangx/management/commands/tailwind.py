@@ -1,11 +1,4 @@
-"""Management command for Tailwind CLI installation and build management.
-
-This module provides a clean, OOP-based interface for:
-- Installing the Tailwind CLI binary
-- Building Tailwind output files
-- Watching Tailwind source files for changes
-- Cleaning generated CSS files
-"""
+"""Tailwind CLI management command (install, build, watch, clean)."""
 
 from pathlib import Path
 from subprocess import DEVNULL, CalledProcessError, Popen, run
@@ -23,25 +16,20 @@ __all__: list[str] = ["InstallHandler", "BuildHandler", "WatchHandler", "CleanHa
 
 
 class _TailwindValidator:
-    """Shared validator for Tailwind CLI operations."""
+    """Validates Tailwind CLI paths and files."""
 
     def __init__(self, verbose: bool = True) -> None:
         self.verbose = verbose
 
     def validate_cli_exists(self, cli_path: Path) -> None:
-        """Validate that the Tailwind CLI exists."""
+        """Ensure the Tailwind CLI binary exists."""
         if not cli_path.exists():
             raise CommandError(
                 f"Tailwind CLI not found at '{cli_path}'. Run '{PACKAGE.name} tailwind install' first."
             )
 
     def validate_source_file(self, source_css: Path, required: bool = True) -> bool:
-        """Validate that the source CSS file exists.
-
-        Returns:
-            True if file exists and is valid, False otherwise.
-
-        """
+        """Check if the source CSS file exists."""
         if source_css.exists() and source_css.is_file():
             return True
 
@@ -57,7 +45,7 @@ class _TailwindValidator:
         return False
 
     def ensure_directory(self, directory: Path) -> None:
-        """Ensure a directory exists with proper error handling."""
+        """Create directory if it doesn't exist."""
         try:
             directory.mkdir(parents=True, exist_ok=True)
         except PermissionError:
@@ -68,7 +56,7 @@ class _TailwindValidator:
 
 
 class _TailwindDownloader:
-    """Handles downloading and installation of Tailwind CLI."""
+    """Downloads and installs the Tailwind CLI binary."""
 
     BASE_URL = "https://github.com/tailwindlabs/tailwindcss/releases"
     PLATFORM_FILENAMES = {
@@ -81,12 +69,12 @@ class _TailwindDownloader:
         self.verbose = verbose
 
     def get_download_url(self, version: str, platform: Platform) -> str:
-        """Generate the download URL for the Tailwind CLI binary."""
+        """Build the download URL for the CLI binary."""
         filename = self._get_filename(platform)
         return f"{self.BASE_URL}/download/{version}/{filename}"
 
     def _get_filename(self, platform: Platform) -> str:
-        """Determine the appropriate filename based on platform."""
+        """Get the platform-specific binary filename."""
         template = self.PLATFORM_FILENAMES.get(platform.os_name)
         if not template:
             raise CommandError(f"Unsupported platform: {platform.os_name}")
@@ -94,7 +82,7 @@ class _TailwindDownloader:
         return template.format(arch=platform.architecture)
 
     def download(self, url: str, destination: Path, show_progress: bool = True) -> None:
-        """Download a file from URL to destination with progress tracking."""
+        """Download a file from URL to destination."""
         from urllib.error import HTTPError, URLError
         from urllib.request import urlretrieve
 
@@ -147,7 +135,7 @@ class _TailwindDownloader:
 
     @staticmethod
     def make_executable(file_path: Path) -> None:
-        """Make the file executable on Unix-like systems."""
+        """Make the file executable (Unix only)."""
         from platform import system
         from stat import S_IXGRP, S_IXOTH, S_IXUSR
 
@@ -157,10 +145,10 @@ class _TailwindDownloader:
 
 
 class InstallHandler:
-    """Handles the installation of Tailwind CLI."""
+    """Handles Tailwind CLI installation."""
 
     def __init__(self, verbose: bool = True) -> None:
-        """Initialize the install handler."""
+        """Initialize with verbosity setting."""
         self.verbose = verbose
         self.downloader = _TailwindDownloader(verbose)
         self.validator = _TailwindValidator(verbose)
@@ -198,7 +186,7 @@ class InstallHandler:
         self._perform_installation(download_url, cli_path, version, platform)
 
     def _display_platform_info(self, platform: Platform) -> None:
-        """Display detected platform information."""
+        """Show detected platform."""
         print(f"\n🖥 Detected platform: {str(platform)}", Text.INFO)
 
     def _display_download_info(
@@ -207,7 +195,7 @@ class InstallHandler:
         platform: Platform,
         cli_path: Path,
     ) -> None:
-        """Display download information to the user."""
+        """Show download details."""
         print("\n" + "=" * 60)
         print("DOWNLOAD INFORMATION", Text.INFO)
         print("=" * 60)
@@ -217,7 +205,7 @@ class InstallHandler:
         print("=" * 60)
 
     def _confirm_overwrite(self, cli_path: Path, auto_confirm: bool) -> bool:
-        """Confirm overwriting existing CLI file."""
+        """Prompt to overwrite an existing CLI file."""
         if auto_confirm:
             cli_path.unlink()
             return True
@@ -252,7 +240,7 @@ class InstallHandler:
         version: str,
         platform: Platform,
     ) -> None:
-        """Download and install the Tailwind CLI."""
+        """Download and set up the CLI binary."""
         self.downloader.download(download_url, cli_path)
 
         if self.verbose:
@@ -306,10 +294,10 @@ class _TailwindExecutor:
 
 
 class BuildHandler(_TailwindExecutor):
-    """Handles building Tailwind output files."""
+    """Builds Tailwind output CSS."""
 
     def build(self, skip_if_no_source: bool = False) -> bool:
-        """Build the Tailwind output css file."""
+        """Build the Tailwind output CSS file."""
         cli_path = TAILWIND.cli
         source_css = TAILWIND.source
         output_css = TAILWIND.output
@@ -335,7 +323,7 @@ class BuildHandler(_TailwindExecutor):
 
 
 class WatchHandler(_TailwindExecutor):
-    """Handles watching and rebuilding Tailwind output files on changes."""
+    """Watches and rebuilds Tailwind CSS on file changes."""
 
     def __init__(self, verbose: bool = True) -> None:
         """Initialize the watch handler."""
@@ -381,7 +369,7 @@ class WatchHandler(_TailwindExecutor):
         cli_path: Path,
         stop_event: Event | None,
     ) -> None:
-        """Execute the Tailwind watch command with guaranteed cleanup."""
+        """Run the watch command with cleanup on exit."""
         try:
             if self.verbose:
                 print("   Starting Tailwind watcher process...", Text.INFO)
@@ -407,7 +395,7 @@ class WatchHandler(_TailwindExecutor):
             self._terminate_process()
 
     def _monitor_with_stop_event(self, stop_event: Event) -> None:
-        """Monitor process with stop event, exit when signaled or process ends."""
+        """Wait until stop event is signaled or process ends."""
         while self._process and self._process.poll() is None:
             if stop_event.wait(timeout=0.5):
                 # Stop event signaled - break and let finally cleanup
@@ -415,7 +403,7 @@ class WatchHandler(_TailwindExecutor):
         # Cleanup happens in finally block of _execute_watch
 
     def _terminate_process(self) -> None:
-        """Terminate the Tailwind watch process gracefully with guaranteed cleanup."""
+        """Terminate the watch process gracefully."""
         if not self._process:
             return
 
@@ -445,14 +433,14 @@ class WatchHandler(_TailwindExecutor):
 
 
 class CleanHandler:
-    """Handles cleaning of Tailwind output CSS file."""
+    """Cleans generated Tailwind output CSS."""
 
     def __init__(self, verbose: bool = True) -> None:
-        """Initialize the clean handler."""
+        """Initialize with verbosity setting."""
         self.verbose = verbose
 
     def clean(self) -> None:
-        """Delete the built Tailwind output CSS file."""
+        """Delete the Tailwind output CSS file."""
         output_css = TAILWIND.output
 
         if not output_css.exists():
@@ -474,7 +462,7 @@ class CleanHandler:
 
 
 class Command(BaseCommand):
-    """Management command for Tailwind CLI operations."""
+    """Tailwind CLI management: install, build, watch, clean."""
 
     help = "Tailwind CLI management: install, build, watch, and clean operations."
 
@@ -541,7 +529,7 @@ class Command(BaseCommand):
         self._execute_command(command_type, options, verbose)
 
     def _determine_command(self, options: dict[str, Any]) -> str:
-        """Determine which command to execute."""
+        """Resolve which subcommand to execute."""
         command = options.get("command")
         commands: dict[str, bool] = {
             "install": command == "install" or options.get("install", False),

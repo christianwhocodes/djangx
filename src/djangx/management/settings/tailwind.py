@@ -1,4 +1,4 @@
-"""Tailwind CSS settings configuration."""
+"""Tailwind CSS settings."""
 
 from pathlib import Path
 
@@ -13,7 +13,7 @@ __all__: list[str] = [
 
 
 class _TailwindConf(SettingConf):
-    """Tailwind configuration settings."""
+    """Tailwind CSS settings."""
 
     _default_version = "v4.2.0"
 
@@ -43,14 +43,7 @@ TAILWIND = _TailwindConf()
 
 
 def _static_relative_path(file_path: Path) -> str:
-    """Return the portion after static/ as a forward-slash string.
-
-    Given an absolute path under a ``static/`` directory, return the
-    portion after ``static/`` as a forward-slash string suitable for
-    Django's ``static()`` helper.
-
-    Falls back to the bare filename when no ``static`` ancestor is found.
-    """
+    """Return the path portion after 'static/' as a forward-slash string."""
     for parent in file_path.parents:
         if parent.name == "static":
             return file_path.relative_to(parent).as_posix()

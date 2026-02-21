@@ -1,4 +1,4 @@
-"""Initialization."""
+"""Package initialization and CLI entry point."""
 
 import sys
 from dataclasses import dataclass, field
@@ -23,7 +23,7 @@ __all__: list[str] = [
 
 
 class ProjectValidationError(Exception):
-    """Raised when the current directory is not a valid project."""
+    """Current directory is not a valid project."""
 
 
 class _SkipArgsEnum(StrEnum):
@@ -39,40 +39,40 @@ class _SkipArgsEnum(StrEnum):
 
 @dataclass(frozen=True)
 class _PackageInfo:
-    """Package configuration (The toolkit itself)."""
+    """Package metadata and paths."""
 
     base_dir: Path = field(default_factory=lambda: Path(__file__).parent.resolve())
 
     @property
     def name(self) -> str:
-        """The package name (derived from base_dir) - djangx."""
+        """Package name."""
         return self.base_dir.name
 
     @property
     def display_name(self) -> str:
-        """Human-readable display name for the package - DjangX."""
+        """Human-readable package name."""
         return f"{self.name[0].upper()}{self.name[1:-1]}{self.name[-1].upper()}"
 
     @cached_property
     def version(self) -> str:
-        """The package version, retrieved lazily from metadata."""
+        """Package version (lazy-loaded)."""
         from christianwhocodes import Version
 
         return Version.get(self.name)[0]
 
     @property
     def main_app_dir(self) -> Path:
-        """Path to the `app` application directory."""
+        """Path to the main app directory."""
         return self.base_dir / "app"
 
     @property
     def main_app_name(self) -> str:
-        """Name of the `app` application."""
+        """Main app directory name."""
         return self.main_app_dir.name
 
     @property
     def settings_module(self) -> str:
-        """Django Settings Module."""
+        """Django settings module."""
         return f"{self.name}.management.settings"
 
 
@@ -86,7 +86,7 @@ PACKAGE: Final = _PackageInfo()
 
 @dataclass(frozen=True)
 class _ProjectInfo:
-    """Project configuration based on current working directory."""
+    """Project configuration for the current working directory."""
 
     base_dir: Path = field(default_factory=Path.cwd)
     # Track validation state via a list to allow mutation in a frozen dataclass
@@ -118,7 +118,7 @@ class _ProjectInfo:
 
     @cached_property
     def toml(self) -> dict[str, Any]:
-        """Get TOML configuration section. Evaluated lazily and cached."""
+        """TOML configuration section (lazy-loaded, cached)."""
         from christianwhocodes import PyProject
 
         pyproject_path = self.base_dir / "pyproject.toml"
@@ -134,16 +134,16 @@ class _ProjectInfo:
 
     @cached_property
     def env(self) -> dict[str, Any]:
-        """Get combined .env and environment variables. Evaluated lazily."""
+        """Combined .env and environment variables (lazy-loaded)."""
         self.validate()
         from dotenv import dotenv_values
 
         return {**dotenv_values(self.base_dir / ".env"), **environ}
 
     def validate(self) -> None:
-        """Check if the current directory is a valid project.
+        """Check if the current directory is a valid project. Runs once.
 
-        Triggers once. In CLI, we catch the exception for pretty printing.
+        In CLI, we catch the exception for pretty printing.
         In Production, this will bubble up to the WSGI/ASGI server.
         """
         if self._validated[0]:
@@ -197,7 +197,7 @@ def main() -> None:
                 print(f"Not in a valid {PACKAGE.display_name} project directory: {e}", Text.ERROR)
                 sys.exit(ExitCode.ERROR)
             except Exception as e:
-                print(f"Unexpected error during project validation:\n{e}", Text.WARNING)
+                print(f"Unexpected error during project validation:\n{e}", Text.ERROR)
                 sys.exit(ExitCode.ERROR)
             else:
                 from django.core.management import ManagementUtility

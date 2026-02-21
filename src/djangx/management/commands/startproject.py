@@ -1,4 +1,4 @@
-"""Project initialization module for creating new projects."""
+"""Project initialization command."""
 
 from argparse import ArgumentParser, Namespace
 from dataclasses import dataclass
@@ -44,18 +44,7 @@ _SAFE_DIRECTORY_ITEMS: Final[set[str]] = {
 
 @dataclass(frozen=True)
 class _ProjectDependencies:
-    """Manages project dependencies for different configurations.
-
-    This class centralizes dependency management, making it easy to see what
-    packages are required for each configuration type.
-
-    Attributes:
-        base: Core dependencies required for all projects
-        dev: Development dependencies (linters, formatters, etc.)
-        postgresql: PostgreSQL-specific database drivers
-        vercel: Vercel deployment dependencies
-
-    """
+    """Manages project dependencies for different configurations."""
 
     base: tuple[str, ...] = ("pillow>=12.1.0",)
     dev: tuple[str, ...] = ("djlint>=1.36.4", "ruff>=0.15.0")
@@ -63,25 +52,7 @@ class _ProjectDependencies:
     vercel: tuple[str, ...] = ("vercel>=0.3.8",)
 
     def get_for_config(self, preset: PresetEnum, database: DatabaseEnum) -> list[str]:
-        """Get complete dependency list for a specific configuration.
-
-        This method combines base dependencies with configuration-specific ones,
-        using the DATABASE_PRESETS and STARTPROJECT_PRESETS mappings to determine
-        what's needed.
-
-        Args:
-            preset: The preset type (from STARTPROJECT_PRESETS mapping)
-            database: The database backend (from DATABASE_PRESETS mapping)
-
-        Returns:
-            Complete list of dependency strings including version constraints.
-
-        Example:
-            >>> deps = _ProjectDependencies()
-            >>> deps.get_for_config(PresetType.VERCEL, DatabaseBackend.POSTGRESQL)
-            ['pillow>=12.1.0', 'psycopg[binary,pool]>=3.3.2', 'vercel>=0.3.8']
-
-        """
+        """Get the complete dependency list for a preset and database combination."""
         deps = list(self.base)
         deps.append(f"{PACKAGE.name}>={PACKAGE.version}")
 
@@ -97,26 +68,11 @@ class _ProjectDependencies:
 
 
 class _TemplateManager:
-    """Manages all template content for project initialization.
-
-    This class generates file content from templates. Each method corresponds
-    to a specific file type that needs to be created during initialization.
-
-    The templates are dynamic and can incorporate configuration-specific
-    details (database settings, preset requirements, etc.).
-    """
+    """Generates file content templates for project initialization."""
 
     @staticmethod
     def gitignore(database: DatabaseEnum) -> str:
-        """Generate .gitignore content.
-
-        Returns standard .gitignore patterns for Python/Django projects,
-        with database-specific entries based on the chosen backend.
-
-        Args:
-            database: The chosen database backend.
-
-        """
+        """Generate .gitignore content."""
         # Database-specific entries
         db_lines = ""
         if database == DatabaseEnum.SQLITE3:
@@ -163,7 +119,7 @@ env/
 
     @staticmethod
     def readme() -> str:
-        """Generate README.md content with getting started instructions."""
+        """Generate README.md content."""
         return f"""
 # {PROJECT.init_name}
 
@@ -194,21 +150,7 @@ Visit the {PACKAGE.display_name} documentation to learn more about building with
         dependencies: list[str],
         use_postgres_env_vars: bool = False,
     ) -> str:
-        """Generate pyproject.toml with configuration-specific settings.
-
-        This template incorporates settings based on the chosen preset and
-        database backend, using configuration from the mappings.
-
-        Args:
-            preset: Project preset type
-            database: Database backend choice
-            dependencies: List of all required dependencies
-            use_postgres_env_vars: Whether to use env vars for PostgreSQL
-
-        Returns:
-            Complete pyproject.toml file content.
-
-        """
+        """Generate pyproject.toml content."""
         deps = _ProjectDependencies()
         deps_formatted = ",\n    ".join(f'"{dep}"' for dep in dependencies)
         dev_deps_formatted = ",\n    ".join(f'"{dep}"' for dep in deps.dev)
@@ -259,7 +201,7 @@ blank_line_after_tag = "load,extends,endblock"
 
     @staticmethod
     def tailwind_css() -> str:
-        """Generate Tailwind CSS configuration and base styles."""
+        """Generate Tailwind CSS source file."""
         return f"""@import "tailwindcss";
 
 /* =============================================================================
@@ -383,36 +325,18 @@ blank_line_after_tag = "load,extends,endblock"
 
 
 class _FileTracker:
-    """Tracks files and directories created during initialization for rollback.
-
-    This class implements the rollback mechanism that ensures clean failure handling.
-    If initialization fails at any point, all created files and directories are
-    automatically removed.
-
-    The tracking happens in creation order, and cleanup happens in reverse order,
-    ensuring child files are deleted before parent directories.
-    """
+    """Tracks created files/dirs for rollback on failure."""
 
     def __init__(self):
-        """Initialize an empty file tracker."""
         self._created_paths: list[Path] = []
 
     def track(self, path: Path) -> None:
-        """Track a created file or directory for potential rollback.
-
-        Args:
-            path: The filesystem path that was created.
-
-        """
+        """Register a path for potential rollback."""
         if path not in self._created_paths:
             self._created_paths.append(path)
 
     def cleanup_all(self) -> None:
-        """Remove all tracked files and directories in reverse creation order.
-
-        This method is called when initialization fails. It performs best-effort
-        cleanup, not raising exceptions if individual deletions fail.
-        """
+        """Remove all tracked paths in reverse creation order."""
         from shutil import rmtree
 
         # Reverse order ensures files are removed before their parent directories
@@ -431,42 +355,15 @@ class _FileTracker:
 
 
 class _ProjectFileWriter:
-    """Handles file writing operations with existence checks and tracking.
-
-    This class centralizes all file I/O operations, ensuring:
-    - Files are only created if they don't exist (idempotent)
-    - All created files are tracked for rollback
-    - Consistent error handling across file operations
-    """
+    """Handles file creation with existence checks and rollback tracking."""
 
     def __init__(self, project_dir: Path, console: Console, tracker: _FileTracker):
-        """Initialize the file writer.
-
-        Args:
-            project_dir: Root directory for the project
-            console: Rich console for user feedback
-            tracker: File tracker for rollback support
-
-        """
         self.project_dir = project_dir
         self.console = console
         self.tracker = tracker
 
     def write_if_not_exists(self, filename: str, content: str) -> bool:
-        """Write content to a file in the project directory if it doesn't exist.
-
-        Args:
-            filename: Name of the file to create (relative to project_dir)
-            content: Content to write to the file
-
-        Returns:
-            True if file was created, False if it already existed.
-
-        Raises:
-            IOError: If file cannot be written.
-            PermissionError: If lacking write permissions.
-
-        """
+        """Write file in project dir if it doesn't already exist."""
         file_path = self.project_dir / filename
 
         if file_path.exists():
@@ -477,20 +374,7 @@ class _ProjectFileWriter:
         return True
 
     def write_to_path_if_not_exists(self, path: Path, content: str) -> bool:
-        """Write content to a specific path if it doesn't exist.
-
-        Args:
-            path: Full filesystem path to the file
-            content: Content to write to the file
-
-        Returns:
-            True if file was created, False if it already existed.
-
-        Raises:
-            IOError: If file cannot be written.
-            PermissionError: If lacking write permissions.
-
-        """
+        """Write to a specific path if it doesn't already exist."""
         if path.exists():
             return False
 
@@ -499,15 +383,7 @@ class _ProjectFileWriter:
         return True
 
     def ensure_dir(self, path: Path) -> bool:
-        """Ensure a directory exists, creating it if necessary.
-
-        Args:
-            path: Directory path to create
-
-        Returns:
-            True if directory was created, False if it already existed.
-
-        """
+        """Create directory if it doesn't exist."""
         if path.exists():
             return False
 
@@ -528,12 +404,7 @@ _HOME_APP_ASSETS_DIR: Final[Path] = (
 
 
 class _HomeAppCreator:
-    """Creates the default 'home' application by copying bundled assets.
-
-    This class handles the creation of the starter application that comes with
-    every new project by copying the pre-built home app from the package's
-    assets directory (management/assets/startproject/home).
-    """
+    """Copies bundled home app assets into a new project."""
 
     def __init__(
         self,
@@ -541,28 +412,12 @@ class _HomeAppCreator:
         tracker: _FileTracker,
         console: Console,
     ):
-        """Initialize the home app creator.
-
-        Args:
-            project_dir: Root project directory
-            tracker: File tracker for rollback support
-            console: Rich console for user feedback
-
-        """
         self.project_dir = project_dir
         self.tracker = tracker
         self.console = console
 
     def create(self) -> None:
-        """Copy the bundled home app assets to the project directory.
-
-        Copies the entire home app directory from the package's assets.
-        Skips if the home app directory already exists.
-
-        Raises:
-            IOError: If the assets directory is missing or the copy fails.
-
-        """
+        """Copy the home app from package assets to the project directory."""
         from shutil import copytree
 
         # Check if home app already exists
@@ -588,25 +443,13 @@ class _HomeAppCreator:
 
 
 class ProjectInitializationError(Exception):
-    """Raised when project initialization fails due to user cancellation or invalid state."""
+    """Initialization failed due to cancellation or invalid state."""
 
     pass
 
 
 class _ProjectInitializer:
-    """Main orchestrator for project initialization workflow.
-
-    This class coordinates the entire initialization process, handling:
-    - Directory validation
-    - User prompts for configuration selection
-    - Validation of configuration combinations
-    - File creation and tracking
-    - Error handling and rollback
-    - Success message display
-
-    The initializer uses composition, delegating specific tasks to specialized
-    classes while maintaining overall workflow control.
-    """
+    """Orchestrates the project initialization workflow."""
 
     def __init__(
         self,
@@ -615,15 +458,6 @@ class _ProjectInitializer:
         templates: _TemplateManager | None = None,
         console: Console | None = None,
     ):
-        """Initialize the project initializer with configuration.
-
-        Args:
-            project_dir: Directory where project will be created
-            dependencies: Dependency manager (uses default if None)
-            templates: Template manager (uses default if None)
-            console: Rich console for output (creates new if None)
-
-        """
         self.project_dir = Path(project_dir)
         self.dependencies = dependencies or _ProjectDependencies()
         self.templates = templates or _TemplateManager()
@@ -632,18 +466,7 @@ class _ProjectInitializer:
         self.writer = _ProjectFileWriter(self.project_dir, self.console, self.tracker)
 
     def _validate_directory(self, force: bool = False) -> None:
-        """Validate that the directory is suitable for initialization.
-
-        Checks for existing files that might conflict with initialization.
-        Safe items (like .git, LICENSE) are allowed without prompting.
-
-        Args:
-            force: Skip all validation and proceed regardless
-
-        Raises:
-            ProjectInitializationError: If directory is unsuitable and user declines
-
-        """
+        """Ensure the directory is suitable for initialization."""
         if force:
             return
 
@@ -676,20 +499,7 @@ class _ProjectInitializer:
             raise ProjectInitializationError("Initialization cancelled by user.")
 
     def _get_preset_choice(self, preset: str | None = None) -> PresetEnum:
-        """Get and validate the preset choice.
-
-        Uses STARTPROJECT_PRESETS mapping to validate and provide choices.
-
-        Args:
-            preset: CLI-provided preset (skips prompt if provided)
-
-        Returns:
-            Validated PresetType enum value
-
-        Raises:
-            ValueError: If provided preset is invalid
-
-        """
+        """Prompt for or validate the preset choice."""
         if preset:
             try:
                 return PresetEnum(preset)
@@ -716,18 +526,7 @@ class _ProjectInitializer:
     def _get_postgres_config_choice(
         self, preset: PresetEnum, pg_env_vars: bool | None = None
     ) -> bool:
-        """Get PostgreSQL configuration method choice.
-
-        Uses PG_CONFIG_PRESETS mapping to provide options and validate choices.
-
-        Args:
-            preset: Current preset (Vercel requires env vars)
-            pg_env_vars: CLI-provided flag (skips prompt if provided)
-
-        Returns:
-            True for environment variables, False for service files
-
-        """
+        """Prompt for or resolve the PostgreSQL config method."""
         # Vercel requires environment variables (no filesystem access)
         preset_config = STARTPROJECT_PRESETS[preset]
         if preset_config.required_pg_config is not None:
@@ -753,23 +552,7 @@ class _ProjectInitializer:
     def _get_database_choice(
         self, preset: PresetEnum, database: str | None = None, pg_env_vars: bool | None = None
     ) -> tuple[DatabaseEnum, bool]:
-        """Get and validate database choice with PostgreSQL configuration.
-
-        Uses DATABASE_PRESETS mapping for validation and STARTPROJECT_PRESETS for
-        compatibility checking.
-
-        Args:
-            preset: Current preset (may restrict database choices)
-            database: CLI-provided database (skips prompt if provided)
-            pg_env_vars: CLI-provided PG config flag
-
-        Returns:
-            Tuple of (database_backend, use_postgres_env_vars)
-
-        Raises:
-            ValueError: If database is invalid or incompatible with preset
-
-        """
+        """Prompt for or validate the database choice and PG config method."""
         preset_config = STARTPROJECT_PRESETS[preset]
 
         # Check if preset requires a specific database
@@ -833,20 +616,7 @@ class _ProjectInitializer:
     def _create_core_files(
         self, preset: PresetEnum, database: DatabaseEnum, use_postgres_env_vars: bool
     ) -> None:
-        """Create core project configuration files.
-
-        Creates pyproject.toml, .gitignore, and README.md with configuration-specific
-        content using the template manager.
-
-        Args:
-            preset: Project preset type
-            database: Database backend choice
-            use_postgres_env_vars: PostgreSQL configuration method
-
-        Raises:
-            IOError: If files cannot be created
-
-        """
+        """Create pyproject.toml, .gitignore, and README.md."""
         dependencies = self.dependencies.get_for_config(preset, database)
 
         files_to_create = {
@@ -864,17 +634,7 @@ class _ProjectInitializer:
                 self.console.print(f"[dim]{filename} already exists, skipping[/dim]")
 
     def _configure_preset_files_and_env_example(self, preset: PresetEnum) -> None:
-        """Generate preset-specific files using the framework's generate command.
-
-        Uses STARTPROJECT_PRESETS mapping to determine what files need to be generated.
-
-        Args:
-            preset: Project preset type
-
-        Raises:
-            IOError: If file generation fails
-
-        """
+        """Generate preset-specific files and .env.example."""
         from os import environ
         from subprocess import CalledProcessError, run
 
@@ -953,17 +713,7 @@ class _ProjectInitializer:
     def _show_next_steps(
         self, preset: PresetEnum, database: DatabaseEnum, use_postgres_env_vars: bool
     ) -> None:
-        """Display context-specific next steps after successful initialization.
-
-        Uses configuration mappings to provide relevant instructions and
-        documentation links based on the chosen configuration.
-
-        Args:
-            preset: Project preset that was used
-            database: Database backend that was chosen
-            use_postgres_env_vars: PostgreSQL configuration method
-
-        """
+        """Display post-initialization instructions."""
         from rich.panel import Panel
 
         next_steps = [
@@ -1043,22 +793,7 @@ class _ProjectInitializer:
         pg_env_vars: bool | None = None,
         force: bool = False,
     ) -> ExitCode:
-        """Execute the complete project initialization workflow.
-
-        This is the main entry point that orchestrates all initialization steps.
-        See module docstring for detailed flow diagram.
-
-        Args:
-            preset: Optional preset to use (skips interactive prompt)
-            database: Optional database backend (skips interactive prompt)
-            pg_env_vars: Optional PG config flag (skips interactive prompt)
-            force: Skip directory validation
-
-        Returns:
-            ExitCode.SUCCESS if initialization completed successfully,
-            ExitCode.ERROR otherwise.
-
-        """
+        """Run the full project initialization workflow."""
         try:
             # Step 1: Validate directory
             self._validate_directory(force=force)
@@ -1136,42 +871,7 @@ class _ProjectInitializer:
 
 
 def handle_startproject() -> ExitCode:
-    """Handle the startproject command with comprehensive argument parsing and validation.
-
-    This function is the bridge between CLI arguments and the project initialization logic.
-    It performs several key responsibilities:
-
-    1. **Argument Parsing**: Defines and parses all CLI flags for project creation
-    2. **Validation**: Validates argument combinations at the CLI level
-    3. **Translation**: Converts CLI flags to function parameters
-    4. **Error Reporting**: Provides clear error messages for invalid combinations
-
-    The validation happens in two stages:
-    - CLI-level validation (this function): Catches incompatible flag combinations
-    - Prompt-level validation (in startproject.py): Validates interactive choices
-
-    Returns:
-        ExitCode from the initialize function (SUCCESS or ERROR).
-
-    Raises:
-        SystemExit: Via parser.error() for invalid argument combinations.
-
-    Flow:
-        1. Create ArgumentParser with all available flags
-        2. Parse sys.argv[2:] (everything after the command name - startproject/init/new )
-        3. Validate preset-database compatibility
-        4. Validate preset-pg_config compatibility
-        5. Convert mutually-exclusive flags to single parameter
-        6. Call initialize() with validated parameters
-
-    Example CLI calls:
-        $ {PACKAGE.name} startproject --preset vercel  # Auto-selects PostgreSQL + env vars
-        $ {PACKAGE.name} startproject --database postgresql --pg-env-vars
-        $ {PACKAGE.name} startproject --preset default --database sqlite3
-        $ {PACKAGE.name} startproject --database sqlite3  # Auto-selects 'default' preset
-        $ {PACKAGE.name} startproject --force
-
-    """
+    """Parse CLI arguments and run project initialization."""
     # ========================================================================
     # Argument Parser Setup
     # ========================================================================

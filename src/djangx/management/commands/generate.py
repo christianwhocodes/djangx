@@ -1,4 +1,4 @@
-"""Django management command for generating configuration files."""
+"""Management command for generating configuration files."""
 
 import builtins
 import pathlib
@@ -17,22 +17,16 @@ from ..enums import FileGeneratorOptionEnum
 
 
 class _ServerFileGenerator(FileGenerator):
-    f"""
-    Generator for ASGI / WSGI configuration in api/server.py file.
-    
-    Creates an server.py file in the /api directory.
-    Required for running {PACKAGE.display_name} apps with ASGI or WSGI servers.
-    Note that the type of api gateway dependes on the SERVER_USE_ASGI setting.
-    """
+    """Generates api/server.py for ASGI/WSGI deployment."""
 
     @property
     def file_path(self) -> pathlib.Path:
-        """Return the path for the api/server.py."""
+        """Path to api/server.py."""
         return PROJECT.api_dir / "server.py"
 
     @property
     def data(self) -> str:
-        """Return template content for api/server.py."""
+        """Template content for api/server.py."""
         return (
             f"from {PACKAGE.name}.management.backends import SERVER_APPLICATION as application\n\n"
             "app = application\n"
@@ -40,11 +34,7 @@ class _ServerFileGenerator(FileGenerator):
 
 
 class _VercelFileGenerator(FileGenerator):
-    """Generator for Vercel configuration file (vercel.json).
-
-    Creates a vercel.json file in the base directory.
-    Useful for deploying to Vercel with custom install/build commands.
-    """
+    """Generates vercel.json for Vercel deployment."""
 
     @property
     def file_path(self) -> pathlib.Path:
@@ -52,7 +42,7 @@ class _VercelFileGenerator(FileGenerator):
 
     @property
     def data(self) -> str:
-        """Return template content for vercel.json."""
+        """Template content for vercel.json."""
         lines = [
             "{",
             '  "$schema": "https://openapi.vercel.sh/vercel.json",',
@@ -71,21 +61,16 @@ class _VercelFileGenerator(FileGenerator):
 
 
 class _EnvFileGenerator(FileGenerator):
-    """Generator for environment configuration file (.env.example).
-
-    Creates a .env.example file in the base directory with all
-    possible environment variables from configuration classes.
-    All variables are commented out by default.
-    """
+    """Generates .env.example with all available env vars."""
 
     @property
     def file_path(self) -> pathlib.Path:
-        """Return the path for the .env.example file."""
+        """Path to .env.example."""
         return PROJECT.base_dir / ".env.example"
 
     @property
     def data(self) -> str:
-        """Generate .env file content based on all ConfFields from Conf subclasses."""
+        """Build .env.example content from all ConfField definitions."""
         from ..settings.config import SettingConf
 
         lines: list[str] = []
@@ -145,7 +130,7 @@ class _EnvFileGenerator(FileGenerator):
         return "\n".join(lines)
 
     def _add_header(self) -> list[str]:
-        """Add header to the .env.example file."""
+        """File header lines."""
         lines: list[str] = []
         lines.append("# " + "=" * 78)
         lines.append(f"# {PACKAGE.display_name} Environment Configuration")
@@ -159,7 +144,7 @@ class _EnvFileGenerator(FileGenerator):
         return lines
 
     def _add_section_header(self, class_name: str) -> list[str]:
-        """Add section header for a configuration class."""
+        """Section header for a config class."""
         lines: list[str] = []
         lines.append("# " + "-" * 78)
         lines.append(f"# {class_name} Configuration")
@@ -168,7 +153,7 @@ class _EnvFileGenerator(FileGenerator):
         return lines
 
     def _add_footer(self) -> list[str]:
-        """Add footer to the .env.example file."""
+        """File footer lines."""
         lines: list[str] = []
         lines.append("# " + "=" * 78)
         lines.append("# End of Configuration")
@@ -176,11 +161,11 @@ class _EnvFileGenerator(FileGenerator):
         return lines
 
     def _format_choices(self, choices: list[str]) -> str:
-        """Format choices as 'choice1' | 'choice2' | 'choice3'."""
+        """Format choices as quoted alternatives."""
         return " | ".join(f'"{choice}"' for choice in choices)
 
     def _get_type_example(self, field_type: type) -> str:
-        """Get example value for a field type."""
+        """Return example value string for a field type."""
         match field_type:
             case builtins.bool:
                 return '"true" | "false"'
@@ -198,14 +183,14 @@ class _EnvFileGenerator(FileGenerator):
     def _format_variable_hint(
         self, env_var: str, choices_key: list[str] | None, field_type: type
     ) -> str:
-        """Format variable hint showing proper syntax based on type."""
+        """Format a variable hint showing expected syntax."""
         if choices_key:
             return f"{env_var}={self._format_choices(choices_key)}"
         else:
             return f"{env_var}={self._get_type_example(field_type)}"
 
     def _format_default_value(self, value: Any, field_type: type) -> str:
-        """Format default value for display in comments."""
+        """Format a default value for display in comments."""
         if value is None:
             return "(none)"
 

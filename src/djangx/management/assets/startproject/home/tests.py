@@ -1,4 +1,4 @@
-"""Tests for home app."""
+"""Home app tests."""
 
 # from django.test import TestCase
 

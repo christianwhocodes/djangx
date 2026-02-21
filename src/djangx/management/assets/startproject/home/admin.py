@@ -1,4 +1,4 @@
-"""Admin configuration for home app."""
+"""Home app admin."""
 
 # from django.contrib import admin
 

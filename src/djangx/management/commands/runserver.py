@@ -1,4 +1,4 @@
-"""Custom runserver command with Tailwind CSS watch integration."""
+"""Custom runserver with Tailwind CSS watch integration."""
 
 import signal
 from threading import Event, Thread
@@ -15,7 +15,7 @@ from .tailwind import BuildHandler, CleanHandler, WatchHandler
 
 
 class Command(RunserverCommand):
-    """Development server with Tailwind CSS watch support."""
+    """Development server with Tailwind CSS watch."""
 
     help = "Development server"
 
@@ -77,12 +77,12 @@ class Command(RunserverCommand):
             self._cleanup_watcher()
 
     def inner_run(self, *args: Any, **options: Any) -> None:
-        """Run before the development server starts."""
+        """Prepare Tailwind before starting the server."""
         self._prepare_tailwind()
         return super().inner_run(*args, **options)  # pyright: ignore
 
     def check_migrations(self) -> None:
-        """Check for unapplied migrations and display a warning."""
+        """Warn about unapplied migrations."""
         from django.core.exceptions import ImproperlyConfigured
         from django.db import DEFAULT_DB_ALIAS, connections
         from django.db.migrations.executor import MigrationExecutor
@@ -107,7 +107,7 @@ class Command(RunserverCommand):
         self.stdout.write(self.style.NOTICE(f"Run {PACKAGE.name} migrate to apply them."))
 
     def on_bind(self, server_port: int) -> None:
-        """Display server startup information."""
+        """Display startup banner and server info."""
         self._print_startup_banner()
         self._print_server_info(server_port)
 
@@ -119,13 +119,13 @@ class Command(RunserverCommand):
     # ========== Signal Handling ==========
 
     def _setup_signal_handlers(self) -> None:
-        """Set up custom signal handlers for graceful shutdown."""
+        """Register custom handlers for graceful shutdown."""
         self._original_sigint_handler = signal.getsignal(signal.SIGINT)
         signal.signal(signal.SIGINT, self._handle_shutdown_signal)
         signal.signal(signal.SIGTERM, self._handle_shutdown_signal)
 
     def _handle_shutdown_signal(self, signum: int, frame: Any) -> None:
-        """Handle shutdown signals (Ctrl+C, SIGTERM) with proper synchronization."""
+        """Handle Ctrl+C / SIGTERM with proper cleanup."""
         # If already shutting down, ignore subsequent signals to let cleanup finish
         if self._shutdown_in_progress:
             return
@@ -147,7 +147,7 @@ class Command(RunserverCommand):
         raise KeyboardInterrupt
 
     def _cleanup_watcher(self) -> None:
-        """Stop the Tailwind watcher thread gracefully."""
+        """Stop the Tailwind watcher thread."""
         if not self._watcher_thread or not self._watcher_thread.is_alive():
             return
 
@@ -178,7 +178,7 @@ class Command(RunserverCommand):
     # ========== Tailwind Management ==========
 
     def _prepare_tailwind(self) -> None:
-        """Prepare Tailwind CSS before starting the server."""
+        """Clean, build, and optionally watch Tailwind CSS."""
         # Check if Tailwind source exists
         tailwind_available = TAILWIND.source.exists() and TAILWIND.source.is_file()
 
@@ -255,7 +255,7 @@ class Command(RunserverCommand):
         ArtPrinter(self).print_dev_server_banner()
 
     def _print_server_info(self, server_port: int) -> None:
-        """Print server and version information."""
+        """Print timestamp, version, and URL info."""
         self._print_timestamp()
         self._print_version()
         self._print_local_url(server_port)
@@ -264,7 +264,7 @@ class Command(RunserverCommand):
             self._print_network_url(server_port)
 
     def _print_timestamp(self) -> None:
-        """Print current date and time with timezone."""
+        """Print current date/time with timezone."""
         from django.utils import timezone
 
         tz = timezone.get_current_timezone()

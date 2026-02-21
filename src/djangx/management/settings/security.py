@@ -19,7 +19,7 @@ __all__: list[str] = [
 
 
 class _SecurityConf(SettingConf):
-    """Security-related configuration settings."""
+    """Security settings."""
 
     secret_key = ConfField(
         type=str,

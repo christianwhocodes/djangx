@@ -1,1 +1,1 @@
-"""Database migrations for home app."""
+"""Home app migrations."""

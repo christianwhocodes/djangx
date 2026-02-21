@@ -1,4 +1,4 @@
-"""Enumeration types for file generation."""
+"""File generation enums."""
 
 from enum import StrEnum
 
@@ -8,21 +8,7 @@ __all__: list[str] = ["FileGeneratorOptionEnum"]
 
 
 class FileGeneratorOptionEnum(StrEnum):
-    """File generation options.
-
-    These values are used with the framework's file generation system
-    to create various configuration and deployment files.
-
-    Inherited from christianwhocodes.generators:
-    - PG_SERVICE: PostgreSQL service configuration
-    - PGPASS: PostgreSQL password file
-    - SSH_CONFIG: SSH configuration
-
-    Framework-specific:
-    - ENV: Environment variables file
-    - SERVER: Server deployment file
-    - VERCEL: Vercel configuration
-    """
+    """Available file generation options."""
 
     PG_SERVICE = BaseFileGeneratorOption.PG_SERVICE.value
     PGPASS = BaseFileGeneratorOption.PGPASS.value

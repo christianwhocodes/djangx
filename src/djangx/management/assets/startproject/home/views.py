@@ -1,4 +1,4 @@
-"""Views for home app."""
+"""Home app views."""
 
 from django.views.generic.base import TemplateView
 

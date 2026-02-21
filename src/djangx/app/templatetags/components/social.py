@@ -1,4 +1,4 @@
-"""Template tags for social media components."""
+"""Social media component template tags."""
 
 # from typing import Any
 

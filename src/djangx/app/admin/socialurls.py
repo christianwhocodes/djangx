@@ -1,3 +1,3 @@
-"""Admin configuration for social URL models."""
+"""Social URLs admin."""
 
 __all__: list[str] = []

@@ -1,4 +1,4 @@
-"""Template tags for organization components."""
+"""Organization component template tags."""
 
 # from django import template
 # from django.templatetags.static import static

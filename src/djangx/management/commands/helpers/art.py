@@ -1,4 +1,4 @@
-"""ASCII art and formatting utilities for management commands."""
+"""ASCII art and terminal formatting for management commands."""
 
 from enum import IntEnum, StrEnum
 from shutil import get_terminal_size
@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 
 
 class ArtType(StrEnum):
-    """Enumeration of available ASCII art types."""
+    """Available ASCII art types."""
 
     RUN = "run"
     SERVER = "server"
@@ -16,42 +16,21 @@ class ArtType(StrEnum):
 
 
 class TerminalSize(IntEnum):
-    """Terminal size threshold for ASCII art.
-
-    Used to determine whether to display the full ASCII banner or a compact version.
-
-    Attributes:
-        THRESHOLD: Minimum terminal width (in columns) required for full ASCII art.
-
-    """
+    """Minimum terminal width for full ASCII art."""
 
     THRESHOLD = 60
 
 
 class ArtPrinter:
-    """Handles printing of ASCII art banners with terminal adaptation.
-
-    Provides consistent formatting and styling for ASCII art across
-    different management commands.
-    """
+    """Prints ASCII art banners adapted to terminal width."""
 
     def __init__(self, command: BaseCommand) -> None:
-        """Initialize the ASCII art printer.
-
-        Args:
-            command: The BaseCommand instance for stdout/styling.
-
-        """
+        """Set up command reference and terminal width."""
         self.command = command
         self.terminal_width = get_terminal_size(fallback=(80, 24)).columns
 
     def _get_run_art(self) -> list[str]:
-        """Get ASCII art based on terminal width.
-
-        Returns:
-            List of strings representing the ASCII art lines.
-
-        """
+        """RUN ASCII art lines."""
         if self.terminal_width >= TerminalSize.THRESHOLD:
             return [
                 "",
@@ -72,12 +51,7 @@ class ArtPrinter:
             ]
 
     def _get_server_art(self) -> list[str]:
-        """Get Server ASCII art based on terminal width.
-
-        Returns:
-            List of strings representing the ASCII art lines.
-
-        """
+        """SERVER ASCII art lines."""
         run_art = self._get_run_art()
 
         if self.terminal_width >= TerminalSize.THRESHOLD:
@@ -100,12 +74,7 @@ class ArtPrinter:
         return run_art + server_art
 
     def _get_build_art(self) -> list[str]:
-        """Get Build ASCII art based on terminal width.
-
-        Returns:
-            List of strings representing the ASCII art lines.
-
-        """
+        """BUILD ASCII art lines."""
         run_art = self._get_run_art()
 
         if self.terminal_width >= TerminalSize.THRESHOLD:
@@ -128,12 +97,7 @@ class ArtPrinter:
         return run_art + build_art
 
     def _get_install_art(self) -> list[str]:
-        """Get Install ASCII art based on terminal width.
-
-        Returns:
-            List of strings representing the ASCII art lines.
-
-        """
+        """INSTALL ASCII art lines."""
         run_art = self._get_run_art()
 
         if self.terminal_width >= TerminalSize.THRESHOLD:
@@ -156,18 +120,7 @@ class ArtPrinter:
         return run_art + install_art
 
     def _get_art(self, art_type: ArtType) -> list[str]:
-        """Get ASCII art lines for the specified type.
-
-        Args:
-            art_type: The type of ASCII art to retrieve.
-
-        Returns:
-            List of strings representing the ASCII art lines.
-
-        Raises:
-            ValueError: If an unknown art type is provided.
-
-        """
+        """Get ASCII art lines for the given type."""
         art_getters = {
             ArtType.RUN: self._get_run_art,
             ArtType.SERVER: self._get_server_art,
@@ -188,15 +141,7 @@ class ArtPrinter:
         subtitle: str | None = None,
         notice: str | None = None,
     ) -> None:
-        """Print a complete ASCII art banner with optional subtitle and notice.
-
-        Args:
-            art_type: The type of ASCII art to display.
-            title: Main title text (e.g., "🔥  Development Server  🔥").
-            subtitle: Optional subtitle text (e.g., warning messages).
-            notice: Optional notice text (e.g., "Press Ctrl-C to quit").
-
-        """
+        """Print an ASCII art banner with optional subtitle and notice."""
         art_lines = self._get_art(art_type)
 
         # Print ASCII art
@@ -236,14 +181,7 @@ class ArtPrinter:
     def print_run_process_banner(
         self, art_type: ArtType, display_mode: str, command_count: int
     ) -> None:
-        """Print a banner for command processes (build/install).
-
-        Args:
-            art_type: The type of ASCII art to display.
-            display_mode: The display mode text (e.g., "BUILD", "DRY RUN").
-            command_count: Number of commands to execute.
-
-        """
+        """Print a banner for build/install command processes."""
         if self.terminal_width >= TerminalSize.THRESHOLD:
             self._print_banner(
                 art_type=art_type,

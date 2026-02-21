@@ -1,4 +1,4 @@
-"""Startproject preset constants and database runtime configuration."""
+"""Startproject presets and database runtime configuration."""
 
 from typing import Final
 
@@ -104,7 +104,7 @@ PG_CONFIG_PRESETS: Final[dict[bool, PGConfigMethodDataclass]] = {
 
 
 class _DatabaseConf(SettingConf):
-    """Database configuration settings."""
+    """Database settings."""
 
     backend = ConfField(
         type=str,
@@ -169,7 +169,7 @@ _DATABASE = _DatabaseConf()
 
 
 def _get_databases_config() -> DatabasesDict:
-    """Generate databases configuration based on backend type."""
+    """Build the DATABASES setting based on configured backend."""
     backend: str = _DATABASE.backend.lower()
 
     match backend:

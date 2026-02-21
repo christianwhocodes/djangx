@@ -1,4 +1,4 @@
-"""Type definitions for storage backends."""
+"""Storage type definitions."""
 
 from typing import TypedDict
 
@@ -6,13 +6,13 @@ __all__: list[str] = ["StorageBackendDict", "StoragesDict"]
 
 
 class StorageBackendDict(TypedDict, total=False):
-    """Type definition for individual storage backend configuration."""
+    """Individual storage backend entry."""
 
     BACKEND: str
 
 
 class StoragesDict(TypedDict):
-    """Type definition for STORAGES setting."""
+    """STORAGES setting dict."""
 
     staticfiles: StorageBackendDict
     default: StorageBackendDict

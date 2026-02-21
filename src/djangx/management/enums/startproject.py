@@ -1,4 +1,4 @@
-"""Enumeration types for startproject command."""
+"""Startproject enums."""
 
 from enum import StrEnum
 
@@ -9,27 +9,14 @@ __all__: list[str] = [
 
 
 class PresetEnum(StrEnum):
-    """Available project preset configurations.
-
-    These values are used in:
-    - CLI flags (--preset)
-    - Interactive prompts
-    - STARTPROJECT_PRESETS mapping
-    """
+    """Available project presets."""
 
     DEFAULT = "default"
     VERCEL = "vercel"
 
 
 class DatabaseEnum(StrEnum):
-    """Available database backends.
-
-    These values are used in:
-    - CLI flags (--database)
-    - Interactive prompts
-    - pyproject.toml configuration
-    - DATABASE_CONFIGS mapping (mappings.py)
-    """
+    """Available database backends."""
 
     SQLITE3 = "sqlite3"
     POSTGRESQL = "postgresql"

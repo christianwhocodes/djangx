@@ -1,1 +1,1 @@
-"""Home app package for startproject template."""
+"""Home app package."""

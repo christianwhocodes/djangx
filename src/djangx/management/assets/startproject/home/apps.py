@@ -1,9 +1,9 @@
-"""App configuration for home app."""
+"""Home app configuration."""
 
 from django.apps import AppConfig
 
 
 class HomeConfig(AppConfig):
-    """App configuration for the home app."""
+    """Home app config."""
 
     name = "home"

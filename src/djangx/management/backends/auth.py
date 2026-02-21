@@ -1,4 +1,4 @@
-"""Custom authentication backends for Django."""
+"""Custom authentication backends."""
 
 from typing import TYPE_CHECKING, Any
 
@@ -15,7 +15,7 @@ __all__: list[str] = ["UsernameOrEmailBackend"]
 
 
 class UsernameOrEmailBackend(ModelBackend):
-    """Custom authentication backend that allows users to login with either username or email."""
+    """Allows login with either username or email."""
 
     def authenticate(
         self,

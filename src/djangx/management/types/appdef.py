@@ -1,4 +1,4 @@
-"""Type definitions for Django apps configuration."""
+"""App configuration type definitions."""
 
 from pathlib import Path
 from typing import NotRequired, TypeAlias, TypedDict
@@ -7,7 +7,7 @@ __all__: list[str] = ["TemplatesDict"]
 
 
 class _TemplateOptionsDict(TypedDict):
-    """Template configuration options."""
+    """Template OPTIONS dict."""
 
     context_processors: list[str]
     builtins: NotRequired[list[str]]
@@ -15,7 +15,7 @@ class _TemplateOptionsDict(TypedDict):
 
 
 class _TemplateDict(TypedDict):
-    """Template configuration."""
+    """Single TEMPLATES entry."""
 
     BACKEND: str
     DIRS: list[Path]

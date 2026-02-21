@@ -1,4 +1,4 @@
-"""URL configuration for home app."""
+"""Home app URLs."""
 
 from django.contrib import admin
 from django.urls import URLPattern, URLResolver, path

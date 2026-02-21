@@ -1,4 +1,4 @@
-"""Utility functions for startproject command."""
+"""Startproject validation utilities."""
 
 from ..enums import DatabaseEnum, PresetEnum
 from ..settings import PG_CONFIG_PRESETS, STARTPROJECT_PRESETS
@@ -12,23 +12,7 @@ __all__: list[str] = [
 def validate_preset_database_compatibility(
     preset: PresetEnum, database: DatabaseEnum
 ) -> tuple[bool, str]:
-    """Validate that a database backend is compatible with a preset.
-
-    Args:
-        preset: The chosen preset type
-        database: The chosen database backend
-
-    Returns:
-        Tuple of (is_valid, error_message). error_message is empty if valid.
-
-    Example:
-        >>> is_valid, error = validate_preset_database_compatibility(
-        ...     PresetType.VERCEL, DatabaseBackend.SQLITE3
-        ... )
-        >>> print(is_valid)  # False
-        >>> print(error)  # "Vercel preset requires PostgreSQL database..."
-
-    """
+    """Check if a database backend is compatible with a preset."""
     preset_config = STARTPROJECT_PRESETS[preset]
 
     if preset_config.required_database is None:
@@ -45,23 +29,7 @@ def validate_preset_database_compatibility(
 
 
 def validate_pg_config_compatibility(preset: PresetEnum, pg_env_vars: bool) -> tuple[bool, str]:
-    """Validate that a PostgreSQL config method is compatible with a preset.
-
-    Args:
-        preset: The chosen preset type
-        pg_env_vars: Whether using environment variables for PostgreSQL
-
-    Returns:
-        Tuple of (is_valid, error_message). error_message is empty if valid.
-
-    Example:
-        >>> is_valid, error = validate_pg_config_compatibility(
-        ...     PresetType.VERCEL, False
-        ... )
-        >>> print(is_valid)  # False
-        >>> print(error)  # "Vercel preset requires environment variables..."
-
-    """
+    """Check if a PG config method is compatible with a preset."""
     preset_config = STARTPROJECT_PRESETS[preset]
 
     if preset_config.required_pg_config is None:

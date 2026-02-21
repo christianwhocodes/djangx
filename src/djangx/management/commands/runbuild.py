@@ -1,9 +1,4 @@
-"""Management command for executing build operations.
-
-Executes build commands.
-Supports dry-run mode for previewing commands before execution
-and continues running remaining commands even if one fails.
-"""
+"""Management command for executing build operations."""
 
 from typing import Any
 
@@ -38,12 +33,7 @@ class Command(BaseCommand):
     help = "Execute build commands"
 
     def add_arguments(self, parser: CommandParser) -> None:
-        """Define command-line arguments.
-
-        Args:
-            parser: The argument parser to add arguments to.
-
-        """
+        """Define command-line arguments."""
         parser.add_argument(
             "--dry",
             "--dry-run",
@@ -53,18 +43,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args: Any, **options: Any) -> None:
-        """Handle the runbuild command execution.
-
-        Retrieves build commands, validates them,
-        and either displays them (dry-run) or executes them sequentially.
-        Continues execution even if individual commands fail.
-
-        Args:
-            *args: Unused positional arguments.
-            **options: Command options including:
-                - dry_run (bool): If True, show commands without executing.
-
-        """
+        """Run configured build commands."""
         dry_run: bool = options.get("dry_run", False)
         generator = _BuildCommandGenerator(self)
         generator.generate(dry_run=dry_run)

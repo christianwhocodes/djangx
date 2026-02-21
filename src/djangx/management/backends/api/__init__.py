@@ -1,4 +1,4 @@
-"""API backend configuration (ASGI/WSGI)."""
+"""API backend (ASGI/WSGI)."""
 
 from os import environ
 

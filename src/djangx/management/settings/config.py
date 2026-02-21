@@ -1,4 +1,4 @@
-"""Configuration management utilities."""
+"""Configuration field descriptors and base settings class."""
 
 import builtins
 import pathlib
@@ -15,20 +15,7 @@ _ConfDefaultValueType: TypeAlias = str | bool | list[str] | pathlib.Path | int |
 
 
 class ConfField:
-    """Configuration field descriptor.
-
-    This class defines a configuration field that can be populated from either
-    environment variables or TOML configuration files.
-
-    Args:
-        env: Environment variable name to read from
-        toml: TOML key path (dot-separated) to read from
-        default: Default value if not found in env or TOML
-        type: Type to convert the value to. Supports:
-            - str, bool, pathlib.Path
-            - list[str] for list of strings
-
-    """
+    """Descriptor for a configuration field populated from env vars or TOML."""
 
     def __init__(
         self,
@@ -38,7 +25,7 @@ class ConfField:
         toml: str | None = None,
         default: _ConfDefaultValueType = None,
     ):
-        """Initialize a configuration field descriptor."""
+        """Set up field type, source mappings, and default value."""
         self.type = type
         self.choices = choices
         self.env = env
@@ -47,12 +34,7 @@ class ConfField:
 
     @property
     def as_dict(self) -> dict[str, Any]:
-        """Convert the ConfField to a dictionary representation.
-
-        Returns:
-            Dictionary containing all field configuration
-
-        """
+        """Dictionary representation of the field."""
         return {
             "env": self.env,
             "toml": self.toml,
@@ -68,20 +50,7 @@ class ConfField:
     def convert_value(
         value: Any, target_type: Any, field_name: str | None = None
     ) -> _ConfDefaultValueType:
-        """Convert the raw value to the appropriate type.
-
-        Args:
-            value: Raw value from env or TOML
-            target_type: The type to convert to
-            field_name: Name of the field (for error messages)
-
-        Returns:
-            Converted value of the appropriate type
-
-        Raises:
-            ValueError: If conversion fails
-
-        """
+        """Convert a raw value to the target type."""
         from christianwhocodes import TypeConverter
 
         if value is None:
@@ -126,7 +95,7 @@ class ConfField:
 
 
 class SettingConf:
-    """Base configuration class that handles loading from environment variables and TOML files."""
+    """Base class for loading settings from env vars and TOML."""
 
     # Track all Conf subclasses
     _subclasses: list[type["SettingConf"]] = []
@@ -169,10 +138,7 @@ class SettingConf:
     # ============================================================================
 
     def __init_subclass__(cls) -> None:
-        """Convert ConfField descriptors to properties when a subclass is created.
-
-        This is called automatically when a subclass is created.
-        """
+        """Convert ConfField descriptors to properties on subclass creation."""
         super().__init_subclass__()
 
         # Register this subclass
@@ -230,12 +196,7 @@ class SettingConf:
 
     @classmethod
     def get_env_fields(cls) -> list[dict[str, Any]]:
-        """Collect all ConfField definitions that use environment variables.
-
-        Returns:
-            List of dicts containing class, env key, toml key, choices key, default key and type key for each field.
-
-        """
+        """Collect all ConfField definitions that use environment variables."""
         env_fields: list[dict[str, Any]] = []
 
         for subclass in cls._subclasses:

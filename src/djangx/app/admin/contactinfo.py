@@ -1,3 +1,3 @@
-"""Admin configuration for contact information models."""
+"""Contact info admin."""
 
 __all__: list[str] = []

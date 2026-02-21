@@ -1,4 +1,4 @@
-"""Custom storage backends for Django."""
+"""Custom storage backends."""
 
 from django.core.files.base import ContentFile, File
 from django.core.files.storage import Storage
@@ -12,10 +12,10 @@ __all__: list[str] = ["VercelBlobStorageBackend"]
 
 @deconstructible
 class VercelBlobStorageBackend(Storage):
-    """Custom storage backend for Vercel Blob."""
+    """Storage backend for Vercel Blob."""
 
     def __init__(self) -> None:
-        """Initialize Vercel Blob storage client."""
+        """Set up Vercel Blob client."""
         self.client: BlobClient = BlobClient(BLOB_READ_WRITE_TOKEN)
 
     def _save(self, name: str, content: File) -> str:
@@ -77,10 +77,10 @@ class VercelBlobStorageBackend(Storage):
         return listing.blobs[0].size
 
     def get_valid_name(self, name: str) -> str:
-        """Return a filename suitable for use with the storage system."""
+        """Return a valid filename for storage."""
         return name
 
     def get_available_name(self, name: str, max_length: int | None = None) -> str:
-        """Return a filename that's free on the storage system."""
+        """Return an available filename (Vercel handles uniqueness)."""
         # Vercel Blob handles uniqueness with add_random_suffix
         return name
