@@ -3,9 +3,9 @@
 from typing import Final
 
 from ... import PACKAGE, PROJECT
+from .. import ConfField, ManagementConf
 from ..enums import AppEnum, ContextProcessorEnum, MiddlewareEnum
 from ..types import TemplatesDict
-from .config import ConfField, SettingConf
 
 # TODO: Refactor so that the user can specify the order of apps, middleware, and context processors more flexibly.
 
@@ -21,7 +21,7 @@ __all__: list[str] = [
 # ============================================================================
 
 
-class _AppsConf(SettingConf):
+class _AppsConf(ManagementConf):
     """Installed applications settings."""
 
     extend = ConfField(
@@ -38,7 +38,7 @@ class _AppsConf(SettingConf):
     )
 
 
-class _MiddlewareConf(SettingConf):
+class _MiddlewareConf(ManagementConf):
     """Middleware settings."""
 
     extend = ConfField(
@@ -55,7 +55,7 @@ class _MiddlewareConf(SettingConf):
     )
 
 
-class _ContextProcessorsConf(SettingConf):
+class _ContextProcessorsConf(ManagementConf):
     """Context processors settings."""
 
     extend = ConfField(

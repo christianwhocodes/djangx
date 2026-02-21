@@ -5,6 +5,7 @@ from typing import Final
 from christianwhocodes import PgConfigFilesEnum
 
 from ... import PACKAGE, PROJECT
+from .. import ConfField, ManagementConf
 from ..enums import DatabaseEnum, PresetEnum
 from ..types import (
     DatabaseDataclass,
@@ -14,7 +15,6 @@ from ..types import (
     PGConfigMethodDataclass,
     PresetDataclass,
 )
-from .config import ConfField, SettingConf
 
 __all__: list[str] = [
     "DATABASE_PRESETS",
@@ -103,7 +103,7 @@ PG_CONFIG_PRESETS: Final[dict[bool, PGConfigMethodDataclass]] = {
 # ==============================================================================
 
 
-class _DatabaseConf(SettingConf):
+class _DatabaseConf(ManagementConf):
     """Database settings."""
 
     backend = ConfField(

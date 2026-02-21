@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from ... import PACKAGE, PROJECT
-from .config import ConfField, SettingConf
+from .. import ConfField, ManagementConf
 
 __all__: list[str] = [
     "TAILWIND",
@@ -12,7 +12,7 @@ __all__: list[str] = [
 ]
 
 
-class _TailwindConf(SettingConf):
+class _TailwindConf(ManagementConf):
     """Tailwind CSS settings."""
 
     _default_version = "v4.2.0"

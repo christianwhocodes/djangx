@@ -71,7 +71,7 @@ class _EnvFileGenerator(FileGenerator):
     @property
     def data(self) -> str:
         """Build .env.example content from all ConfField definitions."""
-        from ..settings.config import SettingConf
+        from .. import ManagementConf
 
         lines: list[str] = []
 
@@ -79,7 +79,7 @@ class _EnvFileGenerator(FileGenerator):
         lines.extend(self._add_header())
 
         # Get all fields from Conf subclasses
-        env_fields = SettingConf.get_env_fields()
+        env_fields = ManagementConf.get_env_fields()
 
         # Group fields by class
         fields_by_class: dict[str, list[dict[str, Any]]] = {}
