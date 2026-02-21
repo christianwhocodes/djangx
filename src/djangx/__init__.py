@@ -1,209 +1,170 @@
 """Initialization."""
 
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
+from functools import cached_property
 from os import environ
 from pathlib import Path
-from typing import Any, ClassVar, Final
+from typing import Any, Final
 
 from christianwhocodes import ExitCode, Text, print
 
 __all__: list[str] = [
     "PACKAGE",
     "PROJECT",
+    "ProjectValidationError",
 ]
 
 
-class _SkippedArgsEnum(StrEnum):
+# ============================================================================
+# Helpers
+# ============================================================================
+
+
+class ProjectValidationError(Exception):
+    """Raised when the current directory is not a valid project."""
+
+
+class _SkipArgsEnum(StrEnum):
     STARTPROJECT = "startproject"
     INIT = "init"
     NEW = "new"
 
 
-_SKIP_ARGS: Final[set[_SkippedArgsEnum]] = {
-    _SkippedArgsEnum.STARTPROJECT,
-    _SkippedArgsEnum.INIT,
-    _SkippedArgsEnum.NEW,
-}
-
-
 # ============================================================================
-# Package & Project Configuration
+# Package Configuration
 # ============================================================================
 
 
 @dataclass(frozen=True)
 class _PackageInfo:
-    """Package configuration."""
+    """Package configuration (The toolkit itself)."""
 
-    version: Final[str]
-    """The package version, retrieved from metadata."""
+    base_dir: Path = field(default_factory=lambda: Path(__file__).parent.resolve())
 
-    base_dir: Final[Path]
-    """The root directory of the package."""
+    @property
+    def name(self) -> str:
+        """The package name (derived from base_dir) - djangx."""
+        return self.base_dir.name
 
-    main_app_dir: Final[Path]
-    """Path to the `app` application directory."""
+    @property
+    def display_name(self) -> str:
+        """Human-readable display name for the package - DjangX."""
+        return f"{self.name[0].upper()}{self.name[1:-1]}{self.name[-1].upper()}"
 
-    name: Final[str]
-    """The package name (derived from base_dir)."""
-
-    display_name: Final[str]
-    """Human-readable display name for the package."""
-
-    main_app_name: Final[str]
-    """Name of the `app` application."""
-
-    settings_module: Final[str]
-    """Django Settings Module"""
-
-    @classmethod
-    def create(cls) -> "_PackageInfo":
-        """Create _PackageInfo with default package values.
-
-        Returns:
-            _PackageInfo instance configured for the current package.
-
-        """
+    @cached_property
+    def version(self) -> str:
+        """The package version, retrieved lazily from metadata."""
         from christianwhocodes import Version
 
-        base_dir = Path(__file__).parent.resolve()
-        name = base_dir.name
-        main_app_dir = base_dir / "app"
-        return cls(
-            version=Version.get(name)[0],
-            base_dir=base_dir,
-            main_app_dir=main_app_dir,
-            name=name,  # djangx
-            display_name=name[0].upper() + name[1:-1] + name[-1].upper(),  # DjangX
-            main_app_name=main_app_dir.name,  # app
-            settings_module=f"{name}.management.settings",
-        )
+        return Version.get(self.name)[0]
+
+    @property
+    def main_app_dir(self) -> Path:
+        """Path to the `app` application directory."""
+        return self.base_dir / "app"
+
+    @property
+    def main_app_name(self) -> str:
+        """Name of the `app` application."""
+        return self.main_app_dir.name
+
+    @property
+    def settings_module(self) -> str:
+        """Django Settings Module."""
+        return f"{self.name}.management.settings"
 
 
-PACKAGE = _PackageInfo.create()
-"""Package configuration instance."""
+PACKAGE: Final = _PackageInfo()
 
 
+# ============================================================================
+# Project Configuration
+# ============================================================================
+
+
+@dataclass(frozen=True)
 class _ProjectInfo:
-    _toml_section: ClassVar[dict[str, Any] | None] = None
-    _is_validated: ClassVar[bool] = False
-    _base_dir: ClassVar[Path] = Path.cwd()
+    """Project configuration based on current working directory."""
 
-    @classmethod
-    def _should_skip_validation(cls) -> bool:
-        """Check if the current command should skip project validation."""
-        return len(sys.argv) > 1 and sys.argv[1] in _SKIP_ARGS
+    base_dir: Path = field(default_factory=Path.cwd)
+    # Track validation state via a list to allow mutation in a frozen dataclass
+    _validated: list[bool] = field(default_factory=lambda: [False], init=False, repr=False)
 
-    def __init__(self):
-        """Initialize and validate project on first instantiation."""
-        if not self._is_validated and not self._should_skip_validation():
-            self._load_project()
+    @property
+    def init_name(self) -> str:
+        return self.base_dir.name
 
-        self.base_dir: Final[Path] = self._base_dir
-        self.init_name: Final[str] = self.base_dir.name
-        self.home_app_dir: Final[Path] = self.base_dir / "home"
-        self.home_app_exists: Final[bool] = self.home_app_dir.exists() and self.home_app_dir.is_dir()
-        self.home_app_name: Final[str] = self.home_app_dir.name
-        self.public_dir: Final[Path] = self.base_dir / "public"
-        self.api_dir: Final[Path] = self.base_dir / "api"
+    @property
+    def home_app_dir(self) -> Path:
+        return self.base_dir / "home"
 
-    @classmethod
-    def _check_pyproject_toml(cls) -> dict[str, Any]:
-        f"""
-        Validate and extract 'tool.{PACKAGE.name}' configuration from 'pyproject.toml'.
+    @property
+    def home_app_exists(self) -> bool:
+        return self.home_app_dir.exists() and self.home_app_dir.is_dir()
 
-        Returns:
-            The 'tool.{PACKAGE.name}' configuration section from 'pyproject.toml'
+    @property
+    def home_app_name(self) -> str:
+        return self.home_app_dir.name
 
-        Raises:
-            FileNotFoundError: If 'pyproject.toml' doesn't exist
-            KeyError: If 'tool.{PACKAGE.name}' section is missing
-        """
+    @property
+    def public_dir(self) -> Path:
+        return self.base_dir / "public"
+
+    @property
+    def api_dir(self) -> Path:
+        return self.base_dir / "api"
+
+    @cached_property
+    def toml(self) -> dict[str, Any]:
+        """Get TOML configuration section. Evaluated lazily and cached."""
         from christianwhocodes import PyProject
 
-        pyproject_path = cls._base_dir / "pyproject.toml"
+        pyproject_path = self.base_dir / "pyproject.toml"
 
         if not pyproject_path.exists():
             raise FileNotFoundError(f"pyproject.toml not found at {pyproject_path}")
 
         tool_section = PyProject(pyproject_path).data.get("tool", {})
-
-        if PACKAGE.name in tool_section:
-            return tool_section[PACKAGE.name]
-        else:
+        if PACKAGE.name not in tool_section:
             raise KeyError(f"Missing 'tool.{PACKAGE.name}' section in pyproject.toml")
 
-    @classmethod
-    def _load_project(cls) -> None:
-        """Load and validate project configuration.
+        return tool_section[PACKAGE.name]
 
-        Attempts to read and validate the pyproject.toml file. On success, stores
-        the TOML configuration section. On failure, prints diagnostic messages
-        and exits with an error code.
-        """
-        try:
-            toml_section = cls._check_pyproject_toml()
-
-        except (FileNotFoundError, KeyError, ValueError) as e:
-            cls._is_validated = False
-            print(f"Not in a valid {PACKAGE.display_name} project directory.", Text.ERROR)
-            print(
-                f"A valid project requires: pyproject.toml with a 'tool.{PACKAGE.name}' section (even if empty)",
-                Text.INFO,
-            )
-            print(
-                [
-                    ("Create a new project: ", None),
-                    (f"uvx {PACKAGE.name} startproject (if uv is installed.)", Text.HIGHLIGHT),
-                ]
-            )
-            print(f"Validation error: {e}")
-
-        except Exception as e:
-            cls._is_validated = False
-            print(
-                f"Unexpected error during project validation:\n{e}",
-                Text.WARNING,
-            )
-
-        else:
-            # Success - store configuration
-            cls._is_validated = True
-            cls._toml_section = toml_section
-
-        finally:
-            if not cls._is_validated:
-                sys.exit(ExitCode.ERROR)
-
-    @property
+    @cached_property
     def env(self) -> dict[str, Any]:
-        """Get combined .env and environment variables as a dictionary."""
+        """Get combined .env and environment variables. Evaluated lazily."""
+        self.validate()
         from dotenv import dotenv_values
 
-        if not self._is_validated:
-            if self._should_skip_validation():
-                return dict(environ)
-            self._load_project()
-        return {
-            **dotenv_values(self.base_dir / ".env"),
-            **environ,  # override loaded values with environment variables
-        }
+        return {**dotenv_values(self.base_dir / ".env"), **environ}
 
-    @property
-    def toml(self) -> dict[str, Any]:
-        """Get TOML configuration section."""
-        if not self._is_validated:
-            if self._should_skip_validation():
-                return {}
-            self._load_project()
-        assert self._toml_section is not None
-        return self._toml_section
+    def validate(self) -> None:
+        """Check if the current directory is a valid project.
+
+        Triggers once. In CLI, we catch the exception for pretty printing.
+        In Production, this will bubble up to the WSGI/ASGI server.
+        """
+        if self._validated[0]:
+            return
+
+        # Avoid validation during project creation commands
+        skip_cmds = set(_SkipArgsEnum)
+        if any(arg in sys.argv for arg in skip_cmds):
+            self._validated[0] = True
+            return
+
+        try:
+            _ = self.toml
+        except (FileNotFoundError, KeyError) as e:
+            raise ProjectValidationError(str(e)) from e
+
+        self._validated[0] = True
 
 
-PROJECT = _ProjectInfo()
-"""Project configuration instance based on current working directory."""
+PROJECT: Final = _ProjectInfo()
+
 
 # ============================================================================
 # CLI
@@ -211,55 +172,42 @@ PROJECT = _ProjectInfo()
 
 
 def main() -> None:
-    """Execute the CLI.
-
-    Routes commands to appropriate handlers using pattern matching.
-    Falls back to Management utility for standard commands.
-
-    Command routing:
-    - version/-v/--version: Display package version
-    - startproject/init/new: Initialize new project
-    - *: Delegate to Management utility commands (runserver, migrate, etc.)
-    """
+    """Execute the CLI."""
     if len(sys.argv) < 2:
         print("No arguments passed.", Text.ERROR)
         sys.exit(ExitCode.ERROR)
 
-    match sys.argv[1]:
-        # ====================================================================
-        # Version Display
-        # ====================================================================
+    command = sys.argv[1]
+
+    match command:
         case "-v" | "--version" | "version":
             from christianwhocodes import print_version
 
             sys.exit(print_version(PACKAGE.name))
 
-        # ====================================================================
-        # Project Initialization
-        # ====================================================================
-        case _SkippedArgsEnum.STARTPROJECT | _SkippedArgsEnum.INIT | _SkippedArgsEnum.NEW:
+        case _SkipArgsEnum.STARTPROJECT | _SkipArgsEnum.INIT | _SkipArgsEnum.NEW:
             from .management.commands import handle_startproject
 
             sys.exit(handle_startproject())
 
-        # ====================================================================
-        # Management Utility Commands (Fallback)
-        # ====================================================================
-        # All other commands are passed to Management utility
-        # Examples: runserver, migrate, makemigrations, shell, etc.
         case _:
-            from django.core.management import ManagementUtility
+            try:
+                PROJECT.validate()
+            except ProjectValidationError as e:
+                print(f"Not in a valid {PACKAGE.display_name} project directory: {e}", Text.ERROR)
+                sys.exit(ExitCode.ERROR)
+            except Exception as e:
+                print(f"Unexpected error during project validation:\n{e}", Text.WARNING)
+                sys.exit(ExitCode.ERROR)
+            else:
+                from django.core.management import ManagementUtility
 
-            # Add project directory to Python path for imports
-            sys.path.insert(0, str(PROJECT.base_dir))
+                sys.path.insert(0, str(PROJECT.base_dir))
+                environ.setdefault("DJANGO_SETTINGS_MODULE", PACKAGE.settings_module)
 
-            # Set default settings module
-            environ.setdefault("DJANGO_SETTINGS_MODULE", PACKAGE.settings_module)
-
-            # Create and execute Management utility
-            utility = ManagementUtility(sys.argv)
-            utility.prog_name = PACKAGE.name
-            utility.execute()
+                utility = ManagementUtility(sys.argv)
+                utility.prog_name = PACKAGE.name
+                utility.execute()
 
 
 if __name__ == "__main__":

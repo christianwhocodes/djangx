@@ -10,16 +10,9 @@ This script:
 Run with --dry or --dry-run to preview the git commands without executing them.
 """
 
-from argparse import ArgumentParser, Namespace, RawDescriptionHelpFormatter
-from pathlib import Path
 from subprocess import CalledProcessError, run
-from sys import exit
-from tomllib import TOMLDecodeError
-from typing import NoReturn
-from urllib.parse import urlparse
 
-from christianwhocodes.core import ExitCode, PyProject
-from christianwhocodes.io import Text, print
+from christianwhocodes import ExitCode, PyProject, Text, print
 
 
 class GitPublisher:
@@ -56,6 +49,8 @@ class GitPublisher:
         - https://github.com/user/repo
         - https://github.com/user/repo.git
         """
+        from urllib.parse import urlparse
+
         raw = raw.strip()
 
         # SSH-style: git@github.com:user/repo.git
@@ -111,11 +106,15 @@ class GitPublisher:
 # =========================================================
 def tag_and_push(dry_run: bool = False) -> ExitCode:
     """Create git tag and push to trigger publishing workflow."""
+    from tomllib import TOMLDecodeError
+
     if dry_run:
         print("DRY RUN MODE - no changes will be made\n", Text.INFO)
 
     try:
-        pyproject = PyProject(Path(__file__).resolve().parent.parent.parent / "pyproject.toml")
+        from pathlib import Path
+
+        pyproject = PyProject(Path(__file__).parent.parent.parent.resolve() / "pyproject.toml")
 
         version = pyproject.version
 
@@ -163,8 +162,11 @@ def tag_and_push(dry_run: bool = False) -> ExitCode:
         return ExitCode.SUCCESS
 
 
-def main() -> NoReturn:
+def main() -> None:
     """Parse command-line arguments and execute tag and push operation."""
+    from argparse import ArgumentParser, Namespace, RawDescriptionHelpFormatter
+    from sys import exit
+
     parser = ArgumentParser(
         description="Create and push git tag to trigger publishing workflow",
         formatter_class=RawDescriptionHelpFormatter,
