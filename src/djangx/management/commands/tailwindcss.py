@@ -10,9 +10,14 @@ from christianwhocodes.io import Text, print
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 from ... import PACKAGE
-from ..settings import TAILWIND
+from ..settings import TAILWINDCSS
 
-__all__: list[str] = ["InstallHandler", "BuildHandler", "WatchHandler", "CleanHandler"]
+__all__: list[str] = [
+    "InstallHandler",
+    "BuildHandler",
+    "WatchHandler",
+    "CleanHandler",
+]
 
 
 class _TailwindValidator:
@@ -156,8 +161,8 @@ class InstallHandler:
     def install(self, force: bool = False, use_cache: bool = False) -> None:
         """Install the Tailwind CLI binary."""
         platform = Platform()
-        cli_path = TAILWIND.cli
-        version = TAILWIND.version
+        cli_path = TAILWINDCSS.cli
+        version = TAILWINDCSS.version
 
         if self.verbose:
             self._display_platform_info(platform)
@@ -298,9 +303,9 @@ class BuildHandler(_TailwindExecutor):
 
     def build(self, skip_if_no_source: bool = False) -> bool:
         """Build the Tailwind output CSS file."""
-        cli_path = TAILWIND.cli
-        source_css = TAILWIND.source
-        output_css = TAILWIND.output
+        cli_path = TAILWINDCSS.cli
+        source_css = TAILWINDCSS.source
+        output_css = TAILWINDCSS.output
 
         # Validate source file
         if not self.validator.validate_source_file(source_css, required=not skip_if_no_source):
@@ -332,9 +337,9 @@ class WatchHandler(_TailwindExecutor):
 
     def watch(self, skip_if_no_source: bool = False, stop_event: Event | None = None) -> bool:
         """Watch source files and rebuild on changes."""
-        cli_path = TAILWIND.cli
-        source_css = TAILWIND.source
-        output_css = TAILWIND.output
+        cli_path = TAILWINDCSS.cli
+        source_css = TAILWINDCSS.source
+        output_css = TAILWINDCSS.output
 
         self.validator.validate_cli_exists(cli_path)
 
@@ -441,7 +446,7 @@ class CleanHandler:
 
     def clean(self) -> None:
         """Delete the Tailwind output CSS file."""
-        output_css = TAILWIND.output
+        output_css = TAILWINDCSS.output
 
         if not output_css.exists():
             if self.verbose:

@@ -1,4 +1,4 @@
-"""Tailwind CSS template tag."""
+"""TailwindCSS template tag."""
 
 from django.template import Library
 from django.utils.safestring import SafeString
@@ -7,17 +7,17 @@ register = Library()
 
 
 @register.simple_tag
-def tailwind_css() -> SafeString:
-    """Render the Tailwind CSS link tag if the output file exists."""
+def tailwindcss() -> SafeString:
+    """Render the TailwindCSS link tag if the output file exists."""
     from pathlib import Path
 
     from django.conf import settings
     from django.templatetags.static import static
 
-    output_css: Path = settings.TAILWIND.output
+    output_css: Path = settings.TAILWINDCSS.output
 
     if output_css.exists() and output_css.is_file():
         return SafeString(
-            f'<link rel="stylesheet" href="{static(settings.TAILWIND_OUTPUT_STATIC_URL)}">'
+            f'<link rel="stylesheet" href="{static(settings.TAILWINDCSS_OUTPUT_STATIC_URL)}">'
         )
     return SafeString("")

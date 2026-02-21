@@ -1,2 +1,2 @@
-# Ignore Tailwind output CSS file
-/tailwind.min.css
+# Ignore TailwindCSS output file
+/output.css

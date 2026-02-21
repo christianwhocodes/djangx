@@ -200,8 +200,8 @@ blank_line_after_tag = "load,extends,endblock"
 """
 
     @staticmethod
-    def tailwind_css() -> str:
-        """Generate Tailwind CSS source file."""
+    def tailwindcss() -> str:
+        """Generate TailwindCSS source file."""
         return f"""@import "tailwindcss";
 
 /* =============================================================================

@@ -41,17 +41,15 @@ class _SkipArgsEnum(StrEnum):
 class _PackageInfo:
     """Package metadata and paths."""
 
-    base_dir: Path = field(default_factory=lambda: Path(__file__).parent.resolve())
-
     @property
     def name(self) -> str:
         """Package name."""
-        return self.base_dir.name
+        return "djangx"
 
     @property
     def display_name(self) -> str:
         """Human-readable package name."""
-        return f"{self.name[0].upper()}{self.name[1:-1]}{self.name[-1].upper()}"
+        return "DjangX"
 
     @cached_property
     def version(self) -> str:
@@ -63,7 +61,7 @@ class _PackageInfo:
     @property
     def main_app_dir(self) -> Path:
         """Path to the main app directory."""
-        return self.base_dir / "app"
+        return Path(__file__).parent.resolve() / "app"
 
     @property
     def main_app_name(self) -> str:
@@ -89,8 +87,8 @@ class _ProjectInfo:
     """Project configuration for the current working directory."""
 
     base_dir: Path = field(default_factory=Path.cwd)
-    # Track validation state via a list to allow mutation in a frozen dataclass
-    _validated: list[bool] = field(default_factory=lambda: [False], init=False, repr=False)
+    # Internal flag to ensure validation runs only once. Kept private and not shown in repr.
+    _validated: bool = field(default=False, init=False, repr=False)
 
     @property
     def init_name(self) -> str:
@@ -146,13 +144,13 @@ class _ProjectInfo:
         In CLI, we catch the exception for pretty printing.
         In Production, this will bubble up to the WSGI/ASGI server.
         """
-        if self._validated[0]:
+        if self._validated:
             return
 
         # Avoid validation during project creation commands
         skip_cmds = set(_SkipArgsEnum)
         if any(arg in sys.argv for arg in skip_cmds):
-            self._validated[0] = True
+            object.__setattr__(self, "_validated", True)
             return
 
         try:
@@ -160,7 +158,7 @@ class _ProjectInfo:
         except (FileNotFoundError, KeyError) as e:
             raise ProjectValidationError(str(e)) from e
 
-        self._validated[0] = True
+        object.__setattr__(self, "_validated", True)
 
 
 PROJECT: Final = _ProjectInfo()

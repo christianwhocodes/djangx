@@ -12,7 +12,7 @@ from .runcommands import *  # noqa: F403
 from .security import *  # noqa: F403
 from .startproject import *  # noqa: F403
 from .storages import *  # noqa: F403
-from .tailwind import *  # noqa: F403
+from .tailwindcss import *  # noqa: F403
 
 BASE_DIR: Path = PROJECT.base_dir
 
