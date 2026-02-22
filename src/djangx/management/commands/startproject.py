@@ -15,7 +15,7 @@ from rich.prompt import Confirm, Prompt
 from ... import PACKAGE, PROJECT
 from ..enums import DatabaseEnum, PresetEnum
 from ..settings import DATABASE_PRESETS, PG_CONFIG_PRESETS, STARTPROJECT_PRESETS
-from ..utils import (
+from ..validators import (
     validate_pg_config_compatibility,
     validate_preset_database_compatibility,
 )
