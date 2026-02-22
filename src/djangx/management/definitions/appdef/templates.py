@@ -1,9 +1,7 @@
-"""App configuration type definitions."""
+"""Templates Type Definitions."""
 
 from pathlib import Path
 from typing import NotRequired, TypeAlias, TypedDict
-
-__all__: list[str] = ["TemplatesDict"]
 
 
 class _TemplateOptionsDict(TypedDict):
@@ -24,3 +22,6 @@ class _TemplateDict(TypedDict):
 
 
 TemplatesDict: TypeAlias = list[_TemplateDict]
+
+
+__all__: list[str] = ["TemplatesDict"]

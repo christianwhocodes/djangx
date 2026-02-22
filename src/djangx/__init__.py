@@ -10,23 +10,14 @@ from typing import Any, Final
 
 from christianwhocodes import ExitCode, Text, print
 
-__all__: list[str] = [
-    "PACKAGE",
-    "PROJECT",
-    "ProjectValidationError",
-]
-
-
-# ============================================================================
-# Helpers
-# ============================================================================
-
 
 class ProjectValidationError(Exception):
     """Current directory is not a valid project."""
 
 
 class _SkipArgsEnum(StrEnum):
+    """Enumeration of CLI commands that skip project validation."""
+
     STARTPROJECT = "startproject"
     INIT = "init"
     NEW = "new"

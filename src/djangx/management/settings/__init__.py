@@ -4,17 +4,18 @@ from pathlib import Path
 
 from django.utils.csp import CSP  # pyright: ignore[reportMissingTypeStubs]
 
-from ... import PROJECT
-from .api import *  # noqa: F403
-from .appdef import *  # noqa: F403
-from .auth import *  # noqa: F403
-from .runcommands import *  # noqa: F403
-from .security import *  # noqa: F403
-from .startproject import *  # noqa: F403
-from .storages import *  # noqa: F403
-from .tailwindcss import *  # noqa: F403
+from ... import PACKAGE, PROJECT
+from .appdef import *
+from .auth import *
+from .runcommands import *
+from .security import *
+from .server import *
+from .startproject import *
+from .tailwindcss import *
 
 BASE_DIR: Path = PROJECT.base_dir
+
+ROOT_URLCONF: str = f"{PACKAGE.name}.management.urls"
 
 # ==============================================================================
 # Content Security Policy (CSP)

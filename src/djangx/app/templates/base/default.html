@@ -1,13 +1,10 @@
-{% load org static tailwindcss %}
-
+{% load org static %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
-
     {% block title %}
       <title>{% org "name" %}</title>
     {% endblock title %}
-
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="{% org "description" %}" />
@@ -17,30 +14,27 @@
           href="{% org "favicon-url" %}"
           type="image/x-icon" />
     <link rel="apple-touch-icon" href="{% org "apple-touch-icon-url" %}" />
-
     {% block fonts %}
     {% endblock fonts %}
-
+    {# CSS #}
     <link rel="stylesheet" href="{% static 'app/css/aos.css' %}" />
-    <link rel="stylesheet"
-          href="{% static 'app/css/bootstrap-icons.min.css' %}" />
-    {% tailwindcss %}
+    <link rel="stylesheet" href="{% static 'app/css/bootstrap-icons.css' %}" />
+    {% if not tailwindcss.is_disabled %}
+      <link rel="stylesheet" href="{% static tailwindcss.output_url %}">
+    {% endif %}
+    {# JS #}
     <script defer src="{% static 'app/js/aos.js' %}"></script>
     <script defer src="{% static 'app/js/aos-init.js' %}"></script>
-
     {% block scripts %}
     {% endblock scripts %}
-
   </head>
   <body>
     {% include "app/preloader.html" %}
     {% include "app/scroll-top.html" %}
     {% include "app/header.html" %}
     {% include "app/hero.html" %}
-
     {% block main %}
     {% endblock main %}
-
     {% include "app/footer.html" %}
   </body>
 </html>

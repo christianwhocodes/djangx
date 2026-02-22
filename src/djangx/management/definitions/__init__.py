@@ -1,5 +1,5 @@
-"""Enumeration types."""
+"""Type definitions."""
 
 from .appdef import *
-from .generate import *
+from .auth import *
 from .startproject import *

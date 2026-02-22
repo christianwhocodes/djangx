@@ -5,9 +5,7 @@ from django.core.files.storage import Storage
 from django.utils.deconstruct import deconstructible
 from vercel.blob import BlobClient  # pyright: ignore[reportMissingTypeStubs]
 
-from ..settings import BLOB_READ_WRITE_TOKEN
-
-__all__: list[str] = ["VercelBlobStorageBackend"]
+from ...settings import BLOB_READ_WRITE_TOKEN
 
 
 @deconstructible
@@ -41,9 +39,9 @@ class VercelBlobStorageBackend(Storage):
             raise FileNotFoundError(f"File {name} not found.")
 
         # Get the content
-        content: bytes = self.client.get(listing.blobs[0].url)
+        result = self.client.get(listing.blobs[0].url)
 
-        return ContentFile(content, name=name)
+        return ContentFile(result.content, name=name)
 
     def delete(self, name: str) -> None:
         """Delete file from Vercel Blob."""
@@ -84,3 +82,6 @@ class VercelBlobStorageBackend(Storage):
         """Return an available filename (Vercel handles uniqueness)."""
         # Vercel Blob handles uniqueness with add_random_suffix
         return name
+
+
+__all__: list[str] = ["VercelBlobStorageBackend"]

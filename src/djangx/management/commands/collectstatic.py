@@ -12,11 +12,12 @@ class Command(CollectstaticCommand):
 
     def set_options(self, **options: Any) -> None:
         """Add TailwindCSS source file to ignore patterns."""
-        from ..settings import TAILWINDCSS_SOURCE_STATIC_URL
+        from ..settings import TAILWINDCSS, TAILWINDCSS_SOURCE_URL
 
         super().set_options(**options)
 
-        if self.ignore_patterns is None:
-            self.ignore_patterns = []
+        if not TAILWINDCSS.is_disabled:
+            if self.ignore_patterns is None:
+                self.ignore_patterns = []
 
-        self.ignore_patterns.append(TAILWINDCSS_SOURCE_STATIC_URL)
+            self.ignore_patterns.append(TAILWINDCSS_SOURCE_URL)

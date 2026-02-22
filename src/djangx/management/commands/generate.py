@@ -71,7 +71,7 @@ class _EnvFileGenerator(FileGenerator):
     @property
     def data(self) -> str:
         """Build .env.example content from all ConfField definitions."""
-        from .. import ManagementConf
+        from ..conf import ManagementConf
 
         lines: list[str] = []
 

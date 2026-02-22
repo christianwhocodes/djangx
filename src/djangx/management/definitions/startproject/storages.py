@@ -2,10 +2,8 @@
 
 from typing import TypedDict
 
-__all__: list[str] = ["StorageBackendDict", "StoragesDict"]
 
-
-class StorageBackendDict(TypedDict, total=False):
+class _StorageBackendDict(TypedDict, total=False):
     """Individual storage backend entry."""
 
     BACKEND: str
@@ -14,5 +12,8 @@ class StorageBackendDict(TypedDict, total=False):
 class StoragesDict(TypedDict):
     """STORAGES setting dict."""
 
-    staticfiles: StorageBackendDict
-    default: StorageBackendDict
+    staticfiles: _StorageBackendDict
+    default: _StorageBackendDict
+
+
+__all__: list[str] = ["StoragesDict"]

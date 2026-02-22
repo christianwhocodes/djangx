@@ -3,13 +3,17 @@
 from pathlib import Path
 
 from ... import PACKAGE, PROJECT
-from .. import ConfField, ManagementConf
+from ..conf import ConfField, ManagementConf
 
 __all__: list[str] = [
     "TAILWINDCSS",
-    "TAILWINDCSS_SOURCE_STATIC_URL",
-    "TAILWINDCSS_OUTPUT_STATIC_URL",
+    "TAILWINDCSS_SOURCE_URL",
+    "TAILWINDCSS_OUTPUT_URL",
 ]
+
+# ============================================================================
+# Configuration Classes
+# ============================================================================
 
 
 class _TailwindCSSConf(ManagementConf):
@@ -37,7 +41,7 @@ class _TailwindCSSConf(ManagementConf):
         type=Path,
         default=PACKAGE.main_app_dir / "static" / PACKAGE.main_app_name / "css" / "output.css",
     )
-    disable = ConfField(
+    is_disabled = ConfField(
         type=bool,
         env="TAILWINDCSS_DISABLE",
         toml="tailwindcss.disable",
@@ -51,17 +55,29 @@ class _TailwindCSSConf(ManagementConf):
     )
 
 
-TAILWINDCSS = _TailwindCSSConf()
+# ============================================================================
+# Helper Functions
+# ============================================================================
 
 
-def _static_relative_path(file_path: Path) -> str:
-    """Return the path portion after 'static/' as a forward-slash string."""
+def _static_path_to_url(file_path: Path) -> str:
+    """Return the path portion after 'static/' as a forward-slash string.
+
+    Example: /…/app/static/app/css/output.css -> "app/css/output.css"
+    """
     for parent in file_path.parents:
         if parent.name == "static":
             return file_path.relative_to(parent).as_posix()
     return file_path.name
 
 
-TAILWINDCSS_SOURCE_STATIC_URL: str = _static_relative_path(TAILWINDCSS.source)
+# ============================================================================
+# Django Settings
+# ============================================================================
 
-TAILWINDCSS_OUTPUT_STATIC_URL: str = _static_relative_path(TAILWINDCSS.output)
+
+TAILWINDCSS = _TailwindCSSConf()
+
+TAILWINDCSS_SOURCE_URL: str = _static_path_to_url(TAILWINDCSS.source)
+
+TAILWINDCSS_OUTPUT_URL: str = _static_path_to_url(TAILWINDCSS.output)

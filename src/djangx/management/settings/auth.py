@@ -6,7 +6,7 @@
 # ==============================================================================
 from typing import cast
 
-from ..types import PasswordValidatorDict
+from ..definitions import PasswordValidatorDict
 
 __all__: list[str] = ["AUTH_PASSWORD_VALIDATORS"]
 

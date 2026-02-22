@@ -2,18 +2,9 @@
 
 from pathlib import Path
 
-from ... import PACKAGE, PROJECT
-from .. import ConfField, ManagementConf
-from ..types import StoragesDict
-
-__all__: list[str] = [
-    "STORAGES",
-    "BLOB_READ_WRITE_TOKEN",
-    "STATIC_ROOT",
-    "STATIC_URL",
-    "MEDIA_ROOT",
-    "MEDIA_URL",
-]
+from .... import PACKAGE, PROJECT
+from ...conf import ConfField, ManagementConf
+from ...definitions import StoragesDict
 
 
 class _StorageConf(ManagementConf):
@@ -72,3 +63,13 @@ STATIC_URL: str = "static/"
 MEDIA_ROOT: Path = PROJECT.public_dir / "media"
 
 MEDIA_URL: str = "media/"
+
+
+__all__: list[str] = [
+    "STORAGES",
+    "BLOB_READ_WRITE_TOKEN",
+    "STATIC_ROOT",
+    "STATIC_URL",
+    "MEDIA_ROOT",
+    "MEDIA_URL",
+]

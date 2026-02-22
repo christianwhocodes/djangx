@@ -49,8 +49,8 @@ dev = [
 [tool.djlint]
 profile = "django"
 ignore = "H016,H030,H031"
-blank_line_before_tag = "block"
-blank_line_after_tag = "load,extends,endblock"
+# blank_line_before_tag = "block"
+# blank_line_after_tag = "load,extends,endblock"
 
 [tool.ruff]
 line-length = 101

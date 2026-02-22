@@ -1,7 +1,7 @@
 """API server settings (ASGI/WSGI)."""
 
 from ... import PACKAGE
-from .. import ConfField, ManagementConf
+from ..conf import ConfField, ManagementConf
 
 __all__: list[str] = [
     "SERVER_USE_ASGI",
@@ -25,6 +25,6 @@ _SERVER = _ServerConf()
 
 SERVER_USE_ASGI: bool = _SERVER.use_asgi
 
-ASGI_APPLICATION: str = f"{PACKAGE.name}.management.backends.api.asgi.SERVER_APPLICATION"
+ASGI_APPLICATION: str = f"{PACKAGE.name}.management.backends.server.asgi.SERVER_APPLICATION"
 
-WSGI_APPLICATION: str = f"{PACKAGE.name}.management.backends.api.wsgi.SERVER_APPLICATION"
+WSGI_APPLICATION: str = f"{PACKAGE.name}.management.backends.server.wsgi.SERVER_APPLICATION"

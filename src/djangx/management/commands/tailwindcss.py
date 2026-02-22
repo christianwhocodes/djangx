@@ -155,7 +155,8 @@ class _BaseHandler:
         self.cli_path: Path = TAILWINDCSS.cli
         self.source_css: Path = TAILWINDCSS.source
         self.output_css: Path = TAILWINDCSS.output
-        self.tailwindcss_disabled: bool = TAILWINDCSS.disable
+        self.output_css_exists: bool = self.output_css.exists() and self.output_css.is_file()
+        self.tailwindcss_is_disabled: bool = TAILWINDCSS.is_disabled
 
     def _validate_env(self) -> None:
         """Ensure the CLI exists and the source CSS file is present."""
@@ -179,31 +180,22 @@ class _BaseHandler:
 class BuildHandler(_BaseHandler):
     """Handles one-off compilation of TailwindCSS."""
 
-    def build(self) -> bool:
-        """Run the TailwindCSS build process.
-
-        Args:
-            skip_if_no_source: If True, silently skip when source CSS is missing.
-
-        Returns:
-            True if the build succeeded, False if skipped.
-
-        """
-        if self.tailwindcss_disabled:
-            return False
+    def build(self) -> None:
+        """Run the TailwindCSS build process."""
+        if self.tailwindcss_is_disabled:
+            return
         self._validate_env()
         args = self._get_base_args()
         try:
             if self.verbose:
-                print("   Building TailwindCSS...", Text.INFO)
+                print("   📦 Building TailwindCSS...", Text.INFO)
 
             run(args, check=True, stdout=DEVNULL, stderr=DEVNULL)
 
             if self.verbose:
-                print("   ✓ Build complete!", Text.SUCCESS)
+                print(f"   ✓ Build complete! Output saved to: {self.output_css}", Text.SUCCESS)
         except CalledProcessError as e:
             raise CommandError(f"Build failed: {e}")
-        return True
 
 
 class WatchHandler(_BaseHandler):
@@ -219,10 +211,9 @@ class WatchHandler(_BaseHandler):
 
         Args:
             stop_event: Optional threading.Event to signal process termination.
-            skip_if_no_source: If True, silently skip when source CSS is missing.
 
         """
-        if self.tailwindcss_disabled:
+        if self.tailwindcss_is_disabled:
             return
         self._validate_env()
         args = self._get_base_args() + ["--watch"]
@@ -244,7 +235,11 @@ class WatchHandler(_BaseHandler):
         finally:
             if self._process:
                 self._process.terminate()
-                self._process.wait()
+                try:
+                    self._process.wait(timeout=2.0)
+                except Exception:
+                    self._process.kill()
+                    self._process.wait()
 
 
 class CleanHandler(_BaseHandler):
@@ -252,12 +247,14 @@ class CleanHandler(_BaseHandler):
 
     def clean(self) -> None:
         """Delete the generated output CSS file if it exists."""
-        if self.output_css.exists():
+        if self.tailwindcss_is_disabled:
+            if self.output_css_exists:
+                self.output_css.unlink()
+            return
+        elif self.output_css_exists:
             self.output_css.unlink()
             if self.verbose:
-                print(f"✓ Deleted generated output: {self.output_css}", Text.INFO)
-        elif self.verbose:
-            print("   No output file to clean.", Text.INFO)
+                print(f"✓ Cleaned generated TailwindCSS output: {self.output_css}", Text.INFO)
 
 
 class Command(BaseCommand):
@@ -300,7 +297,7 @@ class Command(BaseCommand):
                 skip_prompt=options["skip_prompt"], use_cache=options["use_cache"]
             )
         elif cmd == "build":
-            _: bool = BuildHandler(v).build()
+            BuildHandler(v).build()
         elif cmd == "watch":
             WatchHandler(v).watch()
         elif cmd == "clean":
