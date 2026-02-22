@@ -62,7 +62,9 @@ class Command(RunserverCommand):
     def handle(self, *args: object, **options: Any) -> str | None:
         """Handle the dev command execution."""
         self.no_clipboard = options.get("no_clipboard", False)
-        self.no_tailwindcss_watch = options.get("no_tailwindcss_watch", False)
+        self.no_tailwindcss_watch = (
+            options.get("no_tailwindcss_watch", False) or TAILWINDCSS.no_watch
+        )
         self.verbose = options.get("verbose", False)
 
         self._setup_signal_handlers()
@@ -208,7 +210,7 @@ class Command(RunserverCommand):
         if self.verbose:
             self.stdout.write(self.style.HTTP_INFO("\n📦 Building TailwindCSS..."))
 
-        build_success = BuildHandler(verbose=self.verbose).build(skip_if_no_source=True)
+        build_success = BuildHandler(verbose=self.verbose).build()
 
         if build_success and self.verbose:
             self.stdout.write(self.style.SUCCESS(f"✓ Output saved to: {TAILWINDCSS.output}"))
@@ -239,7 +241,7 @@ class Command(RunserverCommand):
 
         def run_watcher() -> None:
             handler = WatchHandler(verbose=self.verbose)
-            handler.watch(skip_if_no_source=True, stop_event=self._stop_watcher_event)
+            handler.watch(stop_event=self._stop_watcher_event)
 
         self._watcher_thread = Thread(
             target=run_watcher,

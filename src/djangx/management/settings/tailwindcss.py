@@ -1,4 +1,4 @@
-"""Tailwind CSS settings."""
+"""TailwindCSS settings."""
 
 from pathlib import Path
 
@@ -41,6 +41,12 @@ class _TailwindCSSConf(ManagementConf):
         type=bool,
         env="TAILWINDCSS_DISABLE",
         toml="tailwindcss.disable",
+        default=False,
+    )
+    no_watch = ConfField(
+        type=bool,
+        env="TAILWINDCSS_NO_WATCH",
+        toml="tailwindcss.no_watch",
         default=False,
     )
 
