@@ -8,7 +8,7 @@ from os import environ
 from pathlib import Path
 from typing import Any, Final
 
-from christianwhocodes import ExitCode, Text, print
+from christianwhocodes import ExitCode, Text, cprint
 
 
 class ProjectValidationError(Exception):
@@ -163,7 +163,7 @@ PROJECT: Final = _ProjectInfo()
 def main() -> None:
     """Execute the CLI."""
     if len(sys.argv) < 2:
-        print("No arguments passed.", Text.ERROR)
+        cprint("No arguments passed.", Text.ERROR)
         sys.exit(ExitCode.ERROR)
 
     command = sys.argv[1]
@@ -183,10 +183,10 @@ def main() -> None:
             try:
                 PROJECT.validate()
             except ProjectValidationError as e:
-                print(f"Not in a valid {PACKAGE.display_name} project directory: {e}", Text.ERROR)
+                cprint(f"Not in a valid {PACKAGE.display_name} project directory: {e}", Text.ERROR)
                 sys.exit(ExitCode.ERROR)
             except Exception as e:
-                print(f"Unexpected error during project validation:\n{e}", Text.ERROR)
+                cprint(f"Unexpected error during project validation:\n{e}", Text.ERROR)
                 sys.exit(ExitCode.ERROR)
             else:
                 from django.core.management import ManagementUtility

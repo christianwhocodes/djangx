@@ -1,16 +1,13 @@
 """Databases settings."""
 
+from christianwhocodes import Platform
+
 from .... import PROJECT
 from ...conf import ConfField, ManagementConf
 from ...definitions import DatabaseDict, DatabaseOptionsDict, DatabasesDict
 from ...enums import DatabaseEnum
 
-# ==============================================================================
-# Database Configuration
-# https://docs.djangoproject.com/en/stable/ref/databases/#postgresql-notes
-# https://www.postgresql.org/docs/current/libpq-pgservice.html
-# https://www.postgresql.org/docs/current/libpq-pgpass.html
-# ==============================================================================
+__all__: list[str] = ["DATABASES", "PG_PASS_FILENAME"]
 
 
 class _DatabaseConf(ManagementConf):
@@ -122,5 +119,12 @@ def _get_databases_config() -> DatabasesDict:
 
 DATABASES: DatabasesDict = _get_databases_config()
 
+PG_PASS_FILENAME = "pgpass.conf" if Platform().os_name == "windows" else ".pgpass"
 
-__all__: list[str] = ["DATABASES"]
+
+# ==============================================================================
+# Database Configuration
+# https://docs.djangoproject.com/en/stable/ref/databases/#postgresql-notes
+# https://www.postgresql.org/docs/current/libpq-pgservice.html
+# https://www.postgresql.org/docs/current/libpq-pgpass.html
+# ==============================================================================

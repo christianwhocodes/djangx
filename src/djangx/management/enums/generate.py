@@ -2,17 +2,14 @@
 
 from enum import StrEnum
 
-from christianwhocodes import FileGeneratorOption as BaseFileGeneratorOption
-
-__all__: list[str] = ["FileGeneratorOptionEnum"]
+__all__: list[str] = ["FileGeneratorOptions"]
 
 
-class FileGeneratorOptionEnum(StrEnum):
+class FileGeneratorOptions(StrEnum):
     """Available file generation options."""
 
-    PG_SERVICE = BaseFileGeneratorOption.PG_SERVICE.value
-    PGPASS = BaseFileGeneratorOption.PGPASS.value
-    SSH_CONFIG = BaseFileGeneratorOption.SSH_CONFIG.value
-    ENV = "env"
-    SERVER = "server"
-    VERCEL = "vercel"
+    DOTENV_EXAMPLE = ".env.example"
+    API_SERVER_PY = "api/server.py"
+    VERCEL_JSON = "vercel.json"
+    PG_SERVICE = "pg_service"
+    PGPASS = "pgpass"

@@ -3,10 +3,9 @@
 from dataclasses import dataclass
 from typing import Final
 
-from christianwhocodes import PgConfigFilesEnum
-
 from ... import PACKAGE
 from ..enums import DatabaseEnum, PresetEnum
+from ..settings import PG_PASS_FILENAME
 
 
 @dataclass(frozen=True)
@@ -110,10 +109,10 @@ PG_CONFIG_METHOD_MAP: Final[dict[bool, _PGConfigMethod]] = {
     False: _PGConfigMethod(
         value=False,
         name="PostgreSQL Service Files",
-        description=f"Use {PgConfigFilesEnum.PG_SERVICE} and {PgConfigFilesEnum.PGPASS} files",
+        description=f"Use `.pg_service.conf` and `{PG_PASS_FILENAME}` files",
         cli_flag="--pg-service-files",
-        files_required=(PgConfigFilesEnum.PG_SERVICE, PgConfigFilesEnum.PGPASS),
-        learn_more_url="https://www.postgresql.org/docs/current/libpq-pgservice.html\nhttps://www.postgresql.org/docs/current/libpq-pgpass.html",
+        files_required=(".pg_service.conf", PG_PASS_FILENAME),
+        learn_more_url="https://www.postgresql.org/docs/current/libpq-pgservice.html\n   https://www.postgresql.org/docs/current/libpq-pgpass.html",
     ),
 }
 

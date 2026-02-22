@@ -12,7 +12,7 @@ Run with --dry or --dry-run to preview the git commands without executing them.
 
 from subprocess import CalledProcessError, run
 
-from christianwhocodes import ExitCode, PyProject, Text, print
+from christianwhocodes import ExitCode, PyProject, Text, cprint
 
 
 class GitPublisher:
@@ -86,7 +86,7 @@ class GitPublisher:
         cmd = ["git", "tag", "-a", tag, "-m", f"Release {version}"]
 
         if dry:
-            print(f"Would run: {' '.join(cmd)}", Text.WARNING)
+            cprint(f"Would run: {' '.join(cmd)}", Text.WARNING)
         else:
             run(cmd, check=True, capture_output=True, text=True)
 
@@ -96,7 +96,7 @@ class GitPublisher:
         """Push tags to origin."""
         cmd = ["git", "push", "origin", "--tags"]
         if dry:
-            print("Would run: git push origin --tags", Text.WARNING)
+            cprint("Would run: git push origin --tags", Text.WARNING)
         else:
             run(cmd, check=True, capture_output=True, text=True)
 
@@ -109,7 +109,7 @@ def tag_and_push(dry_run: bool = False) -> ExitCode:
     from tomllib import TOMLDecodeError
 
     if dry_run:
-        print("DRY RUN MODE - no changes will be made\n", Text.INFO)
+        cprint("DRY RUN MODE - no changes will be made\n", Text.INFO)
 
     try:
         from pathlib import Path
@@ -126,38 +126,38 @@ def tag_and_push(dry_run: bool = False) -> ExitCode:
 
     except FileNotFoundError as e:
         filename = getattr(e, "filename", None)
-        print(f"File not found: {filename or ''}".strip(), Text.ERROR)
+        cprint(f"File not found: {filename or ''}".strip(), Text.ERROR)
         return ExitCode.ERROR
 
     except CalledProcessError as e:
         cmd = " ".join(map(str, e.cmd)) if e.cmd else "<cmd>"
-        print(f"Command failed: {cmd}", Text.ERROR)
-        print(f"Return code: {e.returncode}", Text.ERROR)
+        cprint(f"Command failed: {cmd}", Text.ERROR)
+        cprint(f"Return code: {e.returncode}", Text.ERROR)
         if getattr(e, "stdout", None):
-            print(f"stdout: {e.stdout}", Text.ERROR)
+            cprint(f"stdout: {e.stdout}", Text.ERROR)
         if getattr(e, "stderr", None):
-            print(f"stderr: {e.stderr}", Text.ERROR)
+            cprint(f"stderr: {e.stderr}", Text.ERROR)
         return ExitCode.ERROR
 
     except TOMLDecodeError as e:
-        print(f"Failed to parse pyproject.toml: {str(e)}", Text.ERROR)
+        cprint(f"Failed to parse pyproject.toml: {str(e)}", Text.ERROR)
         return ExitCode.ERROR
 
     except (KeyError, ValueError) as e:
-        print(f"Configuration error: {str(e)}", Text.ERROR)
+        cprint(f"Configuration error: {str(e)}", Text.ERROR)
         return ExitCode.ERROR
 
     except Exception as e:
-        print(f"Unexpected error: {str(e)}", Text.ERROR)
+        cprint(f"Unexpected error: {str(e)}", Text.ERROR)
         return ExitCode.ERROR
 
     else:
         if dry_run:
-            print(f"Tag {tag} would be pushed successfully.", Text.SUCCESS)
-            print("GitHub Actions workflow would trigger.", Text.SUCCESS)
+            cprint(f"Tag {tag} would be pushed successfully.", Text.SUCCESS)
+            cprint("GitHub Actions workflow would trigger.", Text.SUCCESS)
         else:
-            print(f"Tag {tag} pushed successfully!", Text.SUCCESS)
-            print([("Monitor workflow: ", Text.INFO), (actions_url, Text.HIGHLIGHT)])
+            cprint(f"Tag {tag} pushed successfully!", Text.SUCCESS)
+            cprint([("Monitor workflow: ", Text.INFO), (actions_url, Text.HIGHLIGHT)])
 
         return ExitCode.SUCCESS
 

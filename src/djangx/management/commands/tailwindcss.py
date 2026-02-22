@@ -6,7 +6,7 @@ from subprocess import DEVNULL, CalledProcessError, Popen, run
 from threading import Event
 from typing import Any
 
-from christianwhocodes import Platform, Text, print
+from christianwhocodes import Platform, Text, cprint
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 from ... import PACKAGE
@@ -48,7 +48,7 @@ class _InstallHandler:
         if exists:
             if use_cache or not skip_prompt:
                 if self.verbose:
-                    print(f"✓ TailwindCSS CLI found at: {self.cli_path}", Text.SUCCESS)
+                    cprint(f"✓ TailwindCSS CLI found at: {self.cli_path}", Text.INFO)
                 return
 
         # Prompt for confirmation if not in "force/skip_prompt" mode
@@ -61,14 +61,14 @@ class _InstallHandler:
         self._make_executable()
 
         if self.verbose:
-            print("✓ Installation complete!", Text.SUCCESS)
+            cprint("✓ Installation complete!", Text.SUCCESS)
 
     def _prompt_confirmation(self) -> bool:
         """Ask the user for permission to download the binary."""
         confirm = input(f"\nTailwindCSS CLI not found. Download version {self.version}? (y/N): ")
         if confirm.strip().lower() != "y":
             if self.verbose:
-                print("❌ Installation cancelled.", Text.WARNING)
+                cprint("❌ Installation cancelled.", Text.ERROR)
             return False
         return True
 
@@ -103,7 +103,7 @@ class _InstallHandler:
         temp_destination = self.cli_path.with_suffix(self.cli_path.suffix + ".tmp")
         try:
             if self.verbose:
-                print(f"\n📥 Downloading TailwindCSS CLI v{self.version}...", Text.INFO)
+                cprint(f"\n📥 Downloading TailwindCSS CLI v{self.version}...", Text.INFO)
 
             req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
             with urlopen(req, timeout=15) as response, open(temp_destination, "wb") as out_file:
@@ -188,12 +188,12 @@ class BuildHandler(_BaseHandler):
         args = self._get_base_args()
         try:
             if self.verbose:
-                print("   📦 Building TailwindCSS...", Text.INFO)
+                cprint("   📦 Building TailwindCSS...", Text.INFO)
 
             run(args, check=True, stdout=DEVNULL, stderr=DEVNULL)
 
             if self.verbose:
-                print(f"   ✓ Build complete! Output saved to: {self.output_css}", Text.SUCCESS)
+                cprint(f"   ✓ Build complete! Output saved to: {self.output_css}", Text.SUCCESS)
         except CalledProcessError as e:
             raise CommandError(f"Build failed: {e}")
 
@@ -219,7 +219,7 @@ class WatchHandler(_BaseHandler):
         args = self._get_base_args() + ["--watch"]
         try:
             if self.verbose:
-                print("   Starting TailwindCSS watcher (Press Ctrl+C to stop)...", Text.INFO)
+                cprint("   Starting TailwindCSS watcher (Press Ctrl+C to stop)...", Text.INFO)
 
             # Streaming output to console so compiler errors are visible
             self._process = Popen(args)
@@ -254,7 +254,7 @@ class CleanHandler(_BaseHandler):
         elif self.output_css_exists:
             self.output_css.unlink()
             if self.verbose:
-                print(f"✓ Cleaned generated TailwindCSS output: {self.output_css}", Text.INFO)
+                cprint(f"✓ Removed generated TailwindCSS output: {self.output_css}", Text.SUCCESS)
 
 
 class Command(BaseCommand):
