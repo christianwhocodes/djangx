@@ -30,7 +30,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "christianwhocodes>=1.4.2",
+    "christianwhocodes>=1.5.0.post2",
     "django>=6.0.2",
     "django-browser-reload>=1.21.0",
     "django-http-compression[brotli]>=1.2.0",

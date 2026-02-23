@@ -5,6 +5,8 @@ from functools import cached_property
 from pathlib import Path
 from typing import Any, Final
 
+from christianwhocodes import InitAction, PyProject, Version
+
 __all__: list[str] = ["PROJECT", "PACKAGE", "ProjectValidationError"]
 
 
@@ -34,8 +36,6 @@ class _PackageInfo:
     @cached_property
     def version(self) -> str:
         """Package version (lazy-loaded)."""
-        from christianwhocodes import Version
-
         return Version.get(self.name)[0]
 
     @property
@@ -97,8 +97,6 @@ class _ProjectInfo:
     @cached_property
     def toml(self) -> dict[str, Any]:
         """TOML configuration section (lazy-loaded, cached)."""
-        from christianwhocodes import PyProject
-
         pyproject_path = self.base_dir / "pyproject.toml"
 
         if not pyproject_path.exists():
@@ -131,8 +129,6 @@ class _ProjectInfo:
             return
 
         from sys import argv
-
-        from christianwhocodes import InitAction
 
         # Avoid validation during startproject commands
         if any(arg in argv for arg in InitAction):

@@ -2,7 +2,7 @@
 
 import sys
 
-from christianwhocodes import ExitCode, InitAction, Text, cprint
+from christianwhocodes import ExitCode, InitAction, Text, cprint, print_version
 
 from .. import PACKAGE, PROJECT, ProjectValidationError
 
@@ -15,8 +15,6 @@ def main() -> None:
 
     match sys.argv[1]:
         case "-v" | "--version" | "version":
-            from christianwhocodes import print_version
-
             sys.exit(print_version(PACKAGE.name))
 
         case command if command in InitAction:
