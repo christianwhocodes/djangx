@@ -3,7 +3,7 @@
 from christianwhocodes import Platform
 
 from .... import PROJECT
-from ...conf import ConfField, ManagementConf
+from .._conf import ConfField, ManagementConf
 from ...definitions import DatabaseDict, DatabaseOptionsDict, DatabasesDict
 from ...enums import DatabaseEnum
 

@@ -46,19 +46,16 @@ def _get_vercel_spec() -> FileSpec:
 
 def _get_env_spec() -> FileSpec:
     """Return the FileSpec for .env.example with all available env vars."""
-    from ..conf import ManagementConf
+    from ..settings import GENERATED_ENV_FIELDS
 
     lines: list[str] = []
 
     # Add header
     lines.extend(_env_header())
 
-    # Get all fields from Conf subclasses
-    env_fields = ManagementConf.get_env_fields()
-
     # Group fields by class
     fields_by_class: dict[str, list[dict[str, Any]]] = {}
-    for field in env_fields:
+    for field in GENERATED_ENV_FIELDS:
         class_name = cast(str, field["class"])
         if class_name not in fields_by_class:
             fields_by_class[class_name] = []

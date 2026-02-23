@@ -8,8 +8,8 @@ repository = "https://github.com/christianwhocodes/djangx"
 issues = "https://github.com/christianwhocodes/djangx/issues"
 
 [project.scripts]
-djangx = "djangx:main"
-djx = "djangx:main"
+djangx = "djangx.management.cli:main"
+djx = "djangx.management.cli:main"
 
 [project]
 name = "djangx"
@@ -30,7 +30,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "christianwhocodes>=1.4.0",
+    "christianwhocodes>=1.4.1",
     "django>=6.0.2",
     "django-browser-reload>=1.21.0",
     "django-http-compression[brotli]>=1.2.0",

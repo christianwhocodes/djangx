@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from ... import PACKAGE, PROJECT
-from ..conf import ConfField, ManagementConf
+from ._conf import ConfField, ManagementConf
 
 __all__: list[str] = [
     "TAILWINDCSS",

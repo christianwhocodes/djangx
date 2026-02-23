@@ -2,7 +2,7 @@
 
 from django.http import HttpRequest
 
-from .settings import TAILWINDCSS, TAILWINDCSS_OUTPUT_URL
+from ..settings import TAILWINDCSS, TAILWINDCSS_OUTPUT_URL
 
 # ============================================================================
 # TailwindCSS Context Processor

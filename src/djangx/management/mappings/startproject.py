@@ -7,6 +7,12 @@ from ... import PACKAGE
 from ..enums import DatabaseEnum, PresetEnum
 from ..settings import PG_PASS_FILENAME
 
+__all__: list[str] = [
+    "DATABASE_ENUM_CONFIG_MAP",
+    "PG_CONFIG_METHOD_MAP",
+    "PRESET_ENUM_CONFIG_MAP",
+]
+
 
 @dataclass(frozen=True)
 class _PresetDataclass:
@@ -115,10 +121,3 @@ PG_CONFIG_METHOD_MAP: Final[dict[bool, _PGConfigMethod]] = {
         learn_more_url="https://www.postgresql.org/docs/current/libpq-pgservice.html\n   https://www.postgresql.org/docs/current/libpq-pgpass.html",
     ),
 }
-
-
-__all__: list[str] = [
-    "DATABASE_ENUM_CONFIG_MAP",
-    "PG_CONFIG_METHOD_MAP",
-    "PRESET_ENUM_CONFIG_MAP",
-]

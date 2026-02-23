@@ -1,6 +1,6 @@
 """Installed apps, middleware, and template settings."""
 
-from ...conf import ConfField, ManagementConf
+from .._conf import ConfField, ManagementConf
 from ...enums import MiddlewareEnum
 from ...mappings import APP_MIDDLEWARE_MAP
 from .installed_apps import INSTALLED_APPS

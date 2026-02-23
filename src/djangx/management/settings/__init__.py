@@ -7,6 +7,7 @@ from django.utils.csp import CSP  # pyright: ignore[reportMissingTypeStubs]
 from ... import PACKAGE, PROJECT
 from .appdef import *
 from .auth import *
+from .generate import *
 from .runcommands import *
 from .security import *
 from .server import *

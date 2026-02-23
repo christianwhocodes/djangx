@@ -1,6 +1,6 @@
 """Run commands settings."""
 
-from ..conf import ConfField, ManagementConf
+from ._conf import ConfField, ManagementConf
 
 __all__: list[str] = ["RUNCOMMANDS"]
 

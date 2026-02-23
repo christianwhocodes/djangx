@@ -4,11 +4,7 @@ from typing import Final
 
 from ..enums import AppEnum, MiddlewareEnum, TemplateContextProcessorEnum
 
-__all__: list[str] = [
-    "APP_TEMPLATE_CONTEXT_PROCESSOR_MAP",
-    "APP_MIDDLEWARE_MAP",
-]
-
+__all__: list[str] = ["APP_TEMPLATE_CONTEXT_PROCESSOR_MAP", "APP_MIDDLEWARE_MAP"]
 
 APP_TEMPLATE_CONTEXT_PROCESSOR_MAP: Final[dict[AppEnum, list[TemplateContextProcessorEnum]]] = {
     AppEnum.AUTH: [TemplateContextProcessorEnum.AUTH],

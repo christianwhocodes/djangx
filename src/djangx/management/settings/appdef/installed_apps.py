@@ -1,7 +1,7 @@
 """Installed apps, middleware, and template settings."""
 
 from .... import PACKAGE, PROJECT
-from ...conf import ConfField, ManagementConf
+from .._conf import ConfField, ManagementConf
 from ...enums import AppEnum
 
 

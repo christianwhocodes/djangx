@@ -1,26 +1,15 @@
-"""Package initialization and CLI entry point."""
+"""Package and project initialization."""
 
-import sys
 from dataclasses import dataclass, field
-from enum import StrEnum
 from functools import cached_property
-from os import environ
 from pathlib import Path
 from typing import Any, Final
 
-from christianwhocodes import ExitCode, Text, cprint
+__all__: list[str] = ["PROJECT", "PACKAGE", "ProjectValidationError"]
 
 
 class ProjectValidationError(Exception):
     """Current directory is not a valid project."""
-
-
-class _SkipArgsEnum(StrEnum):
-    """Enumeration of CLI commands that skip project validation."""
-
-    STARTPROJECT = "startproject"
-    INIT = "init"
-    NEW = "new"
 
 
 # ============================================================================
@@ -125,6 +114,9 @@ class _ProjectInfo:
     def env(self) -> dict[str, Any]:
         """Combined .env and environment variables (lazy-loaded)."""
         self.validate()
+
+        from os import environ
+
         from dotenv import dotenv_values
 
         return {**dotenv_values(self.base_dir / ".env"), **environ}
@@ -138,9 +130,12 @@ class _ProjectInfo:
         if self._validated:
             return
 
-        # Avoid validation during project creation commands
-        skip_cmds = set(_SkipArgsEnum)
-        if any(arg in sys.argv for arg in skip_cmds):
+        from sys import argv
+
+        from christianwhocodes import InitAction
+
+        # Avoid validation during startproject commands
+        if any(arg in argv for arg in InitAction):
             object.__setattr__(self, "_validated", True)
             return
 
@@ -153,51 +148,3 @@ class _ProjectInfo:
 
 
 PROJECT: Final = _ProjectInfo()
-
-
-# ============================================================================
-# CLI
-# ============================================================================
-
-
-def main() -> None:
-    """Execute the CLI."""
-    if len(sys.argv) < 2:
-        cprint("No arguments passed.", Text.ERROR)
-        sys.exit(ExitCode.ERROR)
-
-    command = sys.argv[1]
-
-    match command:
-        case "-v" | "--version" | "version":
-            from christianwhocodes import print_version
-
-            sys.exit(print_version(PACKAGE.name))
-
-        case _SkipArgsEnum.STARTPROJECT | _SkipArgsEnum.INIT | _SkipArgsEnum.NEW:
-            from .management.commands import handle_startproject
-
-            sys.exit(handle_startproject())
-
-        case _:
-            try:
-                PROJECT.validate()
-            except ProjectValidationError as e:
-                cprint(f"Not in a valid {PACKAGE.display_name} project directory: {e}", Text.ERROR)
-                sys.exit(ExitCode.ERROR)
-            except Exception as e:
-                cprint(f"Unexpected error during project validation:\n{e}", Text.ERROR)
-                sys.exit(ExitCode.ERROR)
-            else:
-                from django.core.management import ManagementUtility
-
-                sys.path.insert(0, str(PROJECT.base_dir))
-                environ.setdefault("DJANGO_SETTINGS_MODULE", PACKAGE.settings_module)
-
-                utility = ManagementUtility(sys.argv)
-                utility.prog_name = PACKAGE.name
-                utility.execute()
-
-
-if __name__ == "__main__":
-    main()

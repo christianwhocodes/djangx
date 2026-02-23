@@ -4,7 +4,7 @@ import builtins
 import pathlib
 from typing import Any, TypeAlias, cast
 
-from .. import PROJECT
+from ... import PROJECT
 
 
 _ConfDefaultValueType: TypeAlias = str | bool | list[str] | pathlib.Path | int | None
