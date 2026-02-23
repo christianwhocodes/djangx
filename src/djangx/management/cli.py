@@ -20,9 +20,9 @@ def main() -> None:
             sys.exit(print_version(PACKAGE.name))
 
         case command if command in InitAction:
-            from .commands import handle_startproject
+            from .commands import StartprojectCommand
 
-            sys.exit(handle_startproject(sys.argv[2:]))
+            sys.exit(StartprojectCommand()(sys.argv[2:]))
 
         case _:
             try:

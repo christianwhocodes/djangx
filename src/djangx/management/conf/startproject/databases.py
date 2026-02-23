@@ -1,13 +1,11 @@
 """Databases settings."""
 
-from christianwhocodes import Platform
-
 from .... import PROJECT
-from ...typings import DatabaseDict, DatabaseOptionsDict, DatabasesDict
 from ...enums import DatabaseEnum
+from ...typings import DatabaseDict, DatabaseOptionsDict, DatabasesDict
 from ..base import BaseConf, ConfField
 
-__all__: list[str] = ["DATABASES", "PG_PASS_FILENAME"]
+__all__: list[str] = ["DATABASES"]
 
 
 class _DatabaseConf(BaseConf):
@@ -119,8 +117,6 @@ def _get_databases_config() -> DatabasesDict:
 
 
 DATABASES: DatabasesDict = _get_databases_config()
-
-PG_PASS_FILENAME = "pgpass.conf" if Platform().os_name == "windows" else ".pgpass"
 
 
 # ==============================================================================
