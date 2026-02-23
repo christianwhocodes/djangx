@@ -1,10 +1,32 @@
 """Installed apps, middleware, and template settings."""
 
-from ...typings import TemplatesDict
+from pathlib import Path
+from typing import NotRequired, TypeAlias, TypedDict
+
 from ...enums import TemplateContextProcessorEnum
 from ...mappings import APP_TEMPLATE_CONTEXT_PROCESSOR_MAP
 from ..base import BaseConf, ConfField
 from .installed_apps import INSTALLED_APPS
+
+
+class _TemplateOptionsDict(TypedDict):
+    """Template OPTIONS dict."""
+
+    context_processors: list[str]
+    builtins: NotRequired[list[str]]
+    libraries: NotRequired[dict[str, str]]
+
+
+class _TemplateDict(TypedDict):
+    """Single TEMPLATES entry."""
+
+    BACKEND: str
+    DIRS: list[Path]
+    APP_DIRS: bool
+    OPTIONS: _TemplateOptionsDict
+
+
+_TemplatesDict: TypeAlias = list[_TemplateDict]
 
 
 class _TemplateContextProcessorsConf(BaseConf):
@@ -58,7 +80,7 @@ def _get_template_context_processors(installed_apps: list[str]) -> list[str]:
     return list(dict.fromkeys(all_context_processors))
 
 
-TEMPLATES: TemplatesDict = [
+TEMPLATES: _TemplatesDict = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [],

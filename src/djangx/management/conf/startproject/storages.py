@@ -1,10 +1,19 @@
 """Static files and storage settings."""
 
 from pathlib import Path
+from typing import TypedDict
 
 from .... import PACKAGE, PROJECT
-from ...typings import StoragesDict
 from ..base import BaseConf, ConfField
+
+__all__: list[str] = [
+    "STORAGES",
+    "BLOB_READ_WRITE_TOKEN",
+    "STATIC_ROOT",
+    "STATIC_URL",
+    "MEDIA_ROOT",
+    "MEDIA_URL",
+]
 
 
 class _StorageConf(BaseConf):
@@ -29,7 +38,20 @@ class _StorageConf(BaseConf):
 _STORAGE = _StorageConf()
 
 
-def _get_storages_config() -> StoragesDict:
+class _StorageBackendDict(TypedDict, total=False):
+    """Individual storage backend entry."""
+
+    BACKEND: str
+
+
+class _StoragesDict(TypedDict):
+    """STORAGES setting dict."""
+
+    staticfiles: _StorageBackendDict
+    default: _StorageBackendDict
+
+
+def _get_storages_config() -> _StoragesDict:
     """Build the STORAGES setting based on configured backend."""
     backend: str = _STORAGE.backend
     storage_backend: str
@@ -52,7 +74,7 @@ def _get_storages_config() -> StoragesDict:
     }
 
 
-STORAGES: StoragesDict = _get_storages_config()
+STORAGES: _StoragesDict = _get_storages_config()
 
 BLOB_READ_WRITE_TOKEN: str = _STORAGE.token
 
@@ -63,13 +85,3 @@ STATIC_URL: str = "static/"
 MEDIA_ROOT: Path = PROJECT.public_dir / "media"
 
 MEDIA_URL: str = "media/"
-
-
-__all__: list[str] = [
-    "STORAGES",
-    "BLOB_READ_WRITE_TOKEN",
-    "STATIC_ROOT",
-    "STATIC_URL",
-    "MEDIA_ROOT",
-    "MEDIA_URL",
-]

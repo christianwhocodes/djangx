@@ -1,8 +1,10 @@
 """Databases settings."""
 
+from pathlib import Path
+from typing import NotRequired, TypedDict
+
 from .... import PROJECT
 from ...enums import DatabaseEnum
-from ...typings import DatabaseDict, DatabaseOptionsDict, DatabasesDict
 from ..base import BaseConf, ConfField
 
 __all__: list[str] = ["DATABASES"]
@@ -73,7 +75,33 @@ class _DatabaseConf(BaseConf):
 _DATABASE = _DatabaseConf()
 
 
-def _get_databases_config() -> DatabasesDict:
+class _DatabaseOptionsDict(TypedDict, total=False):
+    """Database OPTIONS dict."""
+
+    service: str
+    pool: bool
+    sslmode: str
+
+
+class _DatabaseDict(TypedDict):
+    """Single database configuration entry."""
+
+    ENGINE: str
+    NAME: str | Path
+    USER: NotRequired[str | None]
+    PASSWORD: NotRequired[str | None]
+    HOST: NotRequired[str | None]
+    PORT: NotRequired[str | None]
+    OPTIONS: NotRequired[_DatabaseOptionsDict]
+
+
+class _DatabasesDict(TypedDict):
+    """DATABASES setting dict."""
+
+    default: _DatabaseDict
+
+
+def _get_databases_config() -> _DatabasesDict:
     """Build the DATABASES setting based on configured backend."""
     backend: str = _DATABASE.backend.lower()
 
@@ -86,13 +114,13 @@ def _get_databases_config() -> DatabasesDict:
                 }
             }
         case DatabaseEnum.POSTGRESQL:
-            options: DatabaseOptionsDict = {
+            options: _DatabaseOptionsDict = {
                 "pool": _DATABASE.pool,
                 "sslmode": _DATABASE.ssl_mode,
             }
 
             # Add service or connection vars
-            config: DatabaseDict
+            config: _DatabaseDict
             if _DATABASE.use_env_vars:
                 config = {
                     "ENGINE": f"django.db.backends.{DatabaseEnum.POSTGRESQL.value}",
@@ -116,7 +144,7 @@ def _get_databases_config() -> DatabasesDict:
             raise ValueError(f"Unsupported DB backend: {backend}")
 
 
-DATABASES: DatabasesDict = _get_databases_config()
+DATABASES: _DatabasesDict = _get_databases_config()
 
 
 # ==============================================================================
