@@ -40,7 +40,7 @@ class ConfField:
         current: Any = PROJECT.toml
         for k in self.toml.split("."):
             if isinstance(current, dict) and k in current:
-                current = cast(Any, current[k])
+                current = cast(dict[str, Any], current)[k]
             else:
                 return None
 

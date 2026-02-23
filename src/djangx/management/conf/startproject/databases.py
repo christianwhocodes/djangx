@@ -3,7 +3,7 @@
 from christianwhocodes import Platform
 
 from .... import PROJECT
-from ...definitions import DatabaseDict, DatabaseOptionsDict, DatabasesDict
+from ...typings import DatabaseDict, DatabaseOptionsDict, DatabasesDict
 from ...enums import DatabaseEnum
 from ..base import BaseConf, ConfField
 
@@ -94,8 +94,9 @@ def _get_databases_config() -> DatabasesDict:
             }
 
             # Add service or connection vars
+            config: DatabaseDict
             if _DATABASE.use_env_vars:
-                config: DatabaseDict = {
+                config = {
                     "ENGINE": f"django.db.backends.{DatabaseEnum.POSTGRESQL.value}",
                     "NAME": _DATABASE.name,
                     "USER": _DATABASE.user,

@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from .... import PACKAGE, PROJECT
-from ...definitions import StoragesDict
+from ...typings import StoragesDict
 from ..base import BaseConf, ConfField
 
 
