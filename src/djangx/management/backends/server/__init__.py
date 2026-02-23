@@ -3,7 +3,7 @@
 from os import environ
 
 from .... import PACKAGE
-from ...settings import SERVER_USE_ASGI
+from ...conf import SERVER_USE_ASGI
 
 environ.setdefault("DJANGO_SETTINGS_MODULE", PACKAGE.settings_module)
 

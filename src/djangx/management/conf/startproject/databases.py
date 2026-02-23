@@ -3,14 +3,14 @@
 from christianwhocodes import Platform
 
 from .... import PROJECT
-from .._conf import ConfField, ManagementConf
 from ...definitions import DatabaseDict, DatabaseOptionsDict, DatabasesDict
 from ...enums import DatabaseEnum
+from ..base import BaseConf, ConfField
 
 __all__: list[str] = ["DATABASES", "PG_PASS_FILENAME"]
 
 
-class _DatabaseConf(ManagementConf):
+class _DatabaseConf(BaseConf):
     """Database settings."""
 
     backend = ConfField(

@@ -1,11 +1,11 @@
 """Run commands settings."""
 
-from ._conf import ConfField, ManagementConf
+from .base import BaseConf, ConfField
 
 __all__: list[str] = ["RUNCOMMANDS"]
 
 
-class _RunCommandsConf(ManagementConf):
+class _RunCommandsConf(BaseConf):
     """Install and build command lists."""
 
     install = ConfField(

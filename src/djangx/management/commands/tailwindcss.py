@@ -10,7 +10,7 @@ from christianwhocodes import Platform, Text, cprint
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 from ... import PACKAGE
-from ..settings import TAILWINDCSS
+from ..conf import TAILWINDCSS
 
 
 class _InstallHandler:

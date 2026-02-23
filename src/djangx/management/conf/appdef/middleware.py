@@ -1,12 +1,12 @@
 """Installed apps, middleware, and template settings."""
 
-from .._conf import ConfField, ManagementConf
 from ...enums import MiddlewareEnum
 from ...mappings import APP_MIDDLEWARE_MAP
+from ..base import BaseConf, ConfField
 from .installed_apps import INSTALLED_APPS
 
 
-class _MiddlewareConf(ManagementConf):
+class _MiddlewareConf(BaseConf):
     """Middleware settings."""
 
     extend = ConfField(

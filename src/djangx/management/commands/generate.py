@@ -46,7 +46,7 @@ def _get_vercel_spec() -> FileSpec:
 
 def _get_env_spec() -> FileSpec:
     """Return the FileSpec for .env.example with all available env vars."""
-    from ..settings import GENERATED_ENV_FIELDS
+    from ..conf import GENERATED_ENV_FIELDS
 
     lines: list[str] = []
 

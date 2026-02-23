@@ -1,11 +1,11 @@
 """Installed apps, middleware, and template settings."""
 
 from .... import PACKAGE, PROJECT
-from .._conf import ConfField, ManagementConf
 from ...enums import AppEnum
+from ..base import BaseConf, ConfField
 
 
-class _AppsConf(ManagementConf):
+class _AppsConf(BaseConf):
     """Installed applications settings."""
 
     extend = ConfField(

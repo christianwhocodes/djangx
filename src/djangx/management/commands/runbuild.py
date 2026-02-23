@@ -12,7 +12,7 @@ class _BuildCommandGenerator(CommandGenerator):
 
     def get_runcommands(self) -> list[str]:
         """Retrieve build commands."""
-        from ..settings import RUNCOMMANDS
+        from ..conf import RUNCOMMANDS
 
         return RUNCOMMANDS.build
 

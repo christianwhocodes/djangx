@@ -6,7 +6,6 @@ from typing import Any, TypeAlias, cast
 
 from ... import PROJECT
 
-
 _ConfDefaultValueType: TypeAlias = str | bool | list[str] | pathlib.Path | int | None
 
 
@@ -118,18 +117,18 @@ class ConfField:
         return self.convert_value(raw_value, self.type, self.field_name)
 
 
-class ManagementConf:
+class BaseConf:
     """Base class for loading settings from env vars and TOML."""
 
     # Track all Conf subclasses
-    _subclasses: list[type["ManagementConf"]] = []
+    _subclasses: list[type["BaseConf"]] = []
 
     def __init_subclass__(cls) -> None:
         """Register subclass and collect env field metadata."""
         super().__init_subclass__()
 
         # Register this subclass
-        ManagementConf._subclasses.append(cls)
+        BaseConf._subclasses.append(cls)
 
         # Initialize _env_fields for this subclass
         if not hasattr(cls, "_env_fields"):

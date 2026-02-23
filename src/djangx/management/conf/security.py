@@ -5,7 +5,7 @@
 # See https://docs.djangoproject.com/en/stable/howto/deployment/checklist/
 # ==============================================================================
 
-from ._conf import ConfField, ManagementConf
+from .base import BaseConf, ConfField
 
 __all__: list[str] = [
     "SECRET_KEY",
@@ -18,7 +18,7 @@ __all__: list[str] = [
 ]
 
 
-class _SecurityConf(ManagementConf):
+class _SecurityConf(BaseConf):
     """Security settings."""
 
     secret_key = ConfField(

@@ -1,13 +1,13 @@
 """Installed apps, middleware, and template settings."""
 
-from .._conf import ConfField, ManagementConf
 from ...definitions import TemplatesDict
 from ...enums import TemplateContextProcessorEnum
 from ...mappings import APP_TEMPLATE_CONTEXT_PROCESSOR_MAP
+from ..base import BaseConf, ConfField
 from .installed_apps import INSTALLED_APPS
 
 
-class _TemplateContextProcessorsConf(ManagementConf):
+class _TemplateContextProcessorsConf(BaseConf):
     """Context processors settings."""
 
     extend = ConfField(

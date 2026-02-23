@@ -1,7 +1,7 @@
 """Generate Env spec for .env.example with all available env vars."""
 
-from ._conf import ManagementConf
+from .base import BaseConf
 
 __all__: list[str] = ["GENERATED_ENV_FIELDS"]
 
-GENERATED_ENV_FIELDS = ManagementConf.get_env_fields()
+GENERATED_ENV_FIELDS = BaseConf.get_env_fields()

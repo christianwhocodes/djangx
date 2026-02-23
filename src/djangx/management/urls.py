@@ -4,7 +4,7 @@ from django.urls import URLPattern, URLResolver, include, path
 
 from .. import PROJECT
 from .enums import AppEnum
-from .settings import INSTALLED_APPS
+from .conf import INSTALLED_APPS
 
 urlpatterns: list[URLPattern | URLResolver] = [
     *(

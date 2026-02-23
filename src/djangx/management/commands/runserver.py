@@ -10,7 +10,7 @@ from django.contrib.staticfiles.management.commands.runserver import (
 from django.core.management.base import CommandParser
 
 from ... import PACKAGE
-from ..settings import TAILWINDCSS
+from ..conf import TAILWINDCSS
 from .tailwindcss import BuildHandler, CleanHandler, WatchHandler
 
 

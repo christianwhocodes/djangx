@@ -5,7 +5,7 @@ from typing import Final
 
 from ... import PACKAGE
 from ..enums import DatabaseEnum, PresetEnum
-from ..settings import PG_PASS_FILENAME
+from ..conf import PG_PASS_FILENAME
 
 __all__: list[str] = [
     "DATABASE_ENUM_CONFIG_MAP",

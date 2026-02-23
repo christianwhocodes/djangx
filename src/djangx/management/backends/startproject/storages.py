@@ -5,7 +5,7 @@ from django.core.files.storage import Storage
 from django.utils.deconstruct import deconstructible
 from vercel.blob import BlobClient  # pyright: ignore[reportMissingTypeStubs]
 
-from ...settings import BLOB_READ_WRITE_TOKEN
+from ...conf import BLOB_READ_WRITE_TOKEN
 
 
 @deconstructible

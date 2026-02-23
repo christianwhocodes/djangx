@@ -51,7 +51,7 @@ class _PackageInfo:
     @property
     def settings_module(self) -> str:
         """Django settings module."""
-        return f"{self.name}.management.settings"
+        return f"{self.name}.management.conf"
 
 
 PACKAGE: Final = _PackageInfo()

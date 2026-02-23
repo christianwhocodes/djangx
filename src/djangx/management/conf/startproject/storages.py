@@ -3,11 +3,11 @@
 from pathlib import Path
 
 from .... import PACKAGE, PROJECT
-from .._conf import ConfField, ManagementConf
 from ...definitions import StoragesDict
+from ..base import BaseConf, ConfField
 
 
-class _StorageConf(ManagementConf):
+class _StorageConf(BaseConf):
     """Storage backend settings."""
 
     backend = ConfField(
