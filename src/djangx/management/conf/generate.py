@@ -1,6 +1,6 @@
 """Generate Env spec for .env.example with all available env vars."""
 
-from .base import BaseConf
+from ._base import BaseConf
 
 __all__: list[str] = ["GENERATED_ENV_FIELDS"]
 

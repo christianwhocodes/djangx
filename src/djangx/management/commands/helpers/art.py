@@ -178,9 +178,7 @@ class ArtPrinter:
                 notice="       Ctrl-C to quit",
             )
 
-    def print_run_process_banner(
-        self, art_type: ArtType, display_mode: str, command_count: int
-    ) -> None:
+    def print_run_process_banner(self, art_type: ArtType, display_mode: str, command_count: int) -> None:
         """Print a banner for build/install command processes."""
         if self.terminal_width >= TerminalSize.THRESHOLD:
             self._print_banner(

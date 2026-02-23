@@ -59,9 +59,7 @@ class Command(RunserverCommand):
     def handle(self, *args: object, **options: Any) -> str | None:
         """Handle the dev command execution."""
         self.no_clipboard = options.get("no_clipboard", False)
-        self.no_tailwindcss_watch = (
-            options.get("no_tailwindcss_watch", False) or TAILWINDCSS.no_watch
-        )
+        self.no_tailwindcss_watch = options.get("no_tailwindcss_watch", False) or TAILWINDCSS.no_watch
         self.verbose = options.get("verbose", False)
 
         self._setup_signal_handlers()
@@ -162,11 +160,7 @@ class Command(RunserverCommand):
 
         if self._watcher_thread.is_alive():
             if self.verbose:
-                self.stdout.write(
-                    self.style.WARNING(
-                        "   ⚠ TailwindCSS watcher did not stop in time (will be terminated)"
-                    )
-                )
+                self.stdout.write(self.style.WARNING("   ⚠ TailwindCSS watcher did not stop in time (will be terminated)"))
         else:
             if self.verbose:
                 self.stdout.write(self.style.SUCCESS("   ✓ TailwindCSS watcher stopped"))
@@ -183,9 +177,7 @@ class Command(RunserverCommand):
 
         if TAILWINDCSS.is_disabled:
             if self.verbose:
-                self.stdout.write(
-                    self.style.NOTICE("\n⏭ TailwindCSS is disabled (tailwindcss.disable)")
-                )
+                self.stdout.write(self.style.NOTICE("\n⏭ TailwindCSS is disabled (tailwindcss.disable)"))
             return
 
         # Build initial CSS
@@ -196,14 +188,10 @@ class Command(RunserverCommand):
             self._start_watcher()
 
             if self.verbose:
-                self.stdout.write(
-                    self.style.SUCCESS("👀 Watching for changes in TailwindCSS source files")
-                )
+                self.stdout.write(self.style.SUCCESS("👀 Watching for changes in TailwindCSS source files"))
         else:
             if self.verbose:
-                self.stdout.write(
-                    self.style.NOTICE("\n⏭ TailwindCSS watch disabled (--no-tailwindcss-watch)")
-                )
+                self.stdout.write(self.style.NOTICE("\n⏭ TailwindCSS watch disabled (--no-tailwindcss-watch)"))
 
     def _start_watcher(self) -> None:
         """Start the TailwindCSS watcher thread."""
@@ -254,9 +242,7 @@ class Command(RunserverCommand):
 
     def _print_version(self) -> None:
         """Print version."""
-        self.stdout.write(
-            f"  🔧 {PACKAGE.display_name} version: {self.style.HTTP_NOT_MODIFIED(PACKAGE.version)}"
-        )
+        self.stdout.write(f"  🔧 {PACKAGE.display_name} version: {self.style.HTTP_NOT_MODIFIED(PACKAGE.version)}")
 
     def _print_local_url(self, server_port: int) -> None:
         """Print local server URL."""
@@ -290,8 +276,6 @@ class Command(RunserverCommand):
             copy(url)
             self.stdout.write(f"  📋 {self.style.SUCCESS('Copied to clipboard!')}")
         except ImportError:
-            self.stdout.write(
-                f"  📋 {self.style.WARNING('pyperclip not installed - skipping clipboard copy')}"
-            )
+            self.stdout.write(f"  📋 {self.style.WARNING('pyperclip not installed - skipping clipboard copy')}")
         except Exception:
             pass

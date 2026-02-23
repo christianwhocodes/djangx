@@ -1,8 +1,8 @@
 """Installed apps, middleware, and template settings."""
 
 from ...enums import MiddlewareEnum
-from ...mappings import APP_MIDDLEWARE_MAP
-from ..base import BaseConf, ConfField
+from .._base import BaseConf, ConfField
+from ._mappings import APP_MIDDLEWARE_MAP
 from .installed_apps import INSTALLED_APPS
 
 

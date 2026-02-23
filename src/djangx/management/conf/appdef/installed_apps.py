@@ -2,7 +2,7 @@
 
 from .... import PACKAGE, PROJECT
 from ...enums import AppEnum
-from ..base import BaseConf, ConfField
+from .._base import BaseConf, ConfField
 
 
 class _AppsConf(BaseConf):

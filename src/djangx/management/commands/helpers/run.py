@@ -194,9 +194,7 @@ class FormattedCommandOutput(CommandOutput):
         """Print header with ASCII art."""
         display_mode = "DRY RUN" if dry_run else mode
 
-        self.command.stdout.write(
-            self.command.style.SUCCESS(f"\n✨ Starting {display_mode.lower()} process...\n")
-        )
+        self.command.stdout.write(self.command.style.SUCCESS(f"\n✨ Starting {display_mode.lower()} process...\n"))
 
         self.art_printer.print_run_process_banner(self.art_type, display_mode, command_count)
 
@@ -210,16 +208,10 @@ class FormattedCommandOutput(CommandOutput):
         self.command.stdout.write(self.command.style.NOTICE("Commands to be executed:\n"))
 
         for i, cmd in enumerate(commands, 1):
-            self.command.stdout.write(
-                f"  {self.command.style.NOTICE(f'[{i}]')} {self.command.style.HTTP_INFO(cmd)}"
-            )
+            self.command.stdout.write(f"  {self.command.style.NOTICE(f'[{i}]')} {self.command.style.HTTP_INFO(cmd)}")
 
         self.command.stdout.write("")
-        self.command.stdout.write(
-            self.command.style.HTTP_NOT_MODIFIED(
-                "✨ Remove --dry-run flag to execute these commands"
-            )
-        )
+        self.command.stdout.write(self.command.style.HTTP_NOT_MODIFIED("✨ Remove --dry-run flag to execute these commands"))
         self.command.stdout.write("")
 
     def print_command_header(self) -> None:
@@ -245,16 +237,10 @@ class FormattedCommandOutput(CommandOutput):
         """Print final completion summary."""
         self.command.stdout.write(self.command.style.HTTP_NOT_MODIFIED("=" * 60 + "\n"))
         if failed == 0:
-            self.command.stdout.write(
-                self.command.style.SUCCESS(f"🎉 All {completed} command(s) completed successfully!")
-            )
+            self.command.stdout.write(self.command.style.SUCCESS(f"🎉 All {completed} command(s) completed successfully!"))
         else:
-            self.command.stdout.write(
-                self.command.style.SUCCESS(f"✓ {completed}/{total} command(s) completed")
-            )
-            self.command.stdout.write(
-                self.command.style.ERROR(f"✗ {failed}/{total} command(s) failed")
-            )
+            self.command.stdout.write(self.command.style.SUCCESS(f"✓ {completed}/{total} command(s) completed"))
+            self.command.stdout.write(self.command.style.ERROR(f"✗ {failed}/{total} command(s) failed"))
 
         self.command.stdout.write("")
 
@@ -266,7 +252,5 @@ class FormattedCommandOutput(CommandOutput):
         percentage = (current / total) * 100
 
         return (
-            f"  [{bar}] "
-            f"{self.command.style.HTTP_INFO(f'{current}/{total}')} "
-            f"({self.command.style.NOTICE(f'{percentage:.0f}%')})"
+            f"  [{bar}] {self.command.style.HTTP_INFO(f'{current}/{total}')} ({self.command.style.NOTICE(f'{percentage:.0f}%')})"
         )

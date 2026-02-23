@@ -290,15 +290,14 @@ dependencies = [
     { name = "django-minify-html" },
     { name = "django-phonenumber-field", extra = ["phonenumberslite"] },
     { name = "django-watchfiles" },
+    { name = "pillow" },
     { name = "pyperclip" },
     { name = "python-dotenv" },
-    { name = "rich" },
 ]
 
 [package.dev-dependencies]
 dev = [
     { name = "djlint" },
-    { name = "pillow" },
     { name = "psycopg", extra = ["binary", "pool"] },
     { name = "ruff" },
     { name = "ty" },
@@ -314,15 +313,14 @@ requires-dist = [
     { name = "django-minify-html", specifier = ">=1.14.0" },
     { name = "django-phonenumber-field", extras = ["phonenumberslite"], specifier = ">=8.4.0" },
     { name = "django-watchfiles", specifier = ">=1.4.0" },
+    { name = "pillow", specifier = ">=12.1.1" },
     { name = "pyperclip", specifier = ">=1.11.0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
-    { name = "rich", specifier = ">=14.3.3" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "djlint", specifier = ">=1.36.4" },
-    { name = "pillow", specifier = ">=12.1.1" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.3.3" },
     { name = "ruff", specifier = ">=0.15.2" },
     { name = "ty", specifier = ">=0.0.18" },

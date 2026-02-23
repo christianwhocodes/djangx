@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from ... import PACKAGE, PROJECT
-from .base import BaseConf, ConfField
+from ._base import BaseConf, ConfField
 
 __all__: list[str] = [
     "TAILWINDCSS",
@@ -43,8 +43,8 @@ class _TailwindCSSConf(BaseConf):
     )
     is_disabled = ConfField(
         type=bool,
-        env="TAILWINDCSS_DISABLE",
-        toml="tailwindcss.disable",
+        env="TAILWINDCSS_DISABLED",
+        toml="tailwindcss.disabled",
         default=False,
     )
     no_watch = ConfField(

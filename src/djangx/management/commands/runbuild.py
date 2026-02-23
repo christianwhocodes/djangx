@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from christianwhocodes import status
 from django.core.management.base import BaseCommand, CommandParser
 
 from .helpers.run import CommandGenerator, CommandOutput, FormattedCommandOutput
@@ -46,4 +47,5 @@ class Command(BaseCommand):
         """Run configured build commands."""
         dry_run: bool = options.get("dry_run", False)
         generator = _BuildCommandGenerator(self)
-        generator.generate(dry_run=dry_run)
+        with status("Running build commands..."):
+            generator.generate(dry_run=dry_run)

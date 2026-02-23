@@ -7,7 +7,6 @@ from django.utils.csp import CSP  # pyright: ignore[reportMissingTypeStubs]
 from ... import PACKAGE, PROJECT
 from .appdef import *
 from .auth import *
-from .generate import *
 from .runcommands import *
 from .security import *
 from .server import *
@@ -15,6 +14,8 @@ from .startproject import *
 from .tailwindcss import *
 
 BASE_DIR: Path = PROJECT.base_dir
+
+from .generate import *  # Placed last to Ensures GENERATED_ENV_FIELDS has all available env vars for generation of .env.example
 
 ROOT_URLCONF: str = f"{PACKAGE.name}.management.urls"
 

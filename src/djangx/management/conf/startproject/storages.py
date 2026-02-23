@@ -4,7 +4,8 @@ from pathlib import Path
 from typing import TypedDict
 
 from .... import PACKAGE, PROJECT
-from ..base import BaseConf, ConfField
+from ...enums import StorageEnum
+from .._base import BaseConf, ConfField
 
 __all__: list[str] = [
     "STORAGES",
@@ -21,12 +22,12 @@ class _StorageConf(BaseConf):
 
     backend = ConfField(
         type=str,
-        choices=["filesystem", "vercelblob"],
+        choices=[StorageEnum.FILESYSTEM.value, StorageEnum.VERCELBLOB.value],
         env="STORAGE_BACKEND",
         toml="storage.backend",
-        default="filesystem",
+        default=StorageEnum.FILESYSTEM.value,
     )
-    # vercelblob specific
+    # NOTE: This token is only relevant for the Vercel Blob Storage backend, but we include it here for simplicity. It will be ignored if the filesystem backend is used.
     token = ConfField(
         type=str,
         env="BLOB_READ_WRITE_TOKEN",
@@ -57,9 +58,9 @@ def _get_storages_config() -> _StoragesDict:
     storage_backend: str
 
     match backend:
-        case "filesystem" | "local" | "fs":
+        case StorageEnum.FILESYSTEM.value:
             storage_backend = "django.core.files.storage.FileSystemStorage"
-        case "blob" | "vercel" | "vercel-blob":
+        case StorageEnum.VERCELBLOB.value:
             storage_backend = f"{PACKAGE.name}.management.backends.VercelBlobStorageBackend"
         case _:
             raise ValueError(f"Unsupported storage backend: {backend}")

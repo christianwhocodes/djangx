@@ -18,18 +18,19 @@ def main() -> None:
             sys.exit(print_version(PACKAGE.name))
 
         case command if command in InitAction:
-            from .commands import StartprojectCommand
+            from .commands.startproject import Command
 
-            sys.exit(StartprojectCommand()(sys.argv[2:]))
+            sys.exit(Command()(sys.argv[2:]))
 
         case _:
             try:
                 PROJECT.validate()
             except ProjectValidationError as e:
-                cprint(f"Not in a valid {PACKAGE.display_name} project directory: {e}", Text.WARNING)
-                actions = " | ".join(InitAction)
+                cprint(f"Is this a valid {PACKAGE.display_name} project directory?\n{e}", Text.WARNING)
                 cprint(
-                    f"Use '{PACKAGE.name} [{actions}] <project_name>' to initialize a new project.",
+                    f"Assuming you have uv installed:\n"
+                    f"    - run: 'uvx {PACKAGE.name} {InitAction.STARTPROJECT.value} <project_name>' to initialize a new project.\n"
+                    f"    - run: 'uvx {PACKAGE.name} {InitAction.STARTPROJECT.value} -h' to see help on the command.",
                     Text.INFO,
                 )
                 sys.exit(ExitCode.ERROR)

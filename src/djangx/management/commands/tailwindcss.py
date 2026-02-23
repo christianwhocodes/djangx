@@ -77,9 +77,7 @@ class _InstallHandler:
         try:
             self.cli_path.parent.mkdir(parents=True, exist_ok=True)
         except PermissionError:
-            raise CommandError(
-                f"Permission denied: Cannot create directory at {self.cli_path.parent}"
-            )
+            raise CommandError(f"Permission denied: Cannot create directory at {self.cli_path.parent}")
 
     def _get_download_url(self) -> str:
         """Construct the GitHub release URL based on platform and version."""
@@ -279,9 +277,7 @@ class Command(BaseCommand):
             action="store_true",
             help="Force a new download or redownload and bypass confirmation prompts.",
         )
-        install_parser.add_argument(
-            "--use-cache", action="store_true", help="Skip download if CLI binary already exists."
-        )
+        install_parser.add_argument("--use-cache", action="store_true", help="Skip download if CLI binary already exists.")
 
         subparsers.add_parser("build", help="Compile source CSS into minified output.")
         subparsers.add_parser("watch", help="Watch source files and rebuild on changes.")
@@ -293,9 +289,7 @@ class Command(BaseCommand):
         v = options.get("verbosity", 1) > 0
 
         if cmd == "install":
-            _InstallHandler(v).install(
-                skip_prompt=options["skip_prompt"], use_cache=options["use_cache"]
-            )
+            _InstallHandler(v).install(skip_prompt=options["skip_prompt"], use_cache=options["use_cache"])
         elif cmd == "build":
             BuildHandler(v).build()
         elif cmd == "watch":

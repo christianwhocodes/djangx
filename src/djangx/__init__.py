@@ -100,7 +100,7 @@ class _ProjectInfo:
         pyproject_path = self.base_dir / "pyproject.toml"
 
         if not pyproject_path.exists():
-            raise FileNotFoundError(f"pyproject.toml not found at {pyproject_path}")
+            raise FileNotFoundError(f"pyproject.toml not found at '{pyproject_path}'")
 
         tool_section = PyProject(pyproject_path).data.get("tool", {})
         if PACKAGE.name not in tool_section:

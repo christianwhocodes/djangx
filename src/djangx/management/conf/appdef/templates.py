@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import NotRequired, TypeAlias, TypedDict
 
 from ...enums import TemplateContextProcessorEnum
-from ...mappings import APP_TEMPLATE_CONTEXT_PROCESSOR_MAP
-from ..base import BaseConf, ConfField
+from .._base import BaseConf, ConfField
+from ._mappings import APP_TEMPLATE_CONTEXT_PROCESSOR_MAP
 from .installed_apps import INSTALLED_APPS
 
 
@@ -67,14 +67,10 @@ def _get_template_context_processors(installed_apps: list[str]) -> list[str]:
             context_processors_to_remove.update(processor_list)
 
     # Filter out context processors whose apps are not installed or explicitly removed
-    contrib_context_processors: list[str] = [
-        cp for cp in contrib_context_processors if cp not in context_processors_to_remove
-    ]
+    contrib_context_processors: list[str] = [cp for cp in contrib_context_processors if cp not in context_processors_to_remove]
 
     # Add custom context processors at the end
-    all_context_processors: list[str] = (
-        _TEMPLATE_CONTEXT_PROCESSORS_CONF.extend + contrib_context_processors
-    )
+    all_context_processors: list[str] = _TEMPLATE_CONTEXT_PROCESSORS_CONF.extend + contrib_context_processors
 
     # Remove duplicates while preserving order
     return list(dict.fromkeys(all_context_processors))

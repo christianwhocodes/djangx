@@ -37,15 +37,14 @@ dependencies = [
     "django-minify-html>=1.14.0",
     "django-phonenumber-field[phonenumberslite]>=8.4.0",
     "django-watchfiles>=1.4.0",
+    "pillow>=12.1.1",
     "pyperclip>=1.11.0",
     "python-dotenv>=1.2.1",
-    "rich>=14.3.3",
 ]
 
 [dependency-groups]
 dev = [
     "djlint>=1.36.4",
-    "pillow>=12.1.1",
     "psycopg[binary,pool]>=3.3.3",
     "ruff>=0.15.2",
     "ty>=0.0.18",
@@ -59,7 +58,7 @@ ignore = "H016,H030,H031"
 # blank_line_after_tag = "load,extends,endblock"
 
 [tool.ruff]
-line-length = 101
+line-length = 130
 
 [tool.ruff.lint]
 select = ["D"]

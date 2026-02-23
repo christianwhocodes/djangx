@@ -65,9 +65,7 @@ class ConfField:
     # ============================================================================
 
     @staticmethod
-    def convert_value(
-        value: Any, target_type: Any, field_name: str | None = None
-    ) -> _ConfDefaultValueType:
+    def convert_value(value: Any, target_type: Any, field_name: str | None = None) -> _ConfDefaultValueType:
         """Convert a raw value to the target type."""
         from christianwhocodes import TypeConverter
 

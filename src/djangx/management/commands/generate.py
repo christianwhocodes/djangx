@@ -5,28 +5,20 @@ import pathlib
 from collections.abc import Callable
 from typing import Any, cast
 
-from christianwhocodes import (
-    FileGenerator,
-    FileSpec,
-    get_pg_service_spec,
-    get_pgpass_spec,
-)
+from christianwhocodes import FileGenerator, FileSpec, get_pg_service_spec, get_pgpass_spec
 from django.core.management.base import BaseCommand, CommandParser
 
 from ... import PACKAGE, PROJECT
 from ..enums import FileGeneratorOptions
 
 
-def _get_api_server_spec() -> FileSpec:
+def get_api_server_spec(path: pathlib.Path = PROJECT.api_dir / "server.py") -> FileSpec:
     """Return the FileSpec for api/server.py."""
-    content = (
-        f"from {PACKAGE.name}.management.backends import SERVER_APPLICATION as application\n\n"
-        "app = application\n"
-    )
-    return FileSpec(path=PROJECT.api_dir / "server.py", content=content)
+    content = f"from {PACKAGE.name}.management.backends import SERVER_APPLICATION as application\n\napp = application\n"
+    return FileSpec(path=path, content=content)
 
 
-def _get_vercel_spec() -> FileSpec:
+def get_vercel_spec(path: pathlib.Path = PROJECT.base_dir / "vercel.json") -> FileSpec:
     """Return the FileSpec for vercel.json."""
     lines = [
         "{",
@@ -41,10 +33,10 @@ def _get_vercel_spec() -> FileSpec:
         "  ]",
         "}",
     ]
-    return FileSpec(path=PROJECT.base_dir / "vercel.json", content="\n".join(lines) + "\n")
+    return FileSpec(path=path, content="\n".join(lines) + "\n")
 
 
-def _get_env_spec() -> FileSpec:
+def get_env_spec(path: pathlib.Path = PROJECT.base_dir / ".env.example") -> FileSpec:
     """Return the FileSpec for .env.example with all available env vars."""
     from ..conf import GENERATED_ENV_FIELDS
 
@@ -77,9 +69,7 @@ def _get_env_spec() -> FileSpec:
             field_type = field["type"]
 
             # Add field documentation with proper format hints
-            lines.append(
-                f"# Variable: {_env_format_variable_hint(env_var, choices_key, field_type)}"
-            )
+            lines.append(f"# Variable: {_env_format_variable_hint(env_var, choices_key, field_type)}")
             if toml_key:
                 lines.append(f"# TOML Key: {toml_key}")
 
@@ -99,7 +89,7 @@ def _get_env_spec() -> FileSpec:
     # Add footer
     lines.extend(_env_footer())
 
-    return FileSpec(path=PROJECT.base_dir / ".env.example", content="\n".join(lines))
+    return FileSpec(path=path, content="\n".join(lines))
 
 
 # ---------------------------------------------------------------------------
@@ -219,15 +209,15 @@ class Command(BaseCommand):
 
     def handle(self, *args: Any, **options: Any) -> None:
         """Execute the generate command."""
-        file_option: FileGeneratorOptions = FileGeneratorOptions(options["file"])
+        file_option = FileGeneratorOptions(options["file"])
         force: bool = options["force"]
 
         generators: dict[FileGeneratorOptions, Callable[[], FileSpec]] = {
-            FileGeneratorOptions.VERCEL_JSON: _get_vercel_spec,
-            FileGeneratorOptions.API_SERVER_PY: _get_api_server_spec,
+            FileGeneratorOptions.VERCEL_JSON: get_vercel_spec,
+            FileGeneratorOptions.API_SERVER_PY: get_api_server_spec,
+            FileGeneratorOptions.DOTENV_EXAMPLE: get_env_spec,
             FileGeneratorOptions.PG_SERVICE: get_pg_service_spec,
             FileGeneratorOptions.PGPASS: get_pgpass_spec,
-            FileGeneratorOptions.DOTENV_EXAMPLE: _get_env_spec,
         }
 
         spec: FileSpec = generators[file_option]()

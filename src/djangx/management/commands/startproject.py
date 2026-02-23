@@ -3,28 +3,15 @@
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
-from christianwhocodes import (
-    BaseCommand,
-    ExitCode,
-    FileGenerator,
-    FileSpec,
-    InitAction,
-    PostgresFilename,
-    Text,
-    cprint,
-)
+from christianwhocodes import BaseCommand, ExitCode, FileGenerator, FileSpec, InitAction, PostgresFilename, Text, cprint, status
 
 from ... import PACKAGE, PROJECT
-from ..enums import DatabaseEnum, PresetEnum
+from ..enums import DatabaseEnum, PostgresFlagEnum, PresetEnum, StorageEnum
 
-__all__: list[str] = ["StartprojectCommand"]
-
-
-class _PresetDatabaseIncompatibilityError(Exception):
-    """Raised when a preset is used with an incompatible database."""
+# TODO: Ensure build steps are okay - how they are generated in display_successful_setup_info and how they are described in the README. Consider whether to include info about configuring tailwindcss, postgresql, vercel blob etc, especially tailwind.
 
 
-class StartprojectCommand(BaseCommand):
+class Command(BaseCommand):
     """Command to initialize a new project."""
 
     _project_dir: Path
@@ -41,26 +28,25 @@ class StartprojectCommand(BaseCommand):
             "--preset",
             dest="preset",
             type=PresetEnum,
-            choices=[p for p in PresetEnum],
-            help="Project preset to use.",
+            choices=[p.value for p in PresetEnum],
+            help="Project preset to use. Defaults to the 'default' preset.",
             default=PresetEnum.DEFAULT,
         )
         parser.add_argument(
             "--db",
             type=DatabaseEnum,
-            choices=[db for db in DatabaseEnum],
+            choices=[db.value for db in DatabaseEnum],
             help="Database backend to use.",
         )
-        pg_config_group = parser.add_mutually_exclusive_group()
-        pg_config_group.add_argument(
-            "--pg-use-env-vars",
+        parser.add_argument(
+            PostgresFlagEnum.USE_ENV_VARS.value,
             action="store_true",
-            help="Use environment variables for PostgreSQL configuration.",
+            help=f"Use environment variables for PostgreSQL configuration. If False, configuration will be read from {PostgresFilename.PGSERVICE} and {PostgresFilename.PGPASS} files.",
         )
-        pg_config_group.add_argument(
-            "--pg-use-service-files",
+        parser.add_argument(
+            "--disable-tailwindcss",
             action="store_true",
-            help=f"Use a `{PostgresFilename.PGSERVICE}` and `{PostgresFilename.PGPASS}` file for PostgreSQL configuration.",
+            help="Disable TailwindCSS in the generated project.",
         )
 
     def handle(self, args: Namespace) -> ExitCode:
@@ -71,37 +57,39 @@ class StartprojectCommand(BaseCommand):
             self._validate_project_directory(self._project_dir, self._validated_args)
             self._generate_files(self._project_dir, self._validated_args)
 
-        except (_PresetDatabaseIncompatibilityError, FileExistsError) as e:
+        except (ValueError, FileExistsError) as e:
             cprint(str(e), Text.ERROR)
             return ExitCode.ERROR
 
         except Exception as e:
-            cprint(f"An unexpected error occurred: {e}", Text.ERROR)
+            cprint(f"Error occurred during project initialization:\n{e}", Text.ERROR)
             self._revert_generated_files(self._project_dir)
             return ExitCode.ERROR
 
         else:
+            self._display_successful_setup_info(self._project_dir, self._validated_args)
             return ExitCode.SUCCESS
 
     def _validate_args(self, args: Namespace) -> Namespace:
         """Validate the provided arguments."""
         match args.preset:
             case PresetEnum.VERCEL:
+                """Enforce postgresql and environment variable configuration for Vercel preset due to platform requirements and security best practices."""
                 if args.db == DatabaseEnum.SQLITE3:
-                    raise _PresetDatabaseIncompatibilityError(
-                        f"Error: The {PresetEnum.VERCEL} preset requires {DatabaseEnum.POSTGRESQL}. "
-                        f"You cannot use {args.db} with this preset."
-                    )
+                    raise ValueError(f"The {PresetEnum.VERCEL.value} preset requires {DatabaseEnum.POSTGRESQL.value}.")
+
                 args.db = DatabaseEnum.POSTGRESQL
+                args.pg_use_env_vars = True
 
             case _:
+                """Other presets work with either database. Default to sqlite3 if args.db is unspecified."""
                 if not args.db:
                     args.db = DatabaseEnum.SQLITE3
 
-        if args.db == DatabaseEnum.POSTGRESQL and not (
-            args.pg_use_env_vars or args.pg_use_service_files
-        ):
-            args.pg_use_env_vars = True
+        if args.pg_use_env_vars and not args.db == DatabaseEnum.POSTGRESQL:
+            raise ValueError(
+                f"The {PostgresFlagEnum.USE_ENV_VARS.value} flag is only supported for {DatabaseEnum.POSTGRESQL.value}."
+            )
 
         return args
 
@@ -111,47 +99,73 @@ class StartprojectCommand(BaseCommand):
             raise FileExistsError(
                 "The current directory is not empty. Please choose a different project name or remove the existing files."
             )
-        elif project_dir.exists() and project_dir.is_file():
+
+        if not project_dir.exists():
+            return
+
+        if project_dir.is_file():
             raise FileExistsError(
                 f"A file named '{project_dir}' already exists. Please choose a different project name or remove the existing file."
             )
-        elif project_dir.exists() and any(project_dir.iterdir()):
+
+        if any(project_dir.iterdir()):
             raise FileExistsError(
                 f"The directory '{project_dir}' already exists and is not empty. Please choose a different project name or remove the existing files in the directory."
             )
 
     def _generate_files(self, project_dir: Path, args: Namespace) -> None:
-        """Generate other necessary files."""
+        """Generate all necessary files for the project."""
+        with status("Generating base project files..."):
+            self._generate_base_files(project_dir, args)
+
+        if args.preset != PresetEnum.DEFAULT:
+            with status("Generating preset files..."):
+                self._generate_preset_files(project_dir, args)
+
+    def _generate_base_files(self, project_dir: Path, args: Namespace) -> None:
+        """Generate base project files."""
         home_app_dir: Path = project_dir / "home"
 
         files_with_content: list[tuple[Path, str]] = [
-            (project_dir / "pyproject.toml", self._get_pyproject_toml_content(args)),
+            (project_dir / "pyproject.toml", self._get_pyproject_toml_content(project_dir, args)),
+            (project_dir / ".gitignore", self._get_gitignore_content(args)),
+            (project_dir / "README.md", self._get_readme_content(project_dir, args)),
+            (home_app_dir / "__init__.py", ""),
+            (home_app_dir / "migrations" / "__init__.py", ""),
+            (home_app_dir / "templates" / PROJECT.home_app_name / "index.html", self._get_home_app_index_html_content()),
             (home_app_dir / "apps.py", self._get_home_app_apps_py_content()),
             (home_app_dir / "views.py", self._get_home_app_views_py_content()),
             (home_app_dir / "urls.py", self._get_home_app_urls_py_content()),
             (home_app_dir / "admin.py", self._get_home_app_admin_py_content()),
             (home_app_dir / "models.py", self._get_home_app_models_py_content()),
             (home_app_dir / "tests.py", self._get_home_app_tests_py_content()),
-            (
-                home_app_dir / "templates" / PROJECT.home_app_name / "index.html",
-                self._get_home_app_index_html_content(),
-            ),
-            (
-                home_app_dir / "static" / PROJECT.home_app_name / "css" / "tailwind.css",
-                self._get_home_app_tailwindcss_content(),
+            *(
+                [
+                    (
+                        home_app_dir / "static" / PROJECT.home_app_name / "css" / "source.css",
+                        self._get_home_app_tailwindcss_content(),
+                    )
+                ]
+                if not args.disable_tailwindcss
+                else []
             ),
         ]
 
         for path, content in files_with_content:
             FileGenerator(FileSpec(path=path, content=content)).create()
 
-        for file in [
-            home_app_dir / "__init__.py",
-            home_app_dir / "migrations" / "__init__.py",
-            project_dir / "README.md",
-        ]:
-            file.parent.mkdir(parents=True, exist_ok=True)
-            file.touch(exist_ok=True)
+    def _generate_preset_files(self, project_dir: Path, args: Namespace) -> None:
+        """Generate preset-specific files."""
+        from .generate import get_api_server_spec, get_vercel_spec
+
+        match args.preset:
+            case PresetEnum.VERCEL:
+                api_dir: Path = project_dir / "api"
+                FileGenerator(get_vercel_spec(path=project_dir / "vercel.json")).create()
+                FileGenerator(get_api_server_spec(path=api_dir / "server.py")).create()
+                FileGenerator(FileSpec(path=api_dir / "__init__.py", content="")).create()
+            case _:
+                pass
 
     def _revert_generated_files(self, project_dir: Path) -> None:
         """Remove any files that were generated before an error occurred."""
@@ -159,17 +173,77 @@ class StartprojectCommand(BaseCommand):
             for item in sorted(project_dir.rglob("*"), reverse=True):
                 item.unlink() if item.is_file() else item.rmdir()
 
-    def _get_pyproject_toml_content(self, args: Namespace) -> str:
+    def _get_pyproject_toml_content(self, project_dir: Path, args: Namespace) -> str:
         """Generate the content for pyproject.toml based on the provided arguments."""
-        return "trial pyproject content"
+        deps = [
+            '    "pillow>=12.1.1",',
+            f'    "{PACKAGE.name}>=1.5.7",',
+        ]
+        if args.db == DatabaseEnum.POSTGRESQL:
+            deps.insert(1, '    "psycopg[binary,pool]>=3.3.3",')
+        if args.preset == PresetEnum.VERCEL:
+            deps.append('    "vercel>=0.5.0",')
+
+        dependencies = "\n".join(deps)
+
+        djangx_section = f"[tool.{PACKAGE.name}]\n"
+        if args.db == DatabaseEnum.POSTGRESQL:
+            djangx_section += f'db = {{ backend = "{DatabaseEnum.POSTGRESQL.value}", use-env-vars = {"true" if args.pg_use_env_vars else "false"} }}\n'
+        if args.preset == PresetEnum.VERCEL:
+            djangx_section += f'storage = {{ backend = "{StorageEnum.VERCELBLOB.value}", blob-token = "get-from-vercel-blob-storage-and-keep-private-via-env-var" }}\n'
+        if args.disable_tailwindcss:
+            djangx_section += "tailwindcss = { disabled = true }\n"
+
+        return (
+            "[project]\n"
+            f'name = "{project_dir.name}"\n'
+            'version = "0.1.0"\n'
+            'description = ""\n'
+            'readme = "README.md"\n'
+            'requires-python = ">=3.12"\n'
+            "dependencies = [\n"
+            f"{dependencies}\n"
+            "]\n"
+            "\n"
+            "[dependency-groups]\n"
+            'dev = ["djlint>=1.36.4"]\n'
+            "\n"
+            f"{djangx_section}"
+        )
+
+    def _get_gitignore_content(self, args: Namespace) -> str:
+        """Generate the content for .gitignore based on the provided arguments."""
+        sqlite_line = "\n# SQLite database file\n/db.sqlite3\n" if args.db == DatabaseEnum.SQLITE3 else ""
+
+        return (
+            "# Python-generated files\n"
+            "__pycache__/\n"
+            "*.py[oc]\n"
+            "build/\n"
+            "dist/\n"
+            "wheels/\n"
+            "*.egg-info\n"
+            "\n"
+            "# Virtual environments\n"
+            "/.venv/\n"
+            "\n"
+            "# Ruff cache\n"
+            "/.ruff_cache/\n"
+            "\n"
+            "# Temporary files\n"
+            "/.tmp/\n"
+            "\n"
+            "# Static and media files\n"
+            "/public/\n"
+            "\n"
+            "# Environment variables files\n"
+            "/.env*\n"
+            f"{sqlite_line}"
+        )
 
     def _get_home_app_apps_py_content(self) -> str:
         """Generate the content for the home app apps.py."""
-        return (
-            "from django.apps import AppConfig\n\n\n"
-            "class HomeConfig(AppConfig):\n"
-            '    name = "home"\n'
-        )
+        return 'from django.apps import AppConfig\n\n\nclass HomeConfig(AppConfig):\n    name = "home"\n'
 
     def _get_home_app_views_py_content(self) -> str:
         """Generate the content for the home app views.py."""
@@ -344,3 +418,39 @@ class StartprojectCommand(BaseCommand):
             "  }\n"
             "}\n"
         )
+
+    def _get_readme_content(self, project_dir: Path, args: Namespace) -> str:
+        """Generate the content for README.md based on the provided arguments."""
+        steps = self._build_setup_steps(project_dir, args)
+        numbered_steps = "\n".join(f"{i + 1}. {step}" for i, step in enumerate(steps))
+        return f"# {project_dir.name}\n\n## Getting Started\n\n{numbered_steps}\n"
+
+    def _display_successful_setup_info(self, project_dir: Path, args: Namespace) -> None:
+        """Display setup success message and next steps to the user."""
+        cprint(f"\n✓ Project '{project_dir.name}' initialized successfully!", Text.SUCCESS)
+        cprint("\nNext steps:", Text.INFO)
+
+        for i, step in enumerate(self._build_setup_steps(project_dir, args), start=1):
+            cprint(f"  {i}. {step}", Text.INFO)
+
+    def _build_setup_steps(self, project_dir: Path, args: Namespace) -> list[str]:
+        """Build the ordered list of setup steps based on the provided arguments."""
+        steps: list[str] = []
+
+        if args.project_name != ".":
+            steps.append(f"cd {project_dir.name}")
+
+        steps.append("uv sync")
+
+        if args.db == DatabaseEnum.POSTGRESQL and not args.pg_use_env_vars:
+            steps.append(f"Configure your `{PostgresFilename.PGSERVICE}` and `{PostgresFilename.PGPASS}` files.")
+        elif args.db == DatabaseEnum.POSTGRESQL and args.pg_use_env_vars:
+            steps.append("Set your PostgreSQL environment variables in `.env`.")
+
+        if args.preset == PresetEnum.VERCEL:
+            steps.append("Set your Vercel Blob token in `pyproject.toml` (or via env var).")
+
+        steps.append(f"uv run {PACKAGE.name} migrate")
+        steps.append(f"uv run {PACKAGE.name} runserver")
+
+        return steps

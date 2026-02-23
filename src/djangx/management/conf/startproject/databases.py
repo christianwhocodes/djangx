@@ -5,7 +5,7 @@ from typing import NotRequired, TypedDict
 
 from .... import PROJECT
 from ...enums import DatabaseEnum
-from ..base import BaseConf, ConfField
+from .._base import BaseConf, ConfField
 
 __all__: list[str] = ["DATABASES"]
 
@@ -15,10 +15,10 @@ class _DatabaseConf(BaseConf):
 
     backend = ConfField(
         type=str,
-        choices=[DatabaseEnum.SQLITE3, DatabaseEnum.POSTGRESQL],
+        choices=[DatabaseEnum.SQLITE3.value, DatabaseEnum.POSTGRESQL.value],
         env="DB_BACKEND",
         toml="db.backend",
-        default=DatabaseEnum.SQLITE3,
+        default=DatabaseEnum.SQLITE3.value,
     )
     # postgresql specific
     use_env_vars = ConfField(
@@ -106,14 +106,14 @@ def _get_databases_config() -> _DatabasesDict:
     backend: str = _DATABASE.backend.lower()
 
     match backend:
-        case DatabaseEnum.SQLITE3:
+        case DatabaseEnum.SQLITE3.value:
             return {
                 "default": {
                     "ENGINE": f"django.db.backends.{DatabaseEnum.SQLITE3.value}",
                     "NAME": PROJECT.base_dir / f"db.{DatabaseEnum.SQLITE3.value}",
                 }
             }
-        case DatabaseEnum.POSTGRESQL:
+        case DatabaseEnum.POSTGRESQL.value:
             options: _DatabaseOptionsDict = {
                 "pool": _DATABASE.pool,
                 "sslmode": _DATABASE.ssl_mode,
