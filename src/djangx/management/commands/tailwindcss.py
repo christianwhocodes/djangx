@@ -9,8 +9,8 @@ from typing import Any
 from christianwhocodes import Platform, Text, cprint
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
-from ... import PACKAGE
-from ..conf import TAILWINDCSS
+from ...constants import Package
+from ..settings import TAILWINDCSS
 
 
 class _InstallHandler:
@@ -159,7 +159,7 @@ class _BaseHandler:
     def _validate_env(self) -> None:
         """Ensure the CLI exists and the source CSS file is present."""
         if not self.cli_path.exists():
-            raise CommandError(f"CLI not found. Run '{PACKAGE.name} tailwindcss install' first.")
+            raise CommandError(f"CLI not found. Run '{Package.NAME} tailwindcss install' first.")
         if not self.source_css.exists():
             raise CommandError(f"Source CSS file not found at: {self.source_css}")
 

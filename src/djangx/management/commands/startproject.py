@@ -5,8 +5,7 @@ from pathlib import Path
 
 from christianwhocodes import BaseCommand, ExitCode, FileGenerator, FileSpec, InitAction, PostgresFilename, Text, cprint, status
 
-from ... import PACKAGE, PROJECT
-from ..enums import DatabaseEnum, PostgresFlagEnum, PresetEnum, StorageEnum
+from ...constants import DatabaseChoices, Package, PostgresFlags, PresetChoices, Project, StorageChoices
 
 
 class Command(BaseCommand):
@@ -15,8 +14,8 @@ class Command(BaseCommand):
     _project_dir: Path
     _validated_args: Namespace
     _actions = " | ".join(InitAction)
-    prog = f"{PACKAGE.name} [{_actions}] <project_name>"
-    help = f"Initialize a new {PACKAGE.display_name} project."
+    prog = f"{Package.NAME} [{_actions}] <project_name>"
+    help = f"Initialize a new {Package.DISPLAY_NAME} project."
 
     def add_arguments(self, parser: ArgumentParser) -> None:
         """Register arguments onto the parser."""
@@ -25,21 +24,21 @@ class Command(BaseCommand):
             "-p",
             "--preset",
             dest="preset",
-            type=PresetEnum,
-            choices=[p.value for p in PresetEnum],
+            type=PresetChoices,
+            choices=[p for p in PresetChoices],
             help="Project preset to use. Defaults to the 'default' preset.",
-            default=PresetEnum.DEFAULT,
+            default=PresetChoices.DEFAULT,
         )
         parser.add_argument(
             "-d",
             "--db",
             dest="db",
-            type=DatabaseEnum,
-            choices=[db.value for db in DatabaseEnum],
+            type=DatabaseChoices,
+            choices=[db for db in DatabaseChoices],
             help="Database backend to use.",
         )
         parser.add_argument(
-            PostgresFlagEnum.USE_ENV_VARS.value,
+            PostgresFlags.USE_ENV_VARS,
             action="store_true",
             help=f"Use environment variables for PostgreSQL configuration. If False, configuration will be read from {PostgresFilename.PGSERVICE} and {PostgresFilename.PGPASS} files.",
         )
@@ -77,23 +76,21 @@ class Command(BaseCommand):
     def _validate_args(self, args: Namespace) -> Namespace:
         """Validate the provided arguments."""
         match args.preset:
-            case PresetEnum.VERCEL:
+            case PresetChoices.VERCEL:
                 """Enforce postgresql and environment variable configuration for Vercel preset due to platform requirements and security best practices."""
-                if args.db == DatabaseEnum.SQLITE3:
-                    raise ValueError(f"The {PresetEnum.VERCEL.value} preset requires {DatabaseEnum.POSTGRESQL.value}.")
+                if args.db == DatabaseChoices.SQLITE3:
+                    raise ValueError(f"The {PresetChoices.VERCEL} preset requires {DatabaseChoices.POSTGRESQL}.")
 
-                args.db = DatabaseEnum.POSTGRESQL
+                args.db = DatabaseChoices.POSTGRESQL
                 args.pg_use_env_vars = True
 
             case _:
                 """Other presets work with either database. Default to sqlite3 if args.db is unspecified."""
                 if not args.db:
-                    args.db = DatabaseEnum.SQLITE3
+                    args.db = DatabaseChoices.SQLITE3
 
-        if args.pg_use_env_vars and not args.db == DatabaseEnum.POSTGRESQL:
-            raise ValueError(
-                f"The {PostgresFlagEnum.USE_ENV_VARS.value} flag is only supported for {DatabaseEnum.POSTGRESQL.value}."
-            )
+        if args.pg_use_env_vars and not args.db == DatabaseChoices.POSTGRESQL:
+            raise ValueError(f"The {PostgresFlags.USE_ENV_VARS} flag is only supported for {DatabaseChoices.POSTGRESQL}.")
 
         return args
 
@@ -127,7 +124,7 @@ class Command(BaseCommand):
             (project_dir / "README.md", self._get_readme_content(project_dir)),
             (home_app_dir / "__init__.py", ""),
             (home_app_dir / "migrations" / "__init__.py", ""),
-            (home_app_dir / "templates" / PROJECT.home_app_name / "index.html", self._get_home_app_index_html_content()),
+            (home_app_dir / "templates" / Project.HOME_APP_NAME / "index.html", self._get_home_app_index_html_content()),
             (home_app_dir / "apps.py", self._get_home_app_apps_py_content()),
             (home_app_dir / "views.py", self._get_home_app_views_py_content()),
             (home_app_dir / "urls.py", self._get_home_app_urls_py_content()),
@@ -137,7 +134,7 @@ class Command(BaseCommand):
             *(
                 [
                     (
-                        home_app_dir / "static" / PROJECT.home_app_name / "css" / "source.css",
+                        home_app_dir / "static" / Project.HOME_APP_NAME / "css" / "source.css",
                         self._get_home_app_tailwindcss_content(),
                     )
                 ]
@@ -154,7 +151,7 @@ class Command(BaseCommand):
         from .generate import get_api_server_spec, get_env_spec, get_vercel_spec
 
         match args.preset:
-            case PresetEnum.VERCEL:
+            case PresetChoices.VERCEL:
                 api_dir: Path = project_dir / "api"
                 FileGenerator(get_vercel_spec(path=project_dir / "vercel.json")).create()
                 FileGenerator(get_api_server_spec(path=api_dir / "server.py")).create()
@@ -173,20 +170,20 @@ class Command(BaseCommand):
         """Generate the content for pyproject.toml based on the provided arguments."""
         deps = [
             '    "pillow>=12.1.1",',
-            f'    "{PACKAGE.name}>=1.5.7",',
+            f'    "{Package.NAME}>=1.5.7",',
         ]
-        if args.db == DatabaseEnum.POSTGRESQL:
+        if args.db == DatabaseChoices.POSTGRESQL:
             deps.insert(1, '    "psycopg[binary,pool]>=3.3.3",')
-        if args.preset == PresetEnum.VERCEL:
+        if args.preset == PresetChoices.VERCEL:
             deps.append('    "vercel>=0.5.0",')
 
         dependencies = "\n".join(deps)
 
-        djangx_section = f"[tool.{PACKAGE.name}]\n"
-        if args.db == DatabaseEnum.POSTGRESQL:
-            djangx_section += f'db = {{ backend = "{DatabaseEnum.POSTGRESQL.value}", use-env-vars = {"true" if args.pg_use_env_vars else "false"} }}\n'
-        if args.preset == PresetEnum.VERCEL:
-            djangx_section += f'storage = {{ backend = "{StorageEnum.VERCELBLOB.value}", blob-token = "get-from-vercel-blob-storage-and-keep-private-via-env-var" }}\n'
+        djangx_section = f"[tool.{Package.NAME}]\n"
+        if args.db == DatabaseChoices.POSTGRESQL:
+            djangx_section += f'db = {{ backend = "{DatabaseChoices.POSTGRESQL}", use-env-vars = {"true" if args.pg_use_env_vars else "false"} }}\n'
+        if args.preset == PresetChoices.VERCEL:
+            djangx_section += f'storage = {{ backend = "{StorageChoices.VERCELBLOB}", blob-token = "get-from-vercel-blob-storage-and-keep-private-via-env-var" }}\n'
         if args.disable_tailwindcss:
             djangx_section += "tailwindcss = { disabled = true }\n"
 
@@ -209,7 +206,7 @@ class Command(BaseCommand):
 
     def _get_gitignore_content(self, args: Namespace) -> str:
         """Generate the content for .gitignore based on the provided arguments."""
-        sqlite_line = "\n# SQLite database file\n/db.sqlite3\n" if args.db == DatabaseEnum.SQLITE3 else ""
+        sqlite_line = "\n# SQLite database file\n/db.sqlite3\n" if args.db == DatabaseChoices.SQLITE3 else ""
 
         return (
             "# Python-generated files\n"
@@ -304,8 +301,8 @@ class Command(BaseCommand):
             "/* =============================================================================\n"
             "   SOURCE FILES\n"
             "   ============================================================================= */\n"
-            f'@source "../../../../.venv/**/{PACKAGE.name}/{PACKAGE.main_app_name}/templates/{PACKAGE.main_app_name}/**/*.html";\n'
-            f'@source "../../../templates/{PROJECT.home_app_name}/**/*.html";\n'
+            f'@source "../../../../.venv/**/{Package.NAME}/contrib/**/templates/**/*.html";\n'
+            f'@source "../../../templates/{Project.HOME_APP_NAME}/**/*.html";\n'
             "\n"
             "/* =============================================================================\n"
             "   THEME CONFIGURATION\n"

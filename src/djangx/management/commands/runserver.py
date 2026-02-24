@@ -9,8 +9,8 @@ from django.contrib.staticfiles.management.commands.runserver import (
 )
 from django.core.management.base import CommandParser
 
-from ... import PACKAGE
-from ..conf import TAILWINDCSS
+from ...constants import Package
+from ..settings import TAILWINDCSS
 from .tailwindcss import BuildHandler, CleanHandler, WatchHandler
 
 
@@ -101,7 +101,7 @@ class Command(RunserverCommand):
                 f"migrations for app(s): {', '.join(apps_waiting_migration)}."
             )
         )
-        self.stdout.write(self.style.NOTICE(f"Run {PACKAGE.name} migrate to apply them."))
+        self.stdout.write(self.style.NOTICE(f"Run {Package.NAME} migrate to apply them."))
 
     def on_bind(self, server_port: int) -> None:
         """Display startup banner and server info."""
@@ -242,7 +242,7 @@ class Command(RunserverCommand):
 
     def _print_version(self) -> None:
         """Print version."""
-        self.stdout.write(f"  🔧 {PACKAGE.display_name} version: {self.style.HTTP_NOT_MODIFIED(PACKAGE.version)}")
+        self.stdout.write(f"  🔧 {Package.DISPLAY_NAME} version: {self.style.HTTP_NOT_MODIFIED(Package.VERSION)}")
 
     def _print_local_url(self, server_port: int) -> None:
         """Print local server URL."""

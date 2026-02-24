@@ -13,7 +13,7 @@ class _InstallCommandGenerator(CommandGenerator):
 
     def get_runcommands(self) -> list[str]:
         """Retrieve install commands."""
-        from ..conf import RUNCOMMANDS
+        from ..settings import RUNCOMMANDS
 
         return RUNCOMMANDS.install
 

@@ -2,10 +2,10 @@
 
 from os import environ
 
-from .... import PACKAGE
-from ...conf import SERVER_USE_ASGI
+from ....constants import Package
+from ...settings import SERVER_USE_ASGI
 
-environ.setdefault("DJANGO_SETTINGS_MODULE", PACKAGE.settings_module)
+environ.setdefault("DJANGO_SETTINGS_MODULE", Package.SETTINGS_MODULE)
 
 __all__: list[str] = ["SERVER_APPLICATION"]
 

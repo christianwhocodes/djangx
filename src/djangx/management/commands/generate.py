@@ -8,23 +8,22 @@ from typing import Any, cast
 from christianwhocodes import FileGenerator, FileSpec, get_pg_service_spec, get_pgpass_spec
 from django.core.management.base import BaseCommand, CommandParser
 
-from ... import PACKAGE, PROJECT
-from ..enums import FileGeneratorOptions
+from ...constants import FileGenerateChoices, Package, Project
 
 
-def get_api_server_spec(path: pathlib.Path = PROJECT.api_dir / "server.py") -> FileSpec:
+def get_api_server_spec(path: pathlib.Path = Project.API_DIR / "server.py") -> FileSpec:
     """Return the FileSpec for api/server.py."""
-    content = f"from {PACKAGE.name}.management.backends import SERVER_APPLICATION as application\n\napp = application\n"
+    content = f"from {Package.NAME}.management.backends import SERVER_APPLICATION as application\n\napp = application\n"
     return FileSpec(path=path, content=content)
 
 
-def get_vercel_spec(path: pathlib.Path = PROJECT.base_dir / "vercel.json") -> FileSpec:
+def get_vercel_spec(path: pathlib.Path = Project.BASE_DIR / "vercel.json") -> FileSpec:
     """Return the FileSpec for vercel.json."""
     lines = [
         "{",
         '  "$schema": "https://openapi.vercel.sh/vercel.json",',
-        f'  "installCommand": "uv run {PACKAGE.name} runinstall",',
-        f'  "buildCommand": "uv run {PACKAGE.name} runbuild",',
+        f'  "installCommand": "uv run {Package.NAME} runinstall",',
+        f'  "buildCommand": "uv run {Package.NAME} runbuild",',
         '  "rewrites": [',
         "    {",
         '      "source": "/(.*)",',
@@ -36,9 +35,9 @@ def get_vercel_spec(path: pathlib.Path = PROJECT.base_dir / "vercel.json") -> Fi
     return FileSpec(path=path, content="\n".join(lines) + "\n")
 
 
-def get_env_spec(path: pathlib.Path = PROJECT.base_dir / ".env.example") -> FileSpec:
+def get_env_spec(path: pathlib.Path = Project.BASE_DIR / ".env.example") -> FileSpec:
     """Return the FileSpec for .env.example with all available env vars."""
-    from ..conf import GENERATED_ENV_FIELDS
+    from ..settings import GENERATED_ENV_FIELDS
 
     lines: list[str] = []
 
@@ -101,7 +100,7 @@ def _env_header() -> list[str]:
     """File header lines."""
     return [
         "# " + "=" * 78,
-        f"# {PACKAGE.display_name} Environment Configuration",
+        f"# {Package.DISPLAY_NAME} Environment Configuration",
         "# " + "=" * 78,
         "#",
         "# This file contains all available environment variables for configuration.",
@@ -195,9 +194,9 @@ class Command(BaseCommand):
         """Add command arguments."""
         parser.add_argument(
             "file",
-            choices=[opt.value for opt in FileGeneratorOptions],
-            type=FileGeneratorOptions,
-            help=f"Which file to generate (options: {', '.join(o.value for o in FileGeneratorOptions)}).",
+            choices=[opt for opt in FileGenerateChoices],
+            type=FileGenerateChoices,
+            help=f"Which file to generate (options: {', '.join(o for o in FileGenerateChoices)}).",
         )
         parser.add_argument(
             "-f",
@@ -209,15 +208,15 @@ class Command(BaseCommand):
 
     def handle(self, *args: Any, **options: Any) -> None:
         """Execute the generate command."""
-        file_option = FileGeneratorOptions(options["file"])
+        file_option = FileGenerateChoices(options["file"])
         force: bool = options["force"]
 
-        generators: dict[FileGeneratorOptions, Callable[[], FileSpec]] = {
-            FileGeneratorOptions.VERCEL_JSON: get_vercel_spec,
-            FileGeneratorOptions.API_SERVER_PY: get_api_server_spec,
-            FileGeneratorOptions.DOTENV_EXAMPLE: get_env_spec,
-            FileGeneratorOptions.PG_SERVICE: get_pg_service_spec,
-            FileGeneratorOptions.PGPASS: get_pgpass_spec,
+        generators: dict[FileGenerateChoices, Callable[[], FileSpec]] = {
+            FileGenerateChoices.VERCEL_JSON: get_vercel_spec,
+            FileGenerateChoices.API_SERVER_PY: get_api_server_spec,
+            FileGenerateChoices.DOTENV_EXAMPLE: get_env_spec,
+            FileGenerateChoices.PG_SERVICE: get_pg_service_spec,
+            FileGenerateChoices.PGPASS: get_pgpass_spec,
         }
 
         spec: FileSpec = generators[file_option]()
