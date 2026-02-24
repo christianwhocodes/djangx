@@ -8,8 +8,6 @@ from christianwhocodes import BaseCommand, ExitCode, FileGenerator, FileSpec, In
 from ... import PACKAGE, PROJECT
 from ..enums import DatabaseEnum, PostgresFlagEnum, PresetEnum, StorageEnum
 
-# TODO: Ensure build steps are okay - how they are generated in display_successful_setup_info and how they are described in the README. Consider whether to include info about configuring tailwindcss, postgresql, vercel blob etc, especially tailwind.
-
 
 class Command(BaseCommand):
     """Command to initialize a new project."""
@@ -33,7 +31,9 @@ class Command(BaseCommand):
             default=PresetEnum.DEFAULT,
         )
         parser.add_argument(
+            "-d",
             "--db",
+            dest="db",
             type=DatabaseEnum,
             choices=[db.value for db in DatabaseEnum],
             help="Database backend to use.",
@@ -55,7 +55,11 @@ class Command(BaseCommand):
             self._project_dir = Path.cwd() / args.project_name
             self._validated_args = self._validate_args(args)
             self._validate_project_directory(self._project_dir, self._validated_args)
-            self._generate_files(self._project_dir, self._validated_args)
+
+            with status("Generating base project files..."):
+                self._generate_base_files(self._project_dir, self._validated_args)
+            with status("Generating preset files..."):
+                self._generate_preset_files(self._project_dir, self._validated_args)
 
         except (ValueError, FileExistsError) as e:
             cprint(str(e), Text.ERROR)
@@ -67,7 +71,7 @@ class Command(BaseCommand):
             return ExitCode.ERROR
 
         else:
-            self._display_successful_setup_info(self._project_dir, self._validated_args)
+            self._display_successful_setup_info(self._project_dir)
             return ExitCode.SUCCESS
 
     def _validate_args(self, args: Namespace) -> Namespace:
@@ -113,15 +117,6 @@ class Command(BaseCommand):
                 f"The directory '{project_dir}' already exists and is not empty. Please choose a different project name or remove the existing files in the directory."
             )
 
-    def _generate_files(self, project_dir: Path, args: Namespace) -> None:
-        """Generate all necessary files for the project."""
-        with status("Generating base project files..."):
-            self._generate_base_files(project_dir, args)
-
-        if args.preset != PresetEnum.DEFAULT:
-            with status("Generating preset files..."):
-                self._generate_preset_files(project_dir, args)
-
     def _generate_base_files(self, project_dir: Path, args: Namespace) -> None:
         """Generate base project files."""
         home_app_dir: Path = project_dir / "home"
@@ -129,7 +124,7 @@ class Command(BaseCommand):
         files_with_content: list[tuple[Path, str]] = [
             (project_dir / "pyproject.toml", self._get_pyproject_toml_content(project_dir, args)),
             (project_dir / ".gitignore", self._get_gitignore_content(args)),
-            (project_dir / "README.md", self._get_readme_content(project_dir, args)),
+            (project_dir / "README.md", self._get_readme_content(project_dir)),
             (home_app_dir / "__init__.py", ""),
             (home_app_dir / "migrations" / "__init__.py", ""),
             (home_app_dir / "templates" / PROJECT.home_app_name / "index.html", self._get_home_app_index_html_content()),
@@ -156,7 +151,7 @@ class Command(BaseCommand):
 
     def _generate_preset_files(self, project_dir: Path, args: Namespace) -> None:
         """Generate preset-specific files."""
-        from .generate import get_api_server_spec, get_vercel_spec
+        from .generate import get_api_server_spec, get_env_spec, get_vercel_spec
 
         match args.preset:
             case PresetEnum.VERCEL:
@@ -166,6 +161,7 @@ class Command(BaseCommand):
                 FileGenerator(FileSpec(path=api_dir / "__init__.py", content="")).create()
             case _:
                 pass
+        FileGenerator(get_env_spec(path=project_dir / ".env.example")).create()
 
     def _revert_generated_files(self, project_dir: Path) -> None:
         """Remove any files that were generated before an error occurred."""
@@ -419,38 +415,10 @@ class Command(BaseCommand):
             "}\n"
         )
 
-    def _get_readme_content(self, project_dir: Path, args: Namespace) -> str:
-        """Generate the content for README.md based on the provided arguments."""
-        steps = self._build_setup_steps(project_dir, args)
-        numbered_steps = "\n".join(f"{i + 1}. {step}" for i, step in enumerate(steps))
-        return f"# {project_dir.name}\n\n## Getting Started\n\n{numbered_steps}\n"
+    def _get_readme_content(self, project_dir: Path) -> str:
+        """Generate the content for README.md."""
+        return f"# {project_dir.name}\n"
 
-    def _display_successful_setup_info(self, project_dir: Path, args: Namespace) -> None:
-        """Display setup success message and next steps to the user."""
-        cprint(f"\n✓ Project '{project_dir.name}' initialized successfully!", Text.SUCCESS)
-        cprint("\nNext steps:", Text.INFO)
-
-        for i, step in enumerate(self._build_setup_steps(project_dir, args), start=1):
-            cprint(f"  {i}. {step}", Text.INFO)
-
-    def _build_setup_steps(self, project_dir: Path, args: Namespace) -> list[str]:
-        """Build the ordered list of setup steps based on the provided arguments."""
-        steps: list[str] = []
-
-        if args.project_name != ".":
-            steps.append(f"cd {project_dir.name}")
-
-        steps.append("uv sync")
-
-        if args.db == DatabaseEnum.POSTGRESQL and not args.pg_use_env_vars:
-            steps.append(f"Configure your `{PostgresFilename.PGSERVICE}` and `{PostgresFilename.PGPASS}` files.")
-        elif args.db == DatabaseEnum.POSTGRESQL and args.pg_use_env_vars:
-            steps.append("Set your PostgreSQL environment variables in `.env`.")
-
-        if args.preset == PresetEnum.VERCEL:
-            steps.append("Set your Vercel Blob token in `pyproject.toml` (or via env var).")
-
-        steps.append(f"uv run {PACKAGE.name} migrate")
-        steps.append(f"uv run {PACKAGE.name} runserver")
-
-        return steps
+    def _display_successful_setup_info(self, project_dir: Path) -> None:
+        """Display setup success message."""
+        cprint(f"✓ Project '{project_dir.name}' initialized successfully!", Text.SUCCESS)

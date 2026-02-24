@@ -66,9 +66,9 @@ PACKAGE: Final = _PackageInfo()
 class _ProjectInfo:
     """Project configuration for the current working directory."""
 
-    base_dir: Path = field(default_factory=Path.cwd)
-    # Internal flag to ensure validation runs only once. Kept private and not shown in repr.
     _validated: bool = field(default=False, init=False, repr=False)
+    _toml: dict[str, Any] = field(default_factory=lambda: dict(), init=False, repr=False)
+    base_dir: Path = field(default_factory=Path.cwd)
 
     @property
     def init_name(self) -> str:
@@ -94,9 +94,8 @@ class _ProjectInfo:
     def api_dir(self) -> Path:
         return self.base_dir / "api"
 
-    @cached_property
-    def toml(self) -> dict[str, Any]:
-        """TOML configuration section (lazy-loaded, cached)."""
+    def _load_toml(self) -> None:
+        """Load and validate pyproject.toml configuration."""
         pyproject_path = self.base_dir / "pyproject.toml"
 
         if not pyproject_path.exists():
@@ -106,7 +105,14 @@ class _ProjectInfo:
         if PACKAGE.name not in tool_section:
             raise KeyError(f"Missing 'tool.{PACKAGE.name}' section in pyproject.toml")
 
-        return tool_section[PACKAGE.name]
+        object.__setattr__(self, "_toml", tool_section[PACKAGE.name])
+
+    @cached_property
+    def toml(self) -> dict[str, Any]:
+        """pyproject.toml configuration (lazy-loaded)."""
+        self.validate()
+
+        return self._toml
 
     @cached_property
     def env(self) -> dict[str, Any]:
@@ -136,7 +142,7 @@ class _ProjectInfo:
             return
 
         try:
-            _ = self.toml
+            self._load_toml()
         except (FileNotFoundError, KeyError) as e:
             raise ProjectValidationError(str(e)) from e
 
