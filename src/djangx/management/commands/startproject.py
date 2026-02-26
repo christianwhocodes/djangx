@@ -122,7 +122,7 @@ class Command(BaseCommand):
             (home_app_dir / "templates" / Project.HOME_APP_NAME / "index.html", self._get_home_app_index_html_content()),
             (home_app_dir / "apps.py", self._get_home_app_apps_py_content()),
             (home_app_dir / "views.py", self._get_home_app_views_py_content()),
-            (home_app_dir / "urls.py", self._get_home_app_urls_py_content()),
+            (home_app_dir / "urls.py", self._get_home_app_urls_py_content(project_dir)),
             (home_app_dir / "admin.py", self._get_home_app_admin_py_content()),
             (home_app_dir / "models.py", self._get_home_app_models_py_content()),
             (home_app_dir / "tests.py", self._get_home_app_tests_py_content()),
@@ -229,9 +229,25 @@ class Command(BaseCommand):
             '    template_name = "home/index.html"\n'
         )
 
-    def _get_home_app_urls_py_content(self) -> str:
+    def _get_home_app_urls_py_content(self, project_dir: Path) -> str:
         """Generate the content for the home app urls.py."""
         return (
+            f'"""\n'
+            f"URL configuration for {project_dir.name} project.\n"
+            f"\n"
+            f"The `urlpatterns` list routes URLs to views. For more information please see:\n"
+            f"    https://docs.djangoproject.com/en/stable/topics/http/urls/\n"
+            f"Examples:\n"
+            f"Function views\n"
+            f"    1. Add an import:  from my_app import views\n"
+            f"    2. Add a URL to urlpatterns:  path('', views.home, name='home')\n"
+            f"Class-based views\n"
+            f"    1. Add an import:  from other_app.views import Home\n"
+            f"    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')\n"
+            f"Including another URLconf\n"
+            f"    1. Import the include() function: from django.urls import include, path\n"
+            f"    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))\n"
+            f'"""\n'
             "from django.contrib import admin\n"
             "from django.urls import URLPattern, URLResolver, path\n\n"
             "from . import views\n\n"
