@@ -1,19 +1,10 @@
 [build-system]
-requires = ["uv_build>=0.10.5,<0.11.0"]
+requires = ["uv_build>=0.10.7,<0.11.0"]
 build-backend = "uv_build"
-
-[project.urls]
-homepage = "https://github.com/christianwhocodes/djangx#readme"
-repository = "https://github.com/christianwhocodes/djangx"
-issues = "https://github.com/christianwhocodes/djangx/issues"
-
-[project.scripts]
-djangx = "djangx.management.manage:main"
-djx = "djangx.management.manage:main"
 
 [project]
 name = "djangx"
-version = "1.7.0"
+version = "1.7.0.dev1"
 description = "Build and deploy Django apps with confidence."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -22,6 +13,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 classifiers = [
+    "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
@@ -30,36 +22,59 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "christianwhocodes>=1.5.0.post3",
-    "django>=6.0.2",
-    "django-browser-reload>=1.21.0",
-    "django-http-compression[brotli]>=1.2.0",
-    "django-minify-html>=1.14.0",
-    "django-phonenumber-field[phonenumberslite]>=8.4.0",
-    "django-watchfiles>=1.4.0",
-    "pillow>=12.1.1",
-    "pyperclip>=1.11.0",
-    "python-dotenv>=1.2.1",
+    "christianwhocodes==1.5.0.post3",
+    "django==6.0.2",
+    "django-browser-reload==1.21.0",
+    "django-compressor==4.6.0",
+    "django-http-compression[brotli]==1.2.0",
+    "django-minify-html==1.14.0",
+    "django-phonenumber-field[phonenumberslite]==8.4.0",
+    "django-sass-processor==1.4.2",
+    "django-watchfiles==1.4.0",
+    "libsass==0.23.0",
+    "pillow==12.1.1",
+    "pyperclip==1.11.0",
+    "python-dotenv==1.2.1",
 ]
+
+[project.optional-dependencies]
+vercel = ["vercel==0.5.0"]
+psycopg = ["psycopg[binary,pool]==3.3.3"]
 
 [dependency-groups]
 dev = [
     "djlint>=1.36.4",
-    "psycopg[binary,pool]>=3.3.3",
-    "ruff>=0.15.2",
+    "psycopg[binary,pool]==3.3.3",
+    "ruff>=0.15.4",
     "ty>=0.0.19",
-    "vercel>=0.5.0",
+    "vercel==0.5.0",
 ]
 
-[tool.djlint]
-ignore = "H016,H030,H031"
+[project.urls]
+Homepage = "https://github.com/christianwhocodes/djangx"
+Documentation = "https://github.com/christianwhocodes/djangx#readme"
+Repository = "https://github.com/christianwhocodes/djangx"
+Issues = "https://github.com/christianwhocodes/djangx/issues"
+"Bug Tracker" = "https://github.com/christianwhocodes/djangx/issues"
+# Changelog = "https://github.com/christianwhocodes/djangx/blob/main/CHANGELOG.md"
+
+[project.scripts]
+djangx = "djangx.management.cli:main"
+djx = "djangx.management.cli:main"
 
 [tool.ruff]
 line-length = 130
 
+[tool.ruff.format]
+skip-magic-trailing-comma = true
+docstring-code-format = true
+
 [tool.ruff.lint]
 select = ["D"]
 ignore = ["D203", "D213"] # Resolve the conflicts
+
+[tool.djlint]
+ignore = "H016,H030,H031"
 
 [[tool.uv.index]]
 name = "testpypi"

@@ -26,28 +26,23 @@ class _ProjectConf:
     def _load_project(self) -> None:
         """Load and validate pyproject.toml configuration."""
         pyproject_path = self._base_dir / "pyproject.toml"
-
         if not pyproject_path.exists():
             raise FileNotFoundError(f"pyproject.toml not found at '{pyproject_path}'")
-
         tool_section = PyProject(pyproject_path).data.get("tool", {})
         if Package.NAME not in tool_section:
             raise KeyError(f"Missing 'tool.{Package.NAME}' section in pyproject.toml")
-
         object.__setattr__(self, "_toml", tool_section[Package.NAME])
 
     @cached_property
     def toml(self) -> dict[str, Any]:
         """pyproject.toml configuration (lazy-loaded)."""
         self.validate()
-
         return self._toml
 
     @cached_property
     def env(self) -> dict[str, Any]:
         """Combined .env and environment variables (lazy-loaded)."""
         self.validate()
-
         from os import environ
 
         from dotenv import dotenv_values
@@ -62,20 +57,17 @@ class _ProjectConf:
         """
         if self._validated:
             return
-
         from sys import argv
 
-        # Avoid validation during startproject commands
-        if any(arg in argv for arg in InitAction):
+        if any(arg in argv for arg in InitAction):  # Avoid validation during startproject commands
             object.__setattr__(self, "_validated", True)
             return
-
         try:
             self._load_project()
         except (FileNotFoundError, KeyError) as e:
             raise ProjectValidationError(str(e)) from e
-
-        object.__setattr__(self, "_validated", True)
+        else:
+            object.__setattr__(self, "_validated", True)
 
 
 PROJECT_CONF: Final = _ProjectConf()
@@ -110,14 +102,12 @@ class ConfField:
         """Get value from TOML configuration."""
         if self.toml is None:
             return None
-
         current: Any = PROJECT_CONF.toml
         for k in self.toml.split("."):
             if isinstance(current, dict) and k in current:
                 current = cast(dict[str, Any], current)[k]
             else:
                 return None
-
         return current
 
     def _fetch_value(self) -> Any:
@@ -125,12 +115,10 @@ class ConfField:
         # Try environment variable first
         if self.env is not None and self.env in PROJECT_CONF.env:
             return PROJECT_CONF.env[self.env]
-
         # Fall back to TOML config
         toml_value = self._get_from_toml()
         if toml_value is not None:
             return toml_value
-
         # Final fallback to default
         return self.default
 
@@ -153,7 +141,6 @@ class ConfField:
                     return []
                 case _:
                     return None
-
         try:
             match target_type:
                 case builtins.str:
@@ -168,7 +155,6 @@ class ConfField:
                     return TypeConverter.to_path(value)
                 case _:
                     raise ValueError(f"Unsupported target type or type not specified: {target_type}")
-
         except ValueError as e:
             field_info = f" for field '{field_name}'" if field_name else ""
             raise ValueError(f"Error converting config value{field_info}: {e}") from e
@@ -192,15 +178,15 @@ class ConfField:
 class BaseConf:
     """Base class for loading settings from env vars and TOML."""
 
+    verbose_name: str
+
     # Track all Conf subclasses
     _subclasses: list[type["BaseConf"]] = []
 
     def __init_subclass__(cls) -> None:
         """Register subclass and collect env field metadata."""
         super().__init_subclass__()
-
-        # Register this subclass
-        BaseConf._subclasses.append(cls)
+        BaseConf._subclasses.append(cls)  # Register this subclass
 
         # Initialize _env_fields for this subclass
         if not hasattr(cls, "_env_fields"):
@@ -210,26 +196,24 @@ class BaseConf:
             if not isinstance(attr_value, ConfField):
                 continue
 
-            # Store field metadata if it has an env key
-            if attr_value.env is not None:
-                cls._env_fields.append(
-                    {
-                        "class": cls.__name__,
-                        "choices": attr_value.choices,
-                        "env": attr_value.env,
-                        "toml": attr_value.toml,
-                        "default": attr_value.default,
-                        "type": attr_value.type,
-                    }
-                )
+            # Store field metadata
+            # if attr_value.env is not None:
+            cls._env_fields.append(
+                {
+                    "class": cls.verbose_name,
+                    "choices": attr_value.choices,
+                    "env": attr_value.env,
+                    "toml": attr_value.toml,
+                    "default": attr_value.default,
+                    "type": attr_value.type,
+                }
+            )
 
     @classmethod
-    def get_env_fields(cls) -> list[dict[str, Any]]:
-        """Collect all ConfField definitions that use environment variables."""
+    def get_conf_fields(cls) -> list[dict[str, Any]]:
+        """Collect all ConfField definitions."""
         env_fields: list[dict[str, Any]] = []
-
         for subclass in cls._subclasses:
             if hasattr(subclass, "_env_fields"):
                 env_fields.extend(subclass._env_fields)
-
-        return env_fields
+        return sorted(env_fields, key=lambda f: f["class"])  # Sort by class name for better organization

@@ -13,7 +13,7 @@ from ...constants import FileGenerateChoices, Package, Project
 
 def get_api_server_spec(path: pathlib.Path = Project.API_DIR / "server.py") -> FileSpec:
     """Return the FileSpec for api/server.py."""
-    content = f"from {Package.NAME}.management.backends import SERVER_APPLICATION as application\n\napp = application\n"
+    content = f"from {Package.NAME}.management.backends import server_application as application\n\napp = application\n"
     return FileSpec(path=path, content=content)
 
 
@@ -35,18 +35,16 @@ def get_vercel_spec(path: pathlib.Path = Project.BASE_DIR / "vercel.json") -> Fi
     return FileSpec(path=path, content="\n".join(lines) + "\n")
 
 
-def get_env_spec(path: pathlib.Path = Project.BASE_DIR / ".env.example") -> FileSpec:
-    """Return the FileSpec for .env.example with all available env vars."""
-    from ..settings import GENERATED_ENV_FIELDS
+def get_readme_spec(path: pathlib.Path = Project.BASE_DIR / "README.md") -> FileSpec:
+    """Return the FileSpec for README.md with configuration documentation."""
+    from ..settings import CONF_FIELDS
 
     lines: list[str] = []
-
-    # Add header
-    lines.extend(_env_header())
+    lines.extend(_readme_header(path.parent.name))  # Add header
 
     # Group fields by class
     fields_by_class: dict[str, list[dict[str, Any]]] = {}
-    for field in GENERATED_ENV_FIELDS:
+    for field in CONF_FIELDS:
         class_name = cast(str, field["class"])
         if class_name not in fields_by_class:
             fields_by_class[class_name] = []
@@ -55,9 +53,8 @@ def get_env_spec(path: pathlib.Path = Project.BASE_DIR / ".env.example") -> File
     # Generate content for each class group
     for class_name in sorted(fields_by_class.keys()):
         fields = fields_by_class[class_name]
-
-        # Add section header
-        lines.extend(_env_section_header(class_name))
+        lines.extend(_readme_section_header(class_name))  # Add section header
+        lines.extend(_readme_table_header())  # Add table header
 
         # Process each field in this class
         for field in fields:
@@ -66,118 +63,110 @@ def get_env_spec(path: pathlib.Path = Project.BASE_DIR / ".env.example") -> File
             choices_key = field["choices"]
             default_value = field["default"]
             field_type = field["type"]
-
-            # Add field documentation with proper format hints
-            lines.append(f"# Variable: {_env_format_variable_hint(env_var, choices_key, field_type)}")
-            if toml_key:
-                lines.append(f"# TOML Key: {toml_key}")
-
-            # Format default value for display
-            if default_value is not None:
-                formatted_default = _env_format_default_value(default_value, field_type)
-                lines.append(f"# Default: {formatted_default}")
-            else:
-                lines.append("# Default: (none)")
-
-            lines.append(f"# {env_var}=")
-
-            lines.append("")
-
+            lines.append(_readme_table_row(env_var, toml_key, choices_key, default_value, field_type))
         lines.append("")
 
-    # Add footer
-    lines.extend(_env_footer())
-
+    lines.extend(_readme_footer())  # Add footer
     return FileSpec(path=path, content="\n".join(lines))
 
 
 # ---------------------------------------------------------------------------
-# .env.example helpers
+# README.md helpers
 # ---------------------------------------------------------------------------
 
 
-def _env_header() -> list[str]:
+def _readme_header(project_name: str) -> list[str]:
     """File header lines."""
     return [
-        "# " + "=" * 78,
-        f"# {Package.DISPLAY_NAME} Environment Configuration",
-        "# " + "=" * 78,
-        "#",
-        "# This file contains all available environment variables for configuration.",
-        "#",
-        "# Configuration Priority: ENV > TOML > Default",
-        "# " + "=" * 78,
+        f"# {project_name} {Package.DISPLAY_NAME} project",
+        "",
+        "## Quick Start",
+        "",
+        "- Install dependencies (e.g. `uv sync`).",
+        "- Run the development server (`uv run djangx runserver`). You can use `djx` as a shortcut for `djangx`.",
+        "- To configure the project, see the configuration section below.",
+        "",
+        "## Configuration",
+        "",
+        "Settings can be provided via three mechanisms, in order of precedence:",
+        "",
+        f"1. **Environment variable** — set in your `.env` file (e.g. `MY_VAR=value`)",
+        f'2. **`pyproject.toml`** — set as a key under the `[tool.{Package.NAME}]` (e.g. `my_var = "value"`)',
+        f"3. **Default** — the built-in fallback value used when nothing else is provided",
         "",
     ]
 
 
-def _env_section_header(class_name: str) -> list[str]:
+def _readme_section_header(class_name: str) -> list[str]:
     """Section header for a config class."""
+    return [f"### {class_name}", ""]
+
+
+def _readme_table_header() -> list[str]:
+    """Markdown table header row."""
     return [
-        "# " + "-" * 78,
-        f"# {class_name} Configuration",
-        "# " + "-" * 78,
-        "",
+        "| Environment Variable | TOML Key | Accepted Values | Default |",
+        "| -------------------- | -------- | --------------- | ------- |",
     ]
 
 
-def _env_footer() -> list[str]:
+def _readme_footer() -> list[str]:
     """File footer lines."""
-    return [
-        "# " + "=" * 78,
-        "# End of Configuration",
-        "# " + "=" * 78,
-    ]
+    return ["---", "", f"> This file was generated by `{Package.NAME} generate readme`. Re-run the command to refresh it."]
 
 
-def _env_format_choices(choices: list[str]) -> str:
-    """Format choices as quoted alternatives."""
-    return " | ".join(f'"{choice}"' for choice in choices)
+def _readme_format_choices(choices: list[str]) -> str:
+    """Format choices as inline code alternatives."""
+    return " \\| ".join(f"`{choice}`" for choice in choices)
 
 
-def _env_get_type_example(field_type: type) -> str:
-    """Return example value string for a field type."""
+def _readme_get_type_hint(field_type: type) -> str:
+    """Return a human-readable type hint for a field type."""
     match field_type:
         case builtins.bool:
-            return '"true" | "false"'
+            return "`true` \\| `false`"
         case builtins.int:
-            return '"123"'
+            return "integer"
         case builtins.float:
-            return '"123.45"'
+            return "float"
         case builtins.list:
-            return '"value1,value2,value3"'
+            return "comma-separated values"
         case pathlib.Path:
-            return '"/full/path/to/something"'
+            return "absolute path"
         case _:
-            return '"value"'
+            return "string"
 
 
-def _env_format_variable_hint(env_var: str, choices_key: list[str] | None, field_type: type) -> str:
-    """Format a variable hint showing expected syntax."""
-    if choices_key:
-        return f"{env_var}={_env_format_choices(choices_key)}"
-    return f"{env_var}={_env_get_type_example(field_type)}"
-
-
-def _env_format_default_value(value: Any, field_type: type) -> str:
-    """Format a default value for display in comments."""
+def _readme_format_default_value(value: Any, field_type: type) -> str:
+    """Format a default value for display in a markdown table cell."""
     if value is None:
-        return "(none)"
+        return "*(none)*"
 
     match field_type:
         case builtins.bool:
-            return "true" if value else "false"
+            return f"`{'true' if value else 'false'}`"
         case builtins.list:
             if isinstance(value, list):
                 list_items = cast(list[Any], value)
                 if not list_items:
-                    return "(empty list)"
-                return ",".join(str(v) for v in list_items)
-            return str(value)
+                    return "*(empty)*"
+                return f"`{','.join(str(v) for v in list_items)}`"
+            return f"`{value}`"
         case pathlib.Path:
-            return str(pathlib.PurePosixPath(value))
+            return f"`{pathlib.PurePosixPath(value)}`"
         case _:
-            return str(value)
+            return f"`{value}`"
+
+
+def _readme_table_row(
+    env_var: str, toml_key: str | None, choices_key: list[str] | None, default_value: Any, field_type: type
+) -> str:
+    """Format a single markdown table row for a config field."""
+    env_cell = f"`{env_var}`"
+    toml_cell = f"`{toml_key}`" if toml_key else "—"
+    values_cell = _readme_format_choices(choices_key) if choices_key else _readme_get_type_hint(field_type)
+    default_cell = _readme_format_default_value(default_value, field_type)
+    return f"| {env_cell} | {toml_cell} | {values_cell} | {default_cell} |"
 
 
 # ---------------------------------------------------------------------------
@@ -188,7 +177,9 @@ def _env_format_default_value(value: Any, field_type: type) -> str:
 class Command(BaseCommand):
     """Generate configuration files."""
 
-    help: str = "Generate configuration files (e.g., .env.example, vercel.json, asgi.py, wsgi.py, .pg_service.conf, pgpass.conf / .pgpass)."
+    help: str = (
+        "Generate configuration files (e.g., README.md, vercel.json, asgi.py, wsgi.py, .pg_service.conf, pgpass.conf / .pgpass)."
+    )
 
     def add_arguments(self, parser: CommandParser) -> None:
         """Add command arguments."""
@@ -198,13 +189,7 @@ class Command(BaseCommand):
             type=FileGenerateChoices,
             help=f"Which file to generate (options: {', '.join(o for o in FileGenerateChoices)}).",
         )
-        parser.add_argument(
-            "-f",
-            "--force",
-            dest="force",
-            action="store_true",
-            help="Force overwrite without confirmation.",
-        )
+        parser.add_argument("-f", "--force", dest="force", action="store_true", help="Force overwrite without confirmation.")
 
     def handle(self, *args: Any, **options: Any) -> None:
         """Execute the generate command."""
@@ -214,7 +199,7 @@ class Command(BaseCommand):
         generators: dict[FileGenerateChoices, Callable[[], FileSpec]] = {
             FileGenerateChoices.VERCEL_JSON: get_vercel_spec,
             FileGenerateChoices.API_SERVER_PY: get_api_server_spec,
-            FileGenerateChoices.DOTENV_EXAMPLE: get_env_spec,
+            FileGenerateChoices.README: get_readme_spec,
             FileGenerateChoices.PG_SERVICE: get_pg_service_spec,
             FileGenerateChoices.PGPASS: get_pgpass_spec,
         }

@@ -34,7 +34,7 @@ class GitPublisher:
         - git@github.com:user/repo.git
         """
         urls = self.project.data.get("project", {}).get("urls", {})
-        url = urls.get("repository")
+        url = urls.get("repository") or urls.get("Repository")
 
         if not url:
             raise KeyError("No repository URL found in project.urls")
@@ -173,13 +173,7 @@ def main() -> None:
         epilog="Example:\n  publish.py --dry-run",
     )
 
-    parser.add_argument(
-        "--dry",
-        "--dry-run",
-        dest="dry_run",
-        action="store_true",
-        help="Preview commands without execution",
-    )
+    parser.add_argument("--dry", "--dry-run", dest="dry_run", action="store_true", help="Preview commands without execution")
 
     args: Namespace = parser.parse_args()
     exit(tag_and_push(args.dry_run))

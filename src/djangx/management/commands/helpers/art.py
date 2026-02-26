@@ -43,12 +43,7 @@ class ArtPrinter:
                 "",
             ]
         else:
-            return [
-                "",
-                "  █▀█ █░█ █▄░█",
-                "  █▀▄ █▄█ █░▀█",
-                "",
-            ]
+            return ["", "  █▀█ █░█ █▄░█", "  █▀▄ █▄█ █░▀█", ""]
 
     def _get_server_art(self) -> list[str]:
         """SERVER ASCII art lines."""
@@ -65,11 +60,7 @@ class ArtPrinter:
                 "",
             ]
         else:
-            server_art = [
-                "  █▀ █▀▀ █▀█ █░█ █▀▀ █▀█",
-                "  ▄█ ██▄ █▀▄ ▀▄▀ ██▄ █▀▄",
-                "",
-            ]
+            server_art = ["  █▀ █▀▀ █▀█ █░█ █▀▀ █▀█", "  ▄█ ██▄ █▀▄ ▀▄▀ ██▄ █▀▄", ""]
 
         return run_art + server_art
 
@@ -88,11 +79,7 @@ class ArtPrinter:
                 "",
             ]
         else:
-            build_art = [
-                "       █▄▄ █░█ █ █░░ █▀▄",
-                "       █▄█ █▄█ █ █▄▄ █▄▀",
-                "",
-            ]
+            build_art = ["       █▄▄ █░█ █ █░░ █▀▄", "       █▄█ █▄█ █ █▄▄ █▄▀", ""]
 
         return run_art + build_art
 
@@ -111,11 +98,7 @@ class ArtPrinter:
                 "",
             ]
         else:
-            install_art = [
-                "    █ █▄░█ █▀ ▀█▀ ▄▀█ █░░ █░░",
-                "    █ █░▀█ ▄█ ░█░ █▀█ █▄▄ █▄▄",
-                "",
-            ]
+            install_art = ["    █ █▄░█ █▀ ▀█▀ ▄▀█ █░░ █░░", "    █ █░▀█ ▄█ ░█░ █▀█ █▄▄ █▄▄", ""]
 
         return run_art + install_art
 
@@ -134,13 +117,7 @@ class ArtPrinter:
 
         return getter()
 
-    def _print_banner(
-        self,
-        art_type: ArtType,
-        title: str,
-        subtitle: str | None = None,
-        notice: str | None = None,
-    ) -> None:
+    def _print_banner(self, art_type: ArtType, title: str, subtitle: str | None = None, notice: str | None = None) -> None:
         """Print an ASCII art banner with optional subtitle and notice."""
         art_lines = self._get_art(art_type)
 
@@ -187,8 +164,4 @@ class ArtPrinter:
                 notice=f"           {command_count} command(s) to execute",
             )
         else:
-            self._print_banner(
-                art_type=art_type,
-                title=f"      🔨  {display_mode}  🔨",
-                notice=f"    {command_count} command(s)",
-            )
+            self._print_banner(art_type=art_type, title=f"      🔨  {display_mode}  🔨", notice=f"    {command_count} command(s)")

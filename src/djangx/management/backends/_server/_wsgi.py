@@ -6,4 +6,4 @@ https://docs.djangoproject.com/en/stable/howto/deployment/wsgi/
 
 from django.core.wsgi import get_wsgi_application
 
-SERVER_APPLICATION = get_wsgi_application()
+wsgi_application = get_wsgi_application()

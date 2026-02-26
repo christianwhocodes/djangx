@@ -74,11 +74,7 @@ class CommandExecutor:
             # Validate and parse command
             parts: list[str] = cmd.strip().split()
             if not parts:
-                return CommandResult(
-                    command=cmd,
-                    success=False,
-                    error="Empty command string",
-                )
+                return CommandResult(command=cmd, success=False, error="Empty command string")
 
             command_name: str = parts[0]
             command_args: list[str] = parts[1:]
@@ -96,13 +92,7 @@ class CommandExecutor:
 class CommandProcess:
     """Orchestrates command execution with output and progress tracking."""
 
-    def __init__(
-        self,
-        command: BaseCommand,
-        output: CommandOutput,
-        executor: CommandExecutor,
-        mode: str,
-    ) -> None:
+    def __init__(self, command: BaseCommand, output: CommandOutput, executor: CommandExecutor, mode: str) -> None:
         """Set up command, output handler, executor, and mode."""
         self.command = command
         self.output = output

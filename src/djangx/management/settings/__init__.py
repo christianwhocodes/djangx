@@ -5,20 +5,26 @@ from pathlib import Path
 from django.utils.csp import CSP  # pyright: ignore[reportMissingTypeStubs]
 
 from ...constants import Package
-from .appdef import *
-from .auth import *
-from .internationalization import *
-from .runcommands import *
-from .security import *
-from .server import *
-from .startproject import *
+from ._01_security import *
+from ._02_databases import *
+from ._03_storages import *
+from ._04_server import *
+from ._05_internationalization import *
+from ._06_runcommands import *
+from ._07_installed_apps import *
+from ._08_middleware import *
+from ._09_templates import *
+from ._10_staticfile_finders import *
+from ._11_auth import *
+from ._13_sass import *
 
-"""Place last to ensure all env vars are included in GENERATED_ENV_FIELDS."""
-from .generate import *
+"""Import last to ensure all confs that use environment variables are set."""
+from ._12_generate import *
 
 BASE_DIR = Path.cwd()
 
 ROOT_URLCONF: str = f"{Package.NAME}.contrib.urls"
+
 
 # ==============================================================================
 # Content Security Policy (CSP)

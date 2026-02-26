@@ -2,9 +2,7 @@
 
 from typing import Any
 
-from django.contrib.staticfiles.management.commands.runserver import (
-    Command as RunserverCommand,
-)
+from django.contrib.staticfiles.management.commands.runserver import Command as RunserverCommand
 from django.core.management.base import CommandParser
 
 from ...constants import Package
@@ -30,11 +28,7 @@ class Command(RunserverCommand):
     def add_arguments(self, parser: CommandParser) -> None:
         """Add custom arguments to the command."""
         super().add_arguments(parser)
-        parser.add_argument(
-            "--no-clipboard",
-            action="store_true",
-            help="Disable copying the server URL to clipboard",
-        )
+        parser.add_argument("--no-clipboard", action="store_true", help="Disable copying the server URL to clipboard")
 
     def handle(self, *args: object, **options: Any) -> str | None:
         """Handle the dev command execution."""

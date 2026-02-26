@@ -30,17 +30,12 @@ class Command(BaseCommand):
             default=PresetChoices.DEFAULT,
         )
         parser.add_argument(
-            "-d",
-            "--db",
-            dest="db",
-            type=DatabaseChoices,
-            choices=[db for db in DatabaseChoices],
-            help="Database backend to use.",
+            "-d", "--db", dest="db", type=DatabaseChoices, choices=[db for db in DatabaseChoices], help="Database backend to use."
         )
         parser.add_argument(
-            PostgresFlags.USE_ENV_VARS,
+            PostgresFlags.USE_VARS,
             action="store_true",
-            help=f"Use environment variables for PostgreSQL configuration. If False, configuration will be read from {PostgresFilename.PGSERVICE} and {PostgresFilename.PGPASS} files.",
+            help=f"Use environment / pyproject.toml variables for PostgreSQL configuration. If False, configuration will be read from {PostgresFilename.PGSERVICE} and {PostgresFilename.PGPASS} files.",
         )
 
     def handle(self, args: Namespace) -> ExitCode:
@@ -66,16 +61,16 @@ class Command(BaseCommand):
         match args.preset:
             case PresetChoices.VERCEL:
                 """Enforce postgresql and environment variable configuration for Vercel preset due to platform requirements and security best practices."""
-                if args.db == DatabaseChoices.SQLITE3:
+                if args.db == DatabaseChoices.SQLITE:
                     raise ValueError(f"The {PresetChoices.VERCEL} preset requires {DatabaseChoices.POSTGRESQL}.")
                 args.db = DatabaseChoices.POSTGRESQL
-                args.pg_use_env_vars = True
+                args.pg_use_vars = True
             case _:
-                """Other presets work with either database. Default to sqlite3 if args.db is unspecified."""
+                """Other presets work with either database. Default to sqlite if args.db is unspecified."""
                 if not args.db:
-                    args.db = DatabaseChoices.SQLITE3
-        if args.pg_use_env_vars and not args.db == DatabaseChoices.POSTGRESQL:
-            raise ValueError(f"The {PostgresFlags.USE_ENV_VARS} flag is only supported for {DatabaseChoices.POSTGRESQL}.")
+                    args.db = DatabaseChoices.SQLITE
+        if args.pg_use_vars and not args.db == DatabaseChoices.POSTGRESQL:
+            raise ValueError(f"The {PostgresFlags.USE_VARS} flag is only supported for {DatabaseChoices.POSTGRESQL}.")
         return args
 
     def _validate_project_directory(self, project_dir: Path, args: Namespace) -> None:
@@ -97,11 +92,11 @@ class Command(BaseCommand):
 
     def _generate_base_files(self, project_dir: Path, args: Namespace) -> None:
         """Generate base project files."""
+        # TODO: Test out using call_command 'startapp' for generating the home app files instead of manually creating them here. It would be ideal to leverage Django's built-in app generation logic if possible to reduce the amount of custom code we need to maintain for generating app files.
         home_app_dir: Path = project_dir / "home"
         files_with_content: list[tuple[Path, str]] = [
             (project_dir / "pyproject.toml", self._get_pyproject_toml_content(project_dir, args)),
-            (project_dir / ".gitignore", self._get_gitignore_content()),
-            (project_dir / "README.md", self._get_readme_content(project_dir)),
+            (project_dir / ".gitignore", self._get_gitignore_content(args)),
             (home_app_dir / "__init__.py", ""),
             (home_app_dir / "migrations" / "__init__.py", ""),
             (home_app_dir / "templates" / Project.HOME_APP_NAME / "index.html", self._get_home_app_index_html_content()),
@@ -117,7 +112,7 @@ class Command(BaseCommand):
 
     def _generate_preset_files(self, project_dir: Path, args: Namespace) -> None:
         """Generate preset-specific files."""
-        from .generate import get_api_server_spec, get_env_spec, get_vercel_spec
+        from .generate import get_api_server_spec, get_readme_spec, get_vercel_spec
 
         match args.preset:
             case PresetChoices.VERCEL:
@@ -127,7 +122,7 @@ class Command(BaseCommand):
                 FileGenerator(FileSpec(path=api_dir / "__init__.py", content="")).create()
             case _:
                 pass
-        FileGenerator(get_env_spec(path=project_dir / ".env.example")).create()
+        FileGenerator(get_readme_spec(path=project_dir / "README.md")).create()
 
     def _revert_generated_files(self, project_dir: Path) -> None:
         """Remove any files that were generated before an error occurred."""
@@ -137,20 +132,25 @@ class Command(BaseCommand):
 
     def _get_pyproject_toml_content(self, project_dir: Path, args: Namespace) -> str:
         """Generate the content for pyproject.toml based on the provided arguments."""
-        deps = [
-            '    "pillow>=12.1.1",',
-            f'    "{Package.NAME}>=1.5.7",',
-        ]
-        if args.db == DatabaseChoices.POSTGRESQL:
-            deps.insert(1, '    "psycopg[binary,pool]>=3.3.3",')
+        # dependencies
+        extras: list[str] = []
         if args.preset == PresetChoices.VERCEL:
-            deps.append('    "vercel>=0.5.0",')
-        dependencies = "\n".join(deps)
+            extras.append("vercel")
+        if args.db == DatabaseChoices.POSTGRESQL:
+            extras.append("psycopg")
+        extras_str = f"[{','.join(extras)}]" if extras else ""
+        dependencies = f'"{Package.NAME}{extras_str}>={Package.VERSION}"'
+        # tool section
         djangx_section = f"[tool.{Package.NAME}]\n"
         if args.db == DatabaseChoices.POSTGRESQL:
-            djangx_section += f'db = {{ backend = "{DatabaseChoices.POSTGRESQL}", use-env-vars = {"true" if args.pg_use_env_vars else "false"} }}\n'
+            djangx_section += (
+                # TODO: Consider using enums for the toml keys
+                f'db = {{ backend = "{DatabaseChoices.POSTGRESQL}", use-vars = {"true" if args.pg_use_vars else "false"} }}\n'
+            )
         if args.preset == PresetChoices.VERCEL:
+            # TODO: Consider using enums for the toml keys
             djangx_section += f'storage = {{ backend = "{StorageChoices.VERCELBLOB}", blob-token = "get-from-vercel-blob-storage-and-keep-private-via-env-var" }}\n'
+        # final content
         return (
             "[project]\n"
             f'name = "{project_dir.name}"\n'
@@ -158,9 +158,7 @@ class Command(BaseCommand):
             'description = ""\n'
             'readme = "README.md"\n'
             'requires-python = ">=3.12"\n'
-            "dependencies = [\n"
-            f"{dependencies}\n"
-            "]\n"
+            f"dependencies = [{dependencies}]\n"
             "\n"
             "[dependency-groups]\n"
             'dev = ["djlint>=1.36.4"]\n'
@@ -168,8 +166,9 @@ class Command(BaseCommand):
             f"{djangx_section}"
         )
 
-    def _get_gitignore_content(self) -> str:
+    def _get_gitignore_content(self, args: Namespace) -> str:
         """Generate the content for .gitignore based on the provided arguments."""
+        sqlite = f"/db.{DatabaseChoices.SQLITE}3\n" if args.db == DatabaseChoices.SQLITE else ""
         return (
             "# Python-generated files\n"
             "__pycache__/\n"
@@ -186,6 +185,7 @@ class Command(BaseCommand):
             "\n"
             "# Environment variables file\n"
             "/.env\n"
+            f"{sqlite}"
         )
 
     def _get_home_app_apps_py_content(self) -> str:
@@ -262,10 +262,6 @@ class Command(BaseCommand):
             "    </main>\n"
             "{% endblock main %}\n"
         )
-
-    def _get_readme_content(self, project_dir: Path) -> str:
-        """Generate the content for README.md."""
-        return f"# {project_dir.name}\n"
 
     def _display_successful_setup_info(self, project_dir: Path) -> None:
         """Display setup success message."""

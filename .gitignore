@@ -6,12 +6,11 @@ dist/
 wheels/
 *.egg-info
 
+# Temporary files
+/.tmp/
+
 # Virtual environments
 /.venv/
 
 # Ruff cache
 /.ruff_cache/
-
-# Temporary files
-/.tmp/
-/src/tmp/
