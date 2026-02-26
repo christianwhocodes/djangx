@@ -13,7 +13,7 @@ djx = "djangx.management.manage:main"
 
 [project]
 name = "djangx"
-version = "1.6.2.dev1"
+version = "1.7.0"
 description = "Build and deploy Django apps with confidence."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -52,10 +52,7 @@ dev = [
 ]
 
 [tool.djlint]
-profile = "django"
 ignore = "H016,H030,H031"
-# blank_line_before_tag = "block"
-# blank_line_after_tag = "load,extends,endblock"
 
 [tool.ruff]
 line-length = 130

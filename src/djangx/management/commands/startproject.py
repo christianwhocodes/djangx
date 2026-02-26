@@ -42,11 +42,6 @@ class Command(BaseCommand):
             action="store_true",
             help=f"Use environment variables for PostgreSQL configuration. If False, configuration will be read from {PostgresFilename.PGSERVICE} and {PostgresFilename.PGPASS} files.",
         )
-        parser.add_argument(
-            "--disable-tailwindcss",
-            action="store_true",
-            help="Disable TailwindCSS in the generated project.",
-        )
 
     def handle(self, args: Namespace) -> ExitCode:
         """Execute the command logic with the parsed arguments."""
@@ -131,16 +126,6 @@ class Command(BaseCommand):
             (home_app_dir / "admin.py", self._get_home_app_admin_py_content()),
             (home_app_dir / "models.py", self._get_home_app_models_py_content()),
             (home_app_dir / "tests.py", self._get_home_app_tests_py_content()),
-            *(
-                [
-                    (
-                        home_app_dir / "static" / Project.HOME_APP_NAME / "css" / "source.css",
-                        self._get_home_app_tailwindcss_content(),
-                    )
-                ]
-                if not args.disable_tailwindcss
-                else []
-            ),
         ]
 
         for path, content in files_with_content:
@@ -184,8 +169,6 @@ class Command(BaseCommand):
             djangx_section += f'db = {{ backend = "{DatabaseChoices.POSTGRESQL}", use-env-vars = {"true" if args.pg_use_env_vars else "false"} }}\n'
         if args.preset == PresetChoices.VERCEL:
             djangx_section += f'storage = {{ backend = "{StorageChoices.VERCELBLOB}", blob-token = "get-from-vercel-blob-storage-and-keep-private-via-env-var" }}\n'
-        if args.disable_tailwindcss:
-            djangx_section += "tailwindcss = { disabled = true }\n"
 
         return (
             "[project]\n"
@@ -291,125 +274,6 @@ class Command(BaseCommand):
             "        </section>\n"
             "    </main>\n"
             "{% endblock main %}\n"
-        )
-
-    def _get_home_app_tailwindcss_content(self) -> str:
-        """Generate the content for the home app tailwind.css."""
-        return (
-            '@import "tailwindcss";\n'
-            "\n"
-            "/* =============================================================================\n"
-            "   SOURCE FILES\n"
-            "   ============================================================================= */\n"
-            f'@source "../../../../.venv/**/{Package.NAME}/contrib/**/templates/**/*.html";\n'
-            f'@source "../../../templates/{Project.HOME_APP_NAME}/**/*.html";\n'
-            "\n"
-            "/* =============================================================================\n"
-            "   THEME CONFIGURATION\n"
-            "   ============================================================================= */\n"
-            "@theme {\n"
-            "  /* ---------------------------------------------------------------------------\n"
-            "     TYPOGRAPHY\n"
-            "     --------------------------------------------------------------------------- */\n"
-            "  /* Default body text font */\n"
-            "  --font-default:\n"
-            '    "Roboto", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",\n'
-            '    Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji",\n'
-            '    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";\n'
-            "  /* Headings font family */\n"
-            '  --font-heading: "Mulish", system-ui, -apple-system, sans-serif;\n'
-            "  /* Navigation font family */\n"
-            '  --font-nav: "Raleway", system-ui, -apple-system, sans-serif;\n'
-            "\n"
-            "  /* ---------------------------------------------------------------------------\n"
-            "     COLOR PALETTE - Base color system\n"
-            "     --------------------------------------------------------------------------- */\n"
-            "  /* Accent Colors */\n"
-            "  --color-accent: #ff4d4f; /* Primary accent for your brand (links, CTAs) */\n"
-            "  /* Background Colors */\n"
-            "  --color-background: #141414; /* Main page background */\n"
-            "  --color-surface: #1c1c1c; /* Elevated surfaces (cards, panels) */\n"
-            "  /* Text Colors */\n"
-            "  --color-default: #d9d9d9; /* Default body text */\n"
-            "  --color-heading: #ededed; /* Headings and titles */\n"
-            "  --color-contrast: #ffffff; /* Contrast text elements, ensuring readability against backgrounds, accent, headings, default colors  */\n"
-            "\n"
-            "  /* ---------------------------------------------------------------------------\n"
-            "     NAVIGATION COLORS - Navigation component tokens\n"
-            "     --------------------------------------------------------------------------- */\n"
-            "  /* Desktop Navigation */\n"
-            "  --color-nav: #d9d9d9; /* Default nav link color */\n"
-            "  --color-nav-hover: #ff4d4f; /* Nav link hover state */\n"
-            "  /* Mobile Navigation */\n"
-            "  --color-nav-mobile-bg: #2e2e2e; /* Mobile menu background */\n"
-            "  /* Dropdown Menus */\n"
-            "  --color-nav-dropdown-bg: #2e2e2e; /* Dropdown background */\n"
-            "  --color-nav-dropdown: #d9d9d9; /* Dropdown text color */\n"
-            "  --color-nav-dropdown-hover: #ff4d4f; /* Dropdown hover state */\n"
-            "}\n"
-            "\n"
-            "/* =============================================================================\n"
-            "   LIGHT THEME OVERRIDES\n"
-            "   ============================================================================= */\n"
-            "@theme light {\n"
-            "  --color-background: rgba(41, 41, 41, 0.8);\n"
-            "  --color-surface: #484848;\n"
-            "}\n"
-            "\n"
-            "/* =============================================================================\n"
-            "   DARK THEME OVERRIDES\n"
-            "   ============================================================================= */\n"
-            "@theme dark {\n"
-            "  --color-background: #060606;\n"
-            "  --color-surface: #252525;\n"
-            "  --color-default: #ffffff;\n"
-            "  --color-heading: #ffffff;\n"
-            "}\n"
-            "\n"
-            "/* =============================================================================\n"
-            "   UTILITY CLASSES\n"
-            "   ============================================================================= */\n"
-            "@layer utilities {\n"
-            "  /* Full-width container */\n"
-            "  .container-full {\n"
-            "    @apply mx-auto w-full px-8;\n"
-            "  }\n"
-            "\n"
-            "  /* Responsive container (Mobile→SM→MD→LG→XL→2XL: 100%→92%→83%→80%→75%→1400px max) */\n"
-            "  .container {\n"
-            "    @apply mx-auto w-full px-8 sm:w-11/12 sm:px-4 md:w-5/6 lg:w-4/5 xl:w-3/4 xl:px-0 2xl:max-w-[1400px];\n"
-            "  }\n"
-            "}\n"
-            "\n"
-            "/* =============================================================================\n"
-            "   BASE STYLES - Global element styling\n"
-            "   ============================================================================= */\n"
-            "@layer base {\n"
-            "  :root {\n"
-            "    @apply scroll-smooth;\n"
-            "  }\n"
-            "\n"
-            "  body {\n"
-            "    @apply bg-background text-default font-default antialiased;\n"
-            "  }\n"
-            "\n"
-            "  h1,\n"
-            "  h2,\n"
-            "  h3,\n"
-            "  h4,\n"
-            "  h5,\n"
-            "  h6 {\n"
-            "    @apply text-heading font-heading text-balance;\n"
-            "  }\n"
-            "\n"
-            "  a {\n"
-            "    @apply text-accent no-underline transition-colors duration-200 ease-in-out;\n"
-            "  }\n"
-            "\n"
-            "  a:hover {\n"
-            "    color: color-mix(in srgb, var(--color-accent), white 15%);\n"
-            "  }\n"
-            "}\n"
         )
 
     def _get_readme_content(self, project_dir: Path) -> str:

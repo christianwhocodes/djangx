@@ -11,7 +11,6 @@ from .runcommands import *
 from .security import *
 from .server import *
 from .startproject import *
-from .tailwindcss import *
 
 """Place last to ensure all env vars are included in GENERATED_ENV_FIELDS."""
 from .generate import *

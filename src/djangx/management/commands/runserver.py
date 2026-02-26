@@ -1,7 +1,5 @@
-"""Custom runserver with TailwindCSS watch integration."""
+"""Custom runserver."""
 
-import signal
-from threading import Event, Thread
 from typing import Any
 
 from django.contrib.staticfiles.management.commands.runserver import (
@@ -10,16 +8,14 @@ from django.contrib.staticfiles.management.commands.runserver import (
 from django.core.management.base import CommandParser
 
 from ...constants import Package
-from ..settings import TAILWINDCSS
-from .tailwindcss import BuildHandler, CleanHandler, WatchHandler
 
 
 class Command(RunserverCommand):
-    """Development server with TailwindCSS watch."""
+    """Development server."""
 
-    help = "Development server"
+    help = f"{Package.NAME} Development server"
 
-    # Declare parent class attributes for type checking
+    # Django's runserver sets these at runtime; declared here for type checking
     _raw_ipv6: bool
     addr: str
     port: str
@@ -29,13 +25,7 @@ class Command(RunserverCommand):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize the runserver command."""
         super().__init__(*args, **kwargs)
-        self._watcher_thread: Thread | None = None
-        self._stop_watcher_event: Event | None = None
-        self._original_sigint_handler = None
-        self._shutdown_in_progress: bool = False
-        self.verbose: bool = False
         self.no_clipboard: bool = False
-        self.no_tailwindcss_watch: bool = False
 
     def add_arguments(self, parser: CommandParser) -> None:
         """Add custom arguments to the command."""
@@ -45,38 +35,11 @@ class Command(RunserverCommand):
             action="store_true",
             help="Disable copying the server URL to clipboard",
         )
-        parser.add_argument(
-            "--no-tailwindcss-watch",
-            action="store_true",
-            help="Disable TailwindCSS file watching",
-        )
-        parser.add_argument(
-            "--verbose",
-            action="store_true",
-            help="Show detailed TailwindCSS operations and status messages",
-        )
 
     def handle(self, *args: object, **options: Any) -> str | None:
         """Handle the dev command execution."""
         self.no_clipboard = options.get("no_clipboard", False)
-        self.no_tailwindcss_watch = options.get("no_tailwindcss_watch", False) or TAILWINDCSS.no_watch
-        self.verbose = options.get("verbose", False)
-
-        self._setup_signal_handlers()
-
-        try:
-            return super().handle(*args, **options)
-        except KeyboardInterrupt:
-            # Expected during shutdown - propagate after cleanup
-            raise
-        finally:
-            # Ensure cleanup happens even if parent class has issues
-            self._cleanup_watcher()
-
-    def inner_run(self, *args: Any, **options: Any) -> None:
-        """Prepare TailwindCSS before starting the server."""
-        self._prepare_tailwindcss()
-        return super().inner_run(*args, **options)  # pyright: ignore
+        return super().handle(*args, **options)
 
     def check_migrations(self) -> None:
         """Warn about unapplied migrations."""
@@ -112,101 +75,6 @@ class Command(RunserverCommand):
             self._copy_to_clipboard(server_port)
 
         self.stdout.write("")
-
-    # ========== Signal Handling ==========
-
-    def _setup_signal_handlers(self) -> None:
-        """Register custom handlers for graceful shutdown."""
-        self._original_sigint_handler = signal.getsignal(signal.SIGINT)
-        signal.signal(signal.SIGINT, self._handle_shutdown_signal)
-        signal.signal(signal.SIGTERM, self._handle_shutdown_signal)
-
-    def _handle_shutdown_signal(self, signum: int, frame: Any) -> None:
-        """Handle Ctrl+C / SIGTERM with proper cleanup."""
-        # If already shutting down, ignore subsequent signals to let cleanup finish
-        if self._shutdown_in_progress:
-            return
-
-        self._shutdown_in_progress = True
-
-        # Show shutdown message if verbose
-        if self.verbose:
-            self.stdout.write(self.style.WARNING("\n\n🛑 Shutting down gracefully..."))
-
-        # Clean up watcher before restoring signal handler
-        self._cleanup_watcher()
-
-        # Restore original handler for any subsequent signals
-        if self._original_sigint_handler:
-            signal.signal(signal.SIGINT, self._original_sigint_handler)
-
-        # Now propagate the interrupt
-        raise KeyboardInterrupt
-
-    def _cleanup_watcher(self) -> None:
-        """Stop the TailwindCSS watcher thread."""
-        if not self._watcher_thread or not self._watcher_thread.is_alive():
-            return
-
-        if self.verbose:
-            self.stdout.write(self.style.WARNING("   ⏹ Stopping TailwindCSS watcher..."))
-
-        # Signal the thread to stop
-        if self._stop_watcher_event:
-            self._stop_watcher_event.set()
-
-        # Wait for thread to finish with timeout
-        self._watcher_thread.join(timeout=3.0)
-
-        if self._watcher_thread.is_alive():
-            if self.verbose:
-                self.stdout.write(self.style.WARNING("   ⚠ TailwindCSS watcher did not stop in time (will be terminated)"))
-        else:
-            if self.verbose:
-                self.stdout.write(self.style.SUCCESS("   ✓ TailwindCSS watcher stopped"))
-
-        self._watcher_thread = None
-        self._stop_watcher_event = None
-
-    # ========== TailwindCSS Management ==========
-
-    def _prepare_tailwindcss(self) -> None:
-        """Clean, build, and optionally watch TailwindCSS."""
-        # Clean old output
-        CleanHandler(verbose=self.verbose).clean()
-
-        if TAILWINDCSS.is_disabled:
-            if self.verbose:
-                self.stdout.write(self.style.NOTICE("\n⏭ TailwindCSS is disabled (tailwindcss.disable)"))
-            return
-
-        # Build initial CSS
-        BuildHandler(verbose=self.verbose).build()
-
-        # Start watcher if not disabled
-        if not self.no_tailwindcss_watch:
-            self._start_watcher()
-
-            if self.verbose:
-                self.stdout.write(self.style.SUCCESS("👀 Watching for changes in TailwindCSS source files"))
-        else:
-            if self.verbose:
-                self.stdout.write(self.style.NOTICE("\n⏭ TailwindCSS watch disabled (--no-tailwindcss-watch)"))
-
-    def _start_watcher(self) -> None:
-        """Start the TailwindCSS watcher thread."""
-        self._stop_watcher_event = Event()
-
-        def run_watcher() -> None:
-            handler = WatchHandler(verbose=self.verbose)
-            handler.watch(stop_event=self._stop_watcher_event)
-
-        self._watcher_thread = Thread(
-            target=run_watcher,
-            daemon=False,  # Non-daemon ensures proper cleanup before exit
-            name="TailwindCSSWatcher",
-        )
-        self._watcher_thread.start()
 
     # ========== Display Methods ==========
 
@@ -249,12 +117,6 @@ class Command(RunserverCommand):
         url = f"{self.protocol}://{self._format_address()}:{server_port}/"
         self.stdout.write(f"  🌐 Local address:   {self.style.SUCCESS(url)}")
 
-    def _format_address(self) -> str:
-        """Format address for display."""
-        if self._raw_ipv6:
-            return f"[{self.addr}]"
-        return "0.0.0.0" if self.addr == "0" else self.addr
-
     def _print_network_url(self, server_port: int) -> None:
         """Print LAN IP address if available."""
         from socket import gaierror, gethostbyname, gethostname
@@ -279,3 +141,9 @@ class Command(RunserverCommand):
             self.stdout.write(f"  📋 {self.style.WARNING('pyperclip not installed - skipping clipboard copy')}")
         except Exception:
             pass
+
+    def _format_address(self) -> str:
+        """Format address for display."""
+        if self._raw_ipv6:
+            return f"[{self.addr}]"
+        return "0.0.0.0" if self.addr == "0" else self.addr

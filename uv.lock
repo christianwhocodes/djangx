@@ -280,7 +280,7 @@ wheels = [
 
 [[package]]
 name = "djangx"
-version = "1.6.2.dev1"
+version = "1.7.0"
 source = { editable = "." }
 dependencies = [
     { name = "christianwhocodes" },
