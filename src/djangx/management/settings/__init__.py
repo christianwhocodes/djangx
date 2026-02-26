@@ -7,6 +7,7 @@ from django.utils.csp import CSP  # pyright: ignore[reportMissingTypeStubs]
 from ...constants import Package
 from .appdef import *
 from .auth import *
+from .internationalization import *
 from .runcommands import *
 from .security import *
 from .server import *
@@ -37,16 +38,3 @@ SECURE_CSP: dict[str, list[str]] = {
         "https://fonts.gstatic.com",  # Google Fonts font files
     ],
 }
-
-# ==============================================================================
-# Internationalization
-# https://docs.djangoproject.com/en/stable/topics/i18n/
-# ==============================================================================
-
-LANGUAGE_CODE: str = "en-us"
-
-TIME_ZONE: str = "Africa/Nairobi"
-
-USE_I18N: bool = True
-
-USE_TZ: bool = True
