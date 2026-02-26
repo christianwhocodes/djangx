@@ -47,7 +47,7 @@ dev = [
     "djlint>=1.36.4",
     "psycopg[binary,pool]>=3.3.3",
     "ruff>=0.15.2",
-    "ty>=0.0.18",
+    "ty>=0.0.19",
     "vercel>=0.5.0",
 ]
 

@@ -49,21 +49,14 @@ class Command(BaseCommand):
             self._project_dir = Path.cwd() / args.project_name
             self._validated_args = self._validate_args(args)
             self._validate_project_directory(self._project_dir, self._validated_args)
-
             with status("Generating base project files..."):
                 self._generate_base_files(self._project_dir, self._validated_args)
             with status("Generating preset files..."):
                 self._generate_preset_files(self._project_dir, self._validated_args)
-
-        except (ValueError, FileExistsError) as e:
-            cprint(str(e), Text.ERROR)
-            return ExitCode.ERROR
-
-        except Exception as e:
+        except (ValueError, FileExistsError, Exception) as e:
             cprint(f"Error occurred during project initialization:\n{e}", Text.ERROR)
             self._revert_generated_files(self._project_dir)
             return ExitCode.ERROR
-
         else:
             self._display_successful_setup_info(self._project_dir)
             return ExitCode.SUCCESS
@@ -75,18 +68,14 @@ class Command(BaseCommand):
                 """Enforce postgresql and environment variable configuration for Vercel preset due to platform requirements and security best practices."""
                 if args.db == DatabaseChoices.SQLITE3:
                     raise ValueError(f"The {PresetChoices.VERCEL} preset requires {DatabaseChoices.POSTGRESQL}.")
-
                 args.db = DatabaseChoices.POSTGRESQL
                 args.pg_use_env_vars = True
-
             case _:
                 """Other presets work with either database. Default to sqlite3 if args.db is unspecified."""
                 if not args.db:
                     args.db = DatabaseChoices.SQLITE3
-
         if args.pg_use_env_vars and not args.db == DatabaseChoices.POSTGRESQL:
             raise ValueError(f"The {PostgresFlags.USE_ENV_VARS} flag is only supported for {DatabaseChoices.POSTGRESQL}.")
-
         return args
 
     def _validate_project_directory(self, project_dir: Path, args: Namespace) -> None:
@@ -95,15 +84,12 @@ class Command(BaseCommand):
             raise FileExistsError(
                 "The current directory is not empty. Please choose a different project name or remove the existing files."
             )
-
         if not project_dir.exists():
             return
-
         if project_dir.is_file():
             raise FileExistsError(
                 f"A file named '{project_dir}' already exists. Please choose a different project name or remove the existing file."
             )
-
         if any(project_dir.iterdir()):
             raise FileExistsError(
                 f"The directory '{project_dir}' already exists and is not empty. Please choose a different project name or remove the existing files in the directory."
@@ -112,10 +98,9 @@ class Command(BaseCommand):
     def _generate_base_files(self, project_dir: Path, args: Namespace) -> None:
         """Generate base project files."""
         home_app_dir: Path = project_dir / "home"
-
         files_with_content: list[tuple[Path, str]] = [
             (project_dir / "pyproject.toml", self._get_pyproject_toml_content(project_dir, args)),
-            (project_dir / ".gitignore", self._get_gitignore_content(args)),
+            (project_dir / ".gitignore", self._get_gitignore_content()),
             (project_dir / "README.md", self._get_readme_content(project_dir)),
             (home_app_dir / "__init__.py", ""),
             (home_app_dir / "migrations" / "__init__.py", ""),
@@ -127,7 +112,6 @@ class Command(BaseCommand):
             (home_app_dir / "models.py", self._get_home_app_models_py_content()),
             (home_app_dir / "tests.py", self._get_home_app_tests_py_content()),
         ]
-
         for path, content in files_with_content:
             FileGenerator(FileSpec(path=path, content=content)).create()
 
@@ -147,7 +131,7 @@ class Command(BaseCommand):
 
     def _revert_generated_files(self, project_dir: Path) -> None:
         """Remove any files that were generated before an error occurred."""
-        if project_dir.exists():
+        if project_dir.exists() and project_dir.is_dir() and any(project_dir.iterdir()):
             for item in sorted(project_dir.rglob("*"), reverse=True):
                 item.unlink() if item.is_file() else item.rmdir()
 
@@ -161,15 +145,12 @@ class Command(BaseCommand):
             deps.insert(1, '    "psycopg[binary,pool]>=3.3.3",')
         if args.preset == PresetChoices.VERCEL:
             deps.append('    "vercel>=0.5.0",')
-
         dependencies = "\n".join(deps)
-
         djangx_section = f"[tool.{Package.NAME}]\n"
         if args.db == DatabaseChoices.POSTGRESQL:
             djangx_section += f'db = {{ backend = "{DatabaseChoices.POSTGRESQL}", use-env-vars = {"true" if args.pg_use_env_vars else "false"} }}\n'
         if args.preset == PresetChoices.VERCEL:
             djangx_section += f'storage = {{ backend = "{StorageChoices.VERCELBLOB}", blob-token = "get-from-vercel-blob-storage-and-keep-private-via-env-var" }}\n'
-
         return (
             "[project]\n"
             f'name = "{project_dir.name}"\n'
@@ -187,24 +168,15 @@ class Command(BaseCommand):
             f"{djangx_section}"
         )
 
-    def _get_gitignore_content(self, args: Namespace) -> str:
+    def _get_gitignore_content(self) -> str:
         """Generate the content for .gitignore based on the provided arguments."""
-        sqlite_line = "\n# SQLite database file\n/db.sqlite3\n" if args.db == DatabaseChoices.SQLITE3 else ""
-
         return (
             "# Python-generated files\n"
             "__pycache__/\n"
             "*.py[oc]\n"
-            "build/\n"
-            "dist/\n"
-            "wheels/\n"
-            "*.egg-info\n"
             "\n"
-            "# Virtual environments\n"
+            "# Virtual environment\n"
             "/.venv/\n"
-            "\n"
-            "# Ruff cache\n"
-            "/.ruff_cache/\n"
             "\n"
             "# Temporary files\n"
             "/.tmp/\n"
@@ -212,9 +184,8 @@ class Command(BaseCommand):
             "# Static and media files\n"
             "/public/\n"
             "\n"
-            "# Environment variables files\n"
-            "/.env*\n"
-            f"{sqlite_line}"
+            "# Environment variables file\n"
+            "/.env\n"
         )
 
     def _get_home_app_apps_py_content(self) -> str:
